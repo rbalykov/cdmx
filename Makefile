@@ -1,6 +1,8 @@
 PROJECT_ROOT = $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
 MODNAME = cdmx
+#MODNAME = kobject-example
+#MODNAME = kset-example
 
 obj-m += $(MODNAME).o
 
@@ -21,7 +23,7 @@ in:
 	sudo insmod $(MODNAME).ko
 	
 inp:
-	sudo insmod $(MODNAME).ko port_count=6
+	sudo insmod $(MODNAME).ko cdmx_port_count=6
 
 # /sys/devices/virtual/cdmx
 # /sys/class/cdmx
