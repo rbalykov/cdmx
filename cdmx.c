@@ -3,6 +3,7 @@
 #include <uapi/linux/eventpoll.h>
 #include <linux/ctype.h>
 #include <linux/printk.h>
+#include <uapi/asm-generic/errno-base.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Neutrino");
@@ -18,6 +19,9 @@ static struct class *cdmx_devclass 	= NULL;
 static dev_t 		cdmx_device_id;
 //struct cdev cdmx_cdev;
 
+static struct dmx_port **dmx_ports;
+
+static struct kset *dmx_ports_kset;
 static inline bool port_active(struct dmx_port * port)
 {
 	return (port->id >= 0);
@@ -232,8 +236,421 @@ static struct kobj_type port_ktype =
 	.default_groups = port_groups,
 };
 
-static struct kset *dmx_ports_kset;
-static struct dmx_port **dmx_ports;
+static char *cdmx_devnode(struct device *dev, umode_t *mode)
+{
+	if (!mode)
+		return NULL;
+	if ( MAJOR(dev->devt) == MAJOR(cdmx_device_id))
+		*mode = CHMOD_RW;
+	return NULL;
+}
+
+
+static int cdmx_open 	(struct inode *node, struct file *f)
+{
+	struct dmx_port *cdata;
+	cdata = container_of(node->i_cdev, struct dmx_port, cdev);
+	K_DEBUG("file %s, cdata %p dev_t %X",
+			f->f_path.dentry->d_name.name, cdata, cdata->cdev.dev);
+
+	f->private_data = cdata;
+	try_module_get(THIS_MODULE);
+
+	K_DEBUG( "->>> done");
+	return 0;
+}
+
+static int cdmx_release (struct inode *node, struct file *f)
+{
+	struct dmx_port *cdata;
+	cdata = (struct dmx_port *) f->private_data;
+	K_DEBUG("file %s, cdata %p dev_t %X",
+			f->f_path.dentry->d_name.name, cdata, cdata->cdev.dev);
+
+	module_put(THIS_MODULE);
+	return 0;
+}
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+
+static int cdmx_enttec_getparams (struct dmx_port *port)
+{
+	struct usb_frame *frame = &port->read_from;
+
+	if(frame->pending)
+		return -EBUSY;
+
+	frame->msglabel = LABEL_GET_PARAMS;
+	frame->msgsize = ENT_PARAMS_MIN;
+	frame->data[0] = ENT_FW_LSB;
+	frame->data[1] = ENT_FW_DMX;
+
+	//TODO: think of more correct floating-point replacement
+	frame->data[2] = (port->breaktime * 1000) / ENT_TIMEUNIT_NS + 1;
+	frame->data[3] = (port->mabtime * 1000) / ENT_TIMEUNIT_NS + 1;
+
+	frame->data[4] = port->framerate;
+	frame->pending = true;
+
+	return 0;
+}
+
+static int cdmx_enttec_getserial (struct dmx_port *port)
+{
+	struct usb_frame *frame = &port->read_from;
+
+	frame->msglabel = LABEL_GET_SERIAL;
+	frame->msgsize = ENT_SERIAL_SIZE;
+	memcpy(frame->data, USBPRO_SERIAL, ENT_SERIAL_SIZE);
+	frame->pending = true;
+
+	return 0;
+}
+
+static int cdmx_enttec_getvendor (struct dmx_port *port)
+{
+	struct usb_frame *frame = &port->read_from;
+
+	frame->msglabel = LABEL_VENDOR;
+	frame->msgsize = MIN (ENT_NAME_MAX, sizeof(USBPRO_VENDOR));
+	memcpy(frame->data, USBPRO_VENDOR, frame->msgsize);
+	frame->pending = true;
+
+	return 0;
+}
+
+static int cdmx_enttec_getname (struct dmx_port *port)
+{
+	struct usb_frame *frame = &port->read_from;
+
+	frame->msglabel = LABEL_NAME;
+	frame->msgsize = MIN (ENT_NAME_MAX, sizeof(USBPRO_NAME));
+	memcpy(frame->data, USBPRO_NAME, frame->msgsize);
+	frame->pending = true;
+
+	return 0;
+}
+
+static int cdmx_enttec_msg(struct dmx_port *port)
+{
+	int result = 1;
+	if (port->read_from.pending)
+	{
+		K_ERR("output frame is pending, message is dropped: port %d, label %d",
+				port->id, port->write_to.msglabel);
+		return -EBUSY;
+	}
+
+	switch (port->write_to.msglabel)
+	{
+		case LABEL_GET_PARAMS:
+			cdmx_enttec_getparams(port);
+			break;
+		case LABEL_GET_SERIAL:
+			cdmx_enttec_getserial(port);
+			break;
+		case LABEL_VENDOR:
+			cdmx_enttec_getvendor(port);
+			break;
+		case LABEL_NAME:
+			cdmx_enttec_getname(port);
+			break;
+
+		case LABEL_FLASH_FW:
+			break;
+		case LABEL_FLASH_PAGE:
+			break;
+		case LABEL_SET_PARAMS:
+			break;
+		case LABEL_DMX_OUTPUT:
+			break;
+		case LABEL_RDM_OUTPUT:
+			break;
+		case LABEL_ONCHANGE:
+			break;
+		case LABEL_DATA_UPDATE:
+			break;
+		case LABEL_RDM_DISCOVERY:
+			break;
+
+		case LABEL_RECEIVED_DMX:
+		case LABEL_UNIVERSE_0:
+		case LABEL_UNIVERSE_1:
+			break;
+
+		default:
+		break;
+	}
+	port->write_to.whead = 0;
+	if (port->read_from.pending)
+	{
+		K_DEBUG("new message pending");
+	}
+
+	K_DEBUG("->>> TX not implemented yet");
+	return result;
+}
+
+static void cdmx_enttec_parse(struct dmx_port *port)
+{
+	struct usb_frame *write_to = &port->write_to;
+	ssize_t count;
+	uint8_t nextbyte;
+
+	for (count=0; count < write_to->rawsize; count++)
+	{
+		nextbyte = write_to->rawdata[count];
+		switch (write_to->state)
+		{
+		case PRE_SOM:
+			if (nextbyte == ENT_SOM)
+				write_to->state = GOT_SOM;
+		break;
+		case GOT_SOM:
+			write_to->msglabel = nextbyte;
+			write_to->state = GOT_LABEL;
+		break;
+		case GOT_LABEL:
+			write_to->rhead = 0;
+			write_to->msgsize = nextbyte;
+			write_to->state = GOT_SIZE_LSB;
+		break;
+		case GOT_SIZE_LSB:
+			write_to->msgsize += (nextbyte << 8);
+
+			if (write_to->msgsize == 0)
+				write_to->state = WAITING_FOR_EOM;
+			else if (write_to->msgsize > DMX_FRAME_MAX)
+				{
+					K_INFO("dropping broken usb frame, size '%d' \
+							is greater than possible", write_to->msgsize);
+					write_to->state = PRE_SOM;
+				}
+			else
+				write_to->state = IN_DATA;
+		break;
+		case IN_DATA:
+			write_to->data[write_to->whead] = nextbyte;
+			write_to->whead++;
+
+			if (write_to->whead == write_to->msgsize)
+				write_to->state = WAITING_FOR_EOM;
+		break;
+		case WAITING_FOR_EOM:
+			if (nextbyte == ENT_EOM)
+				{
+				write_to->state = PRE_SOM;
+				cdmx_enttec_msg(port);
+				}
+		break;
+		}
+	}
+	write_to->rawsize = 0;
+}
+
+static ssize_t cdmx_write (struct file *f, const char* src,
+		size_t len, loff_t * offset)
+{
+	struct dmx_port *cdata = f->private_data;
+	struct usb_frame *write_to = &cdata->write_to;
+	ssize_t result, size;
+
+	K_DEBUG("port %d", cdata->id);
+	if (mutex_lock_interruptible(&cdata->lock))
+		return -ERESTARTSYS;
+
+	if (!cdata->fsdev)
+	{
+		K_ERR( "device #%d doesn't exist", cdata->id);
+		result = -ENODEV;
+		goto out;
+	}
+	size = sizeof(write_to->rawdata) - write_to->rawsize;
+	if (size < 0)
+	{
+		K_ERR("rawsize greater than buffer size: %d bytes", write_to->rawsize);
+		result = -EINVAL;
+		goto out;
+	}
+
+	size = MIN(size, len);
+	if (copy_from_user(&write_to->rawdata[write_to->rawsize], src, size))
+	{
+		result = -EFAULT;
+		goto out;
+	}
+	write_to->rawsize += size;
+	result = size;
+
+	cdmx_enttec_parse(cdata);
+
+	out:
+	mutex_unlock(&cdata->lock);
+	K_DEBUG("->>> done file %s, id %d, result %d", \
+			f->f_path.dentry->d_name.name, cdata->id, result);
+	return result;
+}
+
+
+static ssize_t cdmx_read 	(struct file *f, char* dest,
+		size_t len, loff_t * offset)
+{
+	struct dmx_port *cdata = (struct dmx_port *) f->private_data;
+	struct usb_frame *frame = &cdata->read_from;
+	ssize_t result = 0, headsize, size;
+	uint8_t header[ENT_HEADER_DMX] = {0}, footer = ENT_EOM;
+
+	K_DEBUG("port %d", cdata->id);
+
+	if (mutex_lock_interruptible(&cdata->lock))
+		return -ERESTARTSYS;
+
+	if (!cdata->fsdev)
+	{
+		K_ERR( "device #%d doesn't exist", cdata->id);
+		result = -ENODEV;
+		goto out;
+	}
+
+	if (!frame->pending)
+		goto out;
+
+	K_DEBUG("size %d, lsb %d, msb %d", frame->msgsize, ((frame->msgsize) && 0x00FF), (frame->msgsize >> 8) );
+	headsize = ENT_HEADER_SIZE;
+	header[0] = ENT_SOM;
+	header[1] = frame->msglabel;
+	header[2] = (uint8_t) ((frame->msgsize) & 0x00FF);		// LSB
+	header[3] = (uint8_t) (frame->msgsize >> 8);// MSB
+
+	if (frame->msglabel == LABEL_RECEIVED_DMX)
+	{
+		header[4] = frame->flags;
+		headsize = ENT_HEADER_DMX;
+	}
+
+	size = MIN(len, (headsize - frame->rhead));
+	if(size > 0)
+	{
+		K_DEBUG("header %d byte(s)", size);
+		if (copy_to_user(dest, &header[frame->rhead], size))
+			goto out;
+		dest += size;
+		len -= size;
+		result += size;
+		frame->rhead += size;
+	}
+
+	size = MIN (len, frame->msgsize);
+	if (size > 0)
+	{
+		K_DEBUG("body %d byte(s)", size);
+		if (copy_to_user(dest, &frame->data, size))
+			goto out;
+		dest += size;
+		len -= size;
+		result += size;
+		frame->rhead += size;
+	}
+
+	if (len > 0)
+	{
+		K_DEBUG("footer %d byte(s)", ENT_FOOTER_SIZE);
+		if (copy_to_user(dest, &footer, ENT_FOOTER_SIZE))
+			goto out;
+		result += ENT_FOOTER_SIZE;
+		frame->rhead = 0;
+		frame->pending = false;
+	}
+
+
+	out:
+	mutex_unlock(&cdata->lock);
+
+	K_DEBUG( "->>> %d bytes total read", result);
+	return result;
+
+}
+/*
+ static ssize_t scr24x_read(struct file *filp, char __user *buf, size_t count,
+								loff_t *ppos)
+{
+	struct scr24x_dev *dev = filp->private_data;
+	int ret;
+	int len;
+
+	if (count < CCID_HEADER_SIZE)
+		return -EINVAL;
+
+	if (mutex_lock_interruptible(&dev->lock))
+		return -ERESTARTSYS;
+
+	if (!dev->dev) {
+		ret = -ENODEV;
+		goto out;
+	}
+
+	ret = scr24x_wait_ready(dev);
+	if (ret < 0)
+		goto out;
+	len = CCID_HEADER_SIZE;
+	ret = read_chunk(dev, 0, len);
+	if (ret < 0)
+		goto out;
+
+	len += le32_to_cpu(*(__le32 *)(&dev->buf[CCID_LENGTH_OFFSET]));
+	if (len > sizeof(dev->buf)) {
+		ret = -EIO;
+		goto out;
+	}
+	ret = read_chunk(dev, CCID_HEADER_SIZE, len);
+	if (ret < 0)
+		goto out;
+
+	if (len < count)
+		count = len;
+
+	if (copy_to_user(buf, dev->buf, count)) {
+		ret = -EFAULT;
+		goto out;
+	}
+
+	ret = count;
+out:
+	mutex_unlock(&dev->lock);
+	return ret;
+}
+ */
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+
+
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+
+
+
+
+static struct file_operations cdmx_ops =
+{
+	.owner		= THIS_MODULE,
+	.read		= cdmx_read,
+	.write		= cdmx_write,
+	.open		= cdmx_open,
+	.release 	= cdmx_release
+};
 
 static struct dmx_port *create_port_obj(int id)
 {
@@ -256,13 +673,12 @@ static struct dmx_port *create_port_obj(int id)
 	if (!port)
 		return NULL;
 
+	mutex_init(&port->lock);
 	port->breaktime = DEFAULT_BREAK;
 	port->mabtime 	= DEFAULT_MAB;
 	port->framerate = DEFAULT_FRAMERATE;
 	port->id = PORT_INACTIVE;
 
-	mutex_init(&port->read_mutex);
-	mutex_init(&port->write_mutex);
 	/*
 	 * As we have a kset for this kobject, we need to set it before calling
 	 * the kobject core.
@@ -282,7 +698,7 @@ static struct dmx_port *create_port_obj(int id)
 		return NULL;
 	}
 
-	// set port active
+	// mark port as active
 	port->id = id;
 
 	/*
@@ -302,9 +718,117 @@ static void destroy_port_obj(struct dmx_port *port)
 }
 
 
-//const char cdmx_ttytemplate[] = "tty%04X";
-//const char cdmx_devtemplate[] = "cdmx%04X";
-//char cdmx_ttyfile[] = "tty0000";
+static int cdmx_create_cdevs (void)
+{
+	int i, c, err;
+	const char 	*chrdev_name 	= "cdmx";
+
+	K_DEBUG("start");
+	// Returns zero or a negative error code.
+	err = alloc_chrdev_region(&cdmx_device_id,
+			BASE_MINOR, cdmx_port_count, chrdev_name);
+	if (err)
+	{
+		K_ERR("failed to allocate chrdev region for '%s'", chrdev_name);
+		err = -ENOENT;
+		goto failure1;
+	}
+	K_DEBUG("allocated chrdev region, creating class");
+
+	// Returns &struct class pointer on success, or ERR_PTR() on error.
+	cdmx_devclass = class_create(THIS_MODULE, chrdev_name);
+	if (IS_ERR(cdmx_devclass))
+	{
+		K_ERR("failed to create class '%s'", chrdev_name);
+		err = -ENOENT;
+		goto failure2;
+	}
+	// handles chrdev CHMOD
+	K_DEBUG("created class, adding cdev");
+	cdmx_devclass->devnode = cdmx_devnode;
+
+
+	for (i=0; i< cdmx_port_count; i++)
+	{
+		cdev_init( &dmx_ports[i]->cdev, &cdmx_ops);
+		dmx_ports[i]->cdev.owner = THIS_MODULE;
+		//  A negative error code is returned on failure.
+		err = cdev_add (&dmx_ports[i]->cdev,
+				MKDEV(MAJOR(cdmx_device_id), (i+BASE_MINOR)), 1);
+
+		if (err < 0)
+		{
+			K_ERR("cdev_add failed");
+			for (c = i - 1; c >= 0; c--)
+			{
+				cdev_del(&dmx_ports[c]->cdev);
+			}
+			err = -ENOENT;
+			goto failure3;
+		}
+	}
+	K_DEBUG("cdev added, creating devices");
+
+//	cdmx_ports = kzalloc(cdmx_port_count * sizeof(struct cdmx_data), GFP_KERNEL);
+//	if (!cdmx_ports)
+//	{
+//		K_ERR("out of memory");
+//		err = -ENOMEM;
+//		goto failure4;
+//	}
+	for (i=0; i< cdmx_port_count; i++)
+	{
+		// Returns &struct device pointer on success, or ERR_PTR() on error.
+		dmx_ports[i]->fsdev = \
+			device_create(cdmx_devclass, NULL, \
+			MKDEV(MAJOR(cdmx_device_id), (i + BASE_MINOR)),
+			NULL, "cdmx%03X", (i + BASE_MINOR));
+
+		if (IS_ERR(dmx_ports[i]->fsdev))
+		{
+			K_ERR("failed create device");
+			for (c = i - 1; c >= 0; c--)
+				device_destroy(cdmx_devclass,
+						MKDEV(MAJOR(cdmx_device_id), (c + BASE_MINOR)));
+			err = -ENOENT;
+			goto failure4;
+		}
+
+	}
+
+	K_DEBUG("->>> done");
+	return 0;
+
+failure4:
+	for (i=0; i< cdmx_port_count; i++)
+		cdev_del(&dmx_ports[i]->cdev);
+failure3:
+	class_destroy(cdmx_devclass);
+failure2:
+	unregister_chrdev_region(MKDEV(MAJOR(cdmx_device_id), BASE_MINOR),
+			cdmx_port_count);
+failure1:
+	K_ERR( "->>> cleanup done");
+	return err;
+}
+
+static void cdmx_remove_cdevs (void)
+{
+	int i;
+	K_DEBUG("start");
+	for (i=0; i< cdmx_port_count; i++)
+	{
+		device_destroy(cdmx_devclass,
+				MKDEV(MAJOR(cdmx_device_id), (i + BASE_MINOR)));
+		cdev_del(&dmx_ports[i]->cdev);
+	}
+	class_destroy(cdmx_devclass);
+	unregister_chrdev_region(MKDEV(MAJOR(cdmx_device_id), BASE_MINOR),
+			cdmx_port_count);
+	K_DEBUG( "->>> done");
+}
+
+
 
 static int __init cdmx_init (void)
 {
@@ -360,7 +884,7 @@ failure1:
 	return err;
 }
 
-static void __exit cdmx_exit(void)
+static void  cdmx_exit(void)
 {
 	int i;
 	K_DEBUG("start");
@@ -375,487 +899,6 @@ static void __exit cdmx_exit(void)
 }
 
 
-
-
-// ----------------------------------------------------------------------------
-// ----------------------------------------------------------------------------
-// ----------------------------------------------------------------------------
-
-
-static struct file_operations cdmx_ops =
-{
-	.owner		= THIS_MODULE,
-	.read		= cdmx_read,
-	.write		= cdmx_write,
-	.open		= cdmx_open,
-	.release 	= cdmx_release
-};
-
-
-static char *cdmx_devnode(struct device *dev, umode_t *mode)
-{
-	if (!mode)
-		return NULL;
-	if ( MAJOR(dev->devt) == MAJOR(cdmx_device_id))
-		*mode = CHMOD_RW;
-	return NULL;
-}
-
-
-static int cdmx_open 	(struct inode *node, struct file *f)
-{
-	struct dmx_port *cdata;
-	cdata = container_of(node->i_cdev, struct dmx_port, cdev);
-	K_DEBUG("file %s, cdata %p dev_t %X", f->f_path.dentry->d_name.name, cdata, cdata->cdev.dev);
-
-	f->private_data = cdata;
-	try_module_get(THIS_MODULE);
-
-	K_DEBUG( "->>> done");
-	return 0;
-}
-
-static int cdmx_release (struct inode *node, struct file *f)
-{
-	struct dmx_port *cdata;
-	cdata = (struct dmx_port *) f->private_data;
-	K_DEBUG("file %s, cdata %p dev_t %X", f->f_path.dentry->d_name.name, cdata, cdata->cdev.dev);
-
-	module_put(THIS_MODULE);
-	return 0;
-}
-
-static ssize_t cdmx_read 	(struct file *f, char* dest, size_t len, loff_t * offset)
-{
-	struct dmx_port *cdata;
-	cdata = (struct dmx_port *) f->private_data;
-	K_DEBUG("file %s, cdata %p dev_t %X", f->f_path.dentry->d_name.name, cdata, cdata->cdev.dev);
-
-	/*
-	struct dmx_port *cdata = (struct dmx_port *) f->private_data;
-	ssize_t queue, result;
-
-	K_DEBUG("file %s", f->f_path.dentry->d_name.name);
-	mutex_lock(&cdata->read_mutex);
-	queue = cdata->read_from.size - cdata->read_from.head;
-	queue = MIN (queue, len);
-	if (queue < 1 )
-	{
-		K_DEBUG("empty queue");
-		mutex_unlock(&cdata->read_mutex);
-		return 0;
-	}
-	result = copy_to_user(dest, &cdata->read_from.data[cdata->read_from.head], queue);
-	cdata->read_from.head += result;
-	mutex_unlock(&cdata->read_mutex);
-
-	K_DEBUG( "returning size %d", result);
-	return result;
-*/	return -EIO;
-}
-void n_dmx_usbpro_msg (struct usb_frame *frame)
-{
-	K_DEBUG( "LABEL=%d, PAYLOAD=%d", \
-			frame->label, frame->datasize );
-}
-
-static ssize_t cdmx_write (struct file *f, const char* src, size_t len, loff_t * offset)
-{
-	struct dmx_port *cdata;
-	struct usb_frame *write_to;
-	ssize_t count, result;
-	uint8_t nextbyte = 0;
-
-	cdata = (struct dmx_port *) f->private_data;
-
-	K_DEBUG("file %s, cdata %p dev_t %X id %d", \
-			f->f_path.dentry->d_name.name, cdata, cdata->cdev.dev, cdata->id);
-	K_DEBUG( "%d bytes to process", len);
-
-	write_to = &cdata->write_to;
-	mutex_lock(&cdata->write_mutex);
-	mutex_lock(&cdata->read_mutex);
-
-	for (count=0; count<len; count++)
-	{
-		nextbyte = src[count];
-		switch (write_to->state)
-		{
-		case PRE_SOM:
-			if (nextbyte == DMX_USBPRO_MAGIC_START)
-			{
-				write_to->state = GOT_SOM;
-			//	write_to->stream = 1;
-			}
-		break;
-		case GOT_SOM:
-			write_to->label = nextbyte;
-			write_to->state = GOT_LABEL;
-		break;
-		case GOT_LABEL:
-			write_to->head = 0;
-			write_to->datasize = nextbyte;
-			write_to->state = GOT_DATA_LSB;
-		break;
-		case GOT_DATA_LSB:
-			write_to->datasize += (nextbyte << 8);
-			if (write_to->datasize == 0)
-				write_to->state = WAITING_FOR_EOM;
-			else
-				write_to->state = IN_DATA;
-
-			write_to->datasize = MIN(write_to->datasize, DMX_FRAME_MAX);
-			write_to->datasize = MAX(write_to->datasize, DMX_FRAME_MIN);
-		break;
-		case IN_DATA:
-			// handle frame shorter than expected
-			if (nextbyte == DMX_USBPRO_MAGIC_END)
-				{
-				write_to->state = PRE_SOM;
-				n_dmx_usbpro_msg(write_to);
-				}
-			write_to->data[write_to->head] = nextbyte;
-			write_to->head++;
-
-			//TODO
-			if (write_to->head == write_to->datasize)
-			{
-				write_to->state = WAITING_FOR_EOM;
-			}
-		break;
-		case WAITING_FOR_EOM:
-			if (nextbyte == DMX_USBPRO_MAGIC_END)
-				{
-				write_to->state = PRE_SOM;
-				n_dmx_usbpro_msg(write_to);
-				}
-		break;
-		}
-	}
-
-	mutex_unlock(&cdata->read_mutex);
-	mutex_unlock(&cdata->write_mutex);
-
-	//TODO
-	result = len;
-	K_DEBUG( "%d bytes processed", result);
-	return result;
-}
-// ----------------------------------------------------------------------------
-// ----------------------------------------------------------------------------
-// ----------------------------------------------------------------------------
-
-
-
-static int cdmx_create_cdevs (void)
-{
-	int i, c, err;
-	const char 	*chrdev_name 	= "cdmx";
-
-	K_DEBUG("start");
-	// Returns zero or a negative error code.
-	err = alloc_chrdev_region(&cdmx_device_id, BASE_MINOR, cdmx_port_count, chrdev_name);
-	if (err)
-	{
-		K_ERR("failed to allocate chrdev region for '%s'", chrdev_name);
-		err = -ENOENT;
-		goto failure1;
-	}
-	K_DEBUG("allocated chrdev region, creating class");
-
-	// Returns &struct class pointer on success, or ERR_PTR() on error.
-	cdmx_devclass = class_create(THIS_MODULE, chrdev_name);
-	if (IS_ERR(cdmx_devclass))
-	{
-		K_ERR("failed to create class '%s'", chrdev_name);
-		err = -ENOENT;
-		goto failure2;
-	}
-	// handles chrdev CHMOD
-	K_DEBUG("created class, adding cdev");
-	cdmx_devclass->devnode = cdmx_devnode;
-
-
-	for (i=0; i< cdmx_port_count; i++)
-	{
-		cdev_init( &dmx_ports[i]->cdev, &cdmx_ops);
-		dmx_ports[i]->cdev.owner = THIS_MODULE;
-		//  A negative error code is returned on failure.
-		err = cdev_add (&dmx_ports[i]->cdev, MKDEV(MAJOR(cdmx_device_id), (i+BASE_MINOR)), 1);
-
-		if (err < 0)
-		{
-			K_ERR("cdev_add failed");
-			for (c = i - 1; c >= 0; c--)
-			{
-				cdev_del(&dmx_ports[c]->cdev);
-			}
-			err = -ENOENT;
-			goto failure3;
-		}
-	}
-	K_DEBUG("cdev added, creating devices");
-
-//	cdmx_ports = kzalloc(cdmx_port_count * sizeof(struct cdmx_data), GFP_KERNEL);
-//	if (!cdmx_ports)
-//	{
-//		K_ERR("out of memory");
-//		err = -ENOMEM;
-//		goto failure4;
-//	}
-	for (i=0; i< cdmx_port_count; i++)
-	{
-		// Returns &struct device pointer on success, or ERR_PTR() on error.
-		dmx_ports[i]->fsdev = \
-			device_create(cdmx_devclass, NULL, \
-			MKDEV(MAJOR(cdmx_device_id), (i + BASE_MINOR)), NULL, "cdmx%03X", (i + BASE_MINOR));
-
-		if (IS_ERR(dmx_ports[i]->fsdev))
-		{
-			K_ERR("failed create device");
-			for (c = i - 1; c >= 0; c--)
-				device_destroy(cdmx_devclass, MKDEV(MAJOR(cdmx_device_id), (c + BASE_MINOR)));
-			err = -ENOENT;
-			goto failure4;
-		}
-
-	}
-
-	K_DEBUG("->>> done");
-	return 0;
-
-failure4:
-	for (i=0; i< cdmx_port_count; i++)
-		cdev_del(&dmx_ports[i]->cdev);
-failure3:
-	class_destroy(cdmx_devclass);
-failure2:
-	unregister_chrdev_region(MKDEV(MAJOR(cdmx_device_id), BASE_MINOR), cdmx_port_count);
-failure1:
-	K_ERR( "->>> cleanup done");
-	return err;
-}
-
-static void cdmx_remove_cdevs (void)
-{
-	int i;
-	K_DEBUG("start");
-	for (i=0; i< cdmx_port_count; i++)
-	{
-		device_destroy(cdmx_devclass, MKDEV(MAJOR(cdmx_device_id), (i + BASE_MINOR)));
-		cdev_del(&dmx_ports[i]->cdev);
-	}
-	class_destroy(cdmx_devclass);
-	unregister_chrdev_region(MKDEV(MAJOR(cdmx_device_id), BASE_MINOR), cdmx_port_count);
-	K_DEBUG( "->>> done");
-}
-
-
-
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-/*
-static int __init cdmx_init (void)
-{
-	int i, p, err=0;
-	struct attribute **ttyattr;
-
-	K_DEBUG( "CDMX init");
-	p = MAX(PORT_COUNT_MIN, cdmx_port_count);
-	p = MIN(PORT_COUNT_MAX, cdmx_port_count);
-	K_DEBUG( "CDMX init: port count = %d", p);
-	cdmx_port_count = p;
-
-	ttyattr = (struct attribute **) \
-			kzalloc( (cdmx_port_count+1) * sizeof(struct attribute *), GFP_KERNEL);
-	if (ttyattr == NULL)
-	{
-		K_ERR("CDMX init: %s: %d: out of memory", __FILE__, __LINE__);
-		err = -ENOMEM;
-		goto failure1;
-	}
-
-	cdmx_ports = (struct cdmx_data *) \
-			kzalloc( cdmx_port_count * sizeof(struct cdmx_data), GFP_KERNEL);
-	if (cdmx_ports == NULL)
-	{
-		K_ERR("CDMX init: %s: %d: out of memory", __FILE__, __LINE__);
-		err = -ENOMEM;
-		goto failure2;
-	}
-	for (i=0; i< cdmx_port_count; i++)
-	{
-		cdmx_ports[i].port_id = i;
-		snprintf(cdmx_ttyfile, sizeof(cdmx_ttytemplate), cdmx_ttytemplate, i);
-		cdmx_ports[i].tty.attr.name = kstrdup(cdmx_ttyfile, GFP_KERNEL);
-		cdmx_ports[i].tty.attr.mode = CHMOD_RW;
-		cdmx_ports[i].tty.file = kstrdup("", GFP_KERNEL);
-		ttyattr[i] = &(cdmx_ports[i].tty.attr);
-
-//		if ((cdmx_ports[i].tty.attr.name == NULL) ||
-//			(cdmx_ports[i].tty.file == NULL))
-//		{
-//			K_ERR("CDMX init: %s: %d: out of memory", __FILE__, __LINE__);
-//			err = -ENOMEM;
-//			goto failure6;
-//		}
-
-		mutex_init(&cdmx_ports[i].read_mutex);
-		mutex_init(&cdmx_ports[i].write_mutex);
-		ttyattr[i] = &cdmx_ports[i].tty.attr;
-	}
-	ttyattr[cdmx_port_count] = NULL;
-	ttykobj.default_attrs = ttyattr;
-
-	// Returns zero or a negative error code.
-	err = alloc_chrdev_region(&cdmx_device_id, BASE_MINOR, cdmx_port_count, cdmx_devname);
-	if (err)
-	{
-		K_ERR("CDMX init: %s: %d: failed alloc_chrdev_region", __FILE__, __LINE__);
-		err = -ENOENT;
-		goto failure3;
-	}
-
-	// Returns &struct class pointer on success, or ERR_PTR() on error.
-	cdmx_devclass = class_create(THIS_MODULE, cdmx_devname);
-	if (IS_ERR(cdmx_devclass))
-	{
-		K_ERR("CDMX init: %s: %d: failed class_create", __FILE__, __LINE__);
-		err = -ENOENT;
-		goto failure4;
-	}
-	cdmx_devclass->devnode = cdmx_devnode;
-
-//	cdev_init( &(cdmx_ports[0].cdev), &cdmx_ops);
-//	cdmx_ports[0].cdev.owner = THIS_MODULE;
-//
-//	//  A negative error code is returned on failure.
-//	err = cdev_add (&cdmx_ports[i].cdev, MKDEV(MAJOR(cdmx_device_id), BASE_MINOR), cdmx_port_count);
-//	if (err < 0)
-//	{
-//		K_ERR("CDMX init: %s: %d: failed cdev_add", __FILE__, __LINE__);
-//		goto failure5;
-//	}
-
-	for (i=0; i< cdmx_port_count; i++)
-	{
-		cdev_init( &(cdmx_ports[i].cdev), &cdmx_ops);
-		cdmx_ports[i].cdev.owner = THIS_MODULE;
-
-		err = cdev_add (&cdmx_ports[i].cdev, \
-				MKDEV(MAJOR(cdmx_device_id), i), 1);
-		if (err < 0)
-		{
-			K_ERR("CDMX init: %s: %d: failed cdev_add", __FILE__, __LINE__);
-			goto failure5;
-		}
-		cdmx_ports[i].cdev_valid = true;
-	}
-
-	for (i=0; i< cdmx_port_count; i++)
-	{
-		cdmx_ports[i].port_id = NOT_VALID;
-		// Returns &struct device pointer on success, or ERR_PTR() on error.
-		cdmx_ports[i].fsdev = \
-			device_create(cdmx_devclass, NULL, \
-			MKDEV(MAJOR(cdmx_device_id), i), NULL, cdmx_devtemplate, i);
-		if (IS_ERR(cdmx_ports[i].fsdev))
-		{
-			K_ERR("CDMX init: %s: %d: failed device_create", __FILE__, __LINE__);
-			err = -ENODEV;
-			goto failure6;
-		}
-
-	}
-
-
-
-	kobject_init(&kobj, &ttykobj);
-
-//	 * Return: If this function returns an error, kobject_put() must be
-//	 *         called to properly clean up the memory associated with the
-//	 *         object.  Under no instance should the kobject that is passed
-//	 *         to this function be directly freed with a call to kfree(),
-//	 *         that can leak memory.
-//	 *
-//	 *         If this function returns success, kobject_put() must also be called
-//	 *         in order to properly clean up the memory associated with the object.
-
-	err = kobject_add(&kobj, NULL, "%s", "cdmx_p");
-	if (err)
-	{
-		K_ERR("CDMX init: %s: %d: failed kobject_add", __FILE__, __LINE__);
-		goto failure7;
-	}
-
-	K_DEBUG( "CDMX init done");
-	return 0;
-
-	failure7:
-		kobject_put(&kobj);
-	failure6:
-		for (i = cdmx_port_count - 1; i > -1; i--)
-		{
-			if (cdmx_ports[i].tty.file != NULL) kfree(cdmx_ports[i].tty.file);
-			if (cdmx_ports[i].tty.attr.name != NULL) kfree(cdmx_ports[i].tty.attr.name);
-			if (!IS_ERR(cdmx_ports[i].fsdev))
-			{
-				device_destroy(cdmx_devclass, MKDEV(MAJOR(cdmx_device_id), i));
-			}
-		}
-	failure5:
-		for (i = cdmx_port_count - 1; i > -1; i--)
-		{
-			if (cdmx_ports[i].cdev_valid) cdev_del(&cdmx_ports[i].cdev);
-		}
-		class_destroy(cdmx_devclass);
-	failure4:
-		unregister_chrdev_region(MKDEV(MAJOR(cdmx_device_id), BASE_MINOR), cdmx_port_count);
-	failure3:
-		kfree(cdmx_ports);
-	failure2:
-		kfree(ttyattr);
-	failure1:
-	K_DEBUG( "CDMX init failed");
-		return err;
-
-}
-
-static void __exit cdmx_exit(void)
-{
-	int i;
-
-	K_DEBUG( "CDMX exit");
-	kobject_put(&kobj);
-	for (i = cdmx_port_count - 1; i > -1; i--)
-	{
-		if (cdmx_ports[i].tty.file != NULL) kfree(cdmx_ports[i].tty.file);
-		if (cdmx_ports[i].tty.attr.name != NULL) kfree(cdmx_ports[i].tty.attr.name);
-		if (!IS_ERR(cdmx_ports[i].fsdev))
-		{
-			device_destroy(cdmx_devclass, MKDEV(MAJOR(cdmx_device_id), i));
-		}
-	}
-	for (i = cdmx_port_count - 1; i > -1; i--)
-	{
-		if (cdmx_ports[i].cdev_valid) cdev_del(&cdmx_ports[i].cdev);
-	}
-	class_destroy(cdmx_devclass);
-	unregister_chrdev_region(MKDEV(MAJOR(cdmx_device_id), BASE_MINOR), cdmx_port_count);
-	kfree(cdmx_ports);
-//	kfree(ttykobj.default_attrs);
-	K_DEBUG( "CDMX exit done");
-}
-*/
 module_init(cdmx_init);
 module_exit(cdmx_exit);
 

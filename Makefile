@@ -25,6 +25,16 @@ in:
 inp:
 	sudo insmod $(MODNAME).ko cdmx_port_count=6
 
+jo:
+	sudo journalctl -ft kernel -o short-monotonic --no-hostname
+	
+
+	
+	
+	
+	
+	
+
 # /sys/devices/virtual/cdmx
 # /sys/class/cdmx
 # /sys/module/dmx_udev/parameters/port_count
