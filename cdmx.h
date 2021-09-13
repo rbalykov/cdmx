@@ -256,7 +256,7 @@ struct usb_frame
 	uint8_t msglabel;
 	uint16_t msgsize;
 	uint8_t flags;
-	uint8_t data[ENT_PAYLOAD_MAX];
+	uint8_t data[ENT_FRAME_MAX];
 	bool pending;
 
 	// reading raw stopped at this pointer

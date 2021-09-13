@@ -278,21 +278,32 @@ static int cdmx_release (struct inode *node, struct file *f)
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
 
+static void cdmx_enttec_mkframe(struct usb_frame *frame, uint8_t label, uint16_t size)
+{
+	frame->data[0] = ENT_SOM;
+	frame->data[1] = label;
+	frame->data[2] = size & 0x00FF;
+	frame->data[3] = (size >> 8) & 0x00FF;
+	frame->data[ENT_HEADER_SIZE + size] = ENT_EOM;
+
+	frame->msgsize = size + ENT_FRAME_OVERHEAD;
+	frame->rhead = 0;
+	frame->pending = true;
+}
+
 static void cdmx_enttec_getparams (struct dmx_port *port)
 {
 	struct usb_frame *frame = &port->read_from;
 
 	// supply timing info and firmware vervion
 	// ENT_FW_DMX, here we pretend to support just DMX, not RDM
-	frame->msgsize = ENT_PARAMS_MIN;
-	frame->data[0] = ENT_FW_LSB;
-	frame->data[1] = ENT_FW_DMX;
+	frame->data[4] = ENT_FW_LSB;
+	frame->data[5] = ENT_FW_DMX;
+	frame->data[6] = (port->breaktime * 1000) / ENT_TIMEUNIT_NS + 1;
+	frame->data[7] = (port->mabtime * 1000) / ENT_TIMEUNIT_NS + 1;
+	frame->data[8] = port->framerate;
 
-	frame->data[2] = (port->breaktime * 1000) / ENT_TIMEUNIT_NS + 1;
-	frame->data[3] = (port->mabtime * 1000) / ENT_TIMEUNIT_NS + 1;
-
-	frame->data[4] = port->framerate;
-	frame->pending = true;
+	cdmx_enttec_mkframe(frame, LABEL_GET_PARAMS, ENT_PARAMS_MIN);
 }
 
 static void cdmx_enttec_setparams (struct dmx_port *port)
@@ -323,31 +334,37 @@ static void cdmx_enttec_setparams (struct dmx_port *port)
 static void cdmx_enttec_getserial (struct dmx_port *port)
 {
 	struct usb_frame *frame = &port->read_from;
+	unsigned int size = sizeof(USBPRO_SERIAL);
 
-	// supply device serial number
-	frame->msgsize = ENT_SERIAL_SIZE;
-	memcpy(frame->data, USBPRO_SERIAL, ENT_SERIAL_SIZE);
-	frame->pending = true;
+	memcpy(&frame->data[ENT_HEADER_SIZE], USBPRO_SERIAL, size);
+	cdmx_enttec_mkframe(frame, LABEL_GET_SERIAL, size);
+
+	K_DEBUG("message %d bytes", frame->msgsize);
 }
+
 
 static void cdmx_enttec_getvendor (struct dmx_port *port)
 {
 	struct usb_frame *frame = &port->read_from;
+	unsigned int size = sizeof(USBPRO_VENDOR);
 
 	// supply vendor name and ESTA codes
-	frame->msgsize = MIN (ENT_NAME_MAX, sizeof(USBPRO_VENDOR));
-	memcpy(frame->data, USBPRO_VENDOR, frame->msgsize);
-	frame->pending = true;
+	memcpy(&frame->data[ENT_HEADER_SIZE], USBPRO_VENDOR, size);
+	cdmx_enttec_mkframe(frame, LABEL_VENDOR, size);
+
+	K_DEBUG("message %d bytes", frame->msgsize);
 }
 
 static void cdmx_enttec_getname (struct dmx_port *port)
 {
 	struct usb_frame *frame = &port->read_from;
+	unsigned int size = sizeof(USBPRO_NAME);
 
 	// supply device name and ESTA codes
-	frame->msgsize = MIN (ENT_NAME_MAX, sizeof(USBPRO_NAME));
-	memcpy(frame->data, USBPRO_NAME, frame->msgsize);
-	frame->pending = true;
+	memcpy(&frame->data[ENT_HEADER_SIZE], USBPRO_NAME, size);
+	cdmx_enttec_mkframe(frame, LABEL_NAME, size);
+
+	K_DEBUG("message %d bytes", frame->msgsize);
 }
 
 static void cdmx_enttec_flash (struct dmx_port *port)
@@ -355,9 +372,10 @@ static void cdmx_enttec_flash (struct dmx_port *port)
 	struct usb_frame *frame = &port->read_from;
 
 	// report failed firmware flashing
-	frame->msgsize = ENT_FLASH_REPLY;
-	memcpy(frame->data, ENT_FLASH_FALSE, ENT_FLASH_REPLY);
-	frame->pending = true;
+	memcpy(&frame->data[ENT_HEADER_SIZE], ENT_FLASH_FALSE, ENT_FLASH_REPLY);
+	cdmx_enttec_mkframe(frame, LABEL_NAME, ENT_FLASH_REPLY);
+
+	K_DEBUG("message %d bytes", frame->msgsize);
 }
 
 
@@ -520,12 +538,13 @@ static int cdmx_bytes_to_read(struct dmx_port *cdata)
 	struct usb_frame *frame = &cdata->read_from;
 	if (!frame->pending)
 		return 0;
-	return ENT_FRAME_OVERHEAD + frame->msgsize - frame->rhead;
+	return frame->msgsize - frame->rhead;
 }
 
 static ssize_t cdmx_write (struct file *f, const char* src,
 		size_t len, loff_t * offset)
 {
+	//TODO: rewrite using epoll()
 	struct dmx_port *cdata = f->private_data;
 	struct usb_frame *write_to = &cdata->write_to;
 	ssize_t result, size;
@@ -561,8 +580,8 @@ static ssize_t cdmx_write (struct file *f, const char* src,
 
 	out:
 	mutex_unlock(&cdata->lock);
-	K_DEBUG("->>> done file %s, id %d, result %d", \
-			f->f_path.dentry->d_name.name, cdata->id, result);
+	K_DEBUG("->>> port %d, bytes written %d", \
+			 cdata->id, result);
 	return result;
 }
 
@@ -572,11 +591,9 @@ static ssize_t cdmx_read 	(struct file *f, char* dest,
 {
 	struct dmx_port *cdata = (struct dmx_port *) f->private_data;
 	struct usb_frame *frame = &cdata->read_from;
-	ssize_t result = 0, headsize, size;
-	uint8_t header[ENT_HEADER_SIZE] = {0}, footer = ENT_EOM;
+	ssize_t result = 0, size = 0;
 
-	K_DEBUG("port %d", cdata->id);
-
+	K_DEBUG("port %d, max %d bytes to read", cdata->id, len);
 	if (mutex_lock_interruptible(&cdata->lock))
 		return -ERESTARTSYS;
 
@@ -590,61 +607,26 @@ static ssize_t cdmx_read 	(struct file *f, char* dest,
 	if (!frame->pending)
 		goto out;
 
-	K_DEBUG("size %d, lsb %d, msb %d", frame->msgsize, ((frame->msgsize) && 0x00FF), (frame->msgsize >> 8) );
-	headsize = ENT_HEADER_SIZE;
-	header[0] = ENT_SOM;
-	header[1] = frame->msglabel;
-	header[2] = (uint8_t) ((frame->msgsize) & 0x00FF);		// LSB
-	header[3] = (uint8_t) (frame->msgsize >> 8);// MSB
+	size = frame->msgsize - frame->rhead;
+	K_DEBUG("message %d bytes, %d done", frame->msgsize, frame->rhead);
+	size = MIN(size, len);
 
-//	TODO: DMX RX should put 'flags' byte and increment msgzise ON ITS OWN
-//
-//	if (frame->msglabel == LABEL_RECEIVED_DMX)
-//	{
-//		header[4] = frame->flags;
-//		headsize = ENT_HEADER_DMX;
-//	}
+	if (copy_to_user(dest, &frame->data[frame->rhead], size))
+		goto out;
 
-	size = MIN(len, (headsize - frame->rhead));
-	if(size > 0)
+	frame->rhead += size;
+	if (frame->rhead == frame->msgsize)
 	{
-		K_DEBUG("header %d byte(s)", size);
-		if (copy_to_user(dest, &header[frame->rhead], size))
-			goto out;
-		dest += size;
-		len -= size;
-		result += size;
-		frame->rhead += size;
-	}
-
-	size = MIN (len, frame->msgsize);
-	if (size > 0)
-	{
-		K_DEBUG("body %d byte(s)", size);
-		if (copy_to_user(dest, &frame->data, size))
-			goto out;
-		dest += size;
-		len -= size;
-		result += size;
-		frame->rhead += size;
-	}
-
-	if (len >= 0)
-	{
-		K_DEBUG("footer %d byte(s)", ENT_FOOTER_SIZE);
-		if (copy_to_user(dest, &footer, ENT_FOOTER_SIZE))
-			goto out;
-		result += ENT_FOOTER_SIZE;
-		frame->rhead = 0;
+		K_DEBUG("unpending");
 		frame->pending = false;
 	}
-
+	result = size;
 
 	out:
 	mutex_unlock(&cdata->lock);
 
-	K_DEBUG( "->>> %d bytes total read", result);
-	return result;
+	K_DEBUG( "->>> port %d, done read: %d, head: %d", cdata->id, size, frame->rhead);
+	return size;
 
 }
 
@@ -652,17 +634,20 @@ __poll_t cdmx_poll (struct file *f, struct poll_table_struct *p)
 {
 	struct dmx_port *cdata = (struct dmx_port *) f->private_data;
 	__poll_t mask = 0;
+	int r, w;
 
-	K_DEBUG("port %d", cdata->id);
 	mutex_lock(&cdata->lock);
 
-	if (cdata->read_from.pending)
-		mask |= (EPOLLIN | EPOLLRDNORM | EPOLLPRI | EPOLLRDBAND);
+	r = cdmx_bytes_to_read(cdata);
+	if (r > 0)
+		mask |= (EPOLLIN | EPOLLRDNORM | EPOLLPRI );
 
-	if( cdmx_space_left(cdata) > 0)
+	w = cdmx_space_left(cdata);
+	if( w > 0)
 		mask |= EPOLLOUT | EPOLLWRNORM;
 
 	mutex_unlock(&cdata->lock);
+	K_DEBUG("port %d, to read: %d, to write: %d", cdata->id, r, w);
 	return mask;
 }
 
@@ -679,19 +664,30 @@ long cdmx_ioctl (struct file *f, unsigned int cmd, unsigned long arg)
 	{
 	case TIOCEXCL:
 		set_bit(CDMX_EXCLUSIVE, &cdata->flags);
+		K_DEBUG("set exclusive");
 		return 0;
 	case TIOCNXCL:
+		K_DEBUG("cleared exclusive");
 		clear_bit(CDMX_EXCLUSIVE, &cdata->flags);
 		return 0;
 	case 0x5440: //TIOCGEXCL:
 		i =  test_bit(CDMX_EXCLUSIVE, &cdata->flags);
+		K_DEBUG("is exclusive: %d", i);
 		return put_user(i, (int __user *)p);
 	case TIOCINQ:
 		i = cdmx_bytes_to_read(cdata);
+		K_DEBUG("bytes to read: %d", i);
 		return put_user(i, (int __user *)p);
 	case TIOCOUTQ:
 		i = cdata->write_to.rawsize;
+		K_DEBUG("bytes queued: %d", i);
 		return put_user(i, (int __user *)p);
+	case TCGETS:
+		K_DEBUG("TCGETS, doing nothing");
+		return 0;
+	case TCSETS:
+		K_DEBUG("TCSETS, doing nothing");
+		return 0;
 	default:
 		return -EINVAL;
 	}
@@ -699,7 +695,7 @@ long cdmx_ioctl (struct file *f, unsigned int cmd, unsigned long arg)
 
 long cdmx_compat_ioctl (struct file *f, unsigned int cmd, unsigned long p)
 {
-	K_DEBUG("COMPAT cmd 0x%X, param 0x%lX", cmd, p);
+	K_DEBUG("cmd 0x%X, param 0x%lX", cmd, p);
 	return 0;
 }
 int cdmx_lock (struct file *f, int i, struct file_lock *lock)
