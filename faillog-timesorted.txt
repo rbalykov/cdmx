@@ -1,0 +1,1297 @@
+                                              sclk_epll = 45158401, sclk_vpll = 350000000, arm_clk = 1000000000
+-- Logs begin at Wed 2021-03-17 21:36:11 UTC, end at Mon 2021-09-13 07:48:05 UTC. --
+Sep 13 07:33:16.334329 odroid kernel: Booting Linux on physical CPU 0xa00
+Sep 13 07:33:16.334875 odroid kernel: Linux version 5.10.41 (odroid@odroid) (gcc (Ubuntu 9.3.0-17ubuntu1~20.04) 9.3.0, GNU ld (GNU Binutils for Ubuntu) 2.34) #1 SMP PREEMPT Tue Jun 1 12:53:03 UTC 2021
+Sep 13 07:33:16.335139 odroid kernel: CPU: ARMv7 Processor [413fc090] revision 0 (ARMv7), cr=10c5387d
+Sep 13 07:33:16.335315 odroid kernel: CPU: PIPT / VIPT nonaliasing data cache, VIPT aliasing instruction cache
+Sep 13 07:33:16.335472 odroid kernel: OF: fdt: Machine model: Hardkernel ODROID-U3 board based on Exynos4412
+Sep 13 07:33:16.335636 odroid kernel: Memory policy: Data cache writealloc
+Sep 13 07:33:16.335851 odroid kernel: Reserved memory: created DMA memory pool at 0xbf700000, size 8 MiB
+Sep 13 07:33:16.336043 odroid kernel: OF: reserved mem: initialized node region_mfc_right, compatible id shared-dma-pool
+Sep 13 07:33:16.336194 odroid kernel: Reserved memory: created DMA memory pool at 0xbd300000, size 36 MiB
+Sep 13 07:33:16.336344 odroid kernel: OF: reserved mem: initialized node region_mfc_left, compatible id shared-dma-pool
+Sep 13 07:33:16.336492 odroid kernel: cma: Reserved 96 MiB at 0xb7000000
+Sep 13 07:33:16.336640 odroid kernel: Samsung CPU ID: 0xe4412220
+Sep 13 07:33:16.336788 odroid kernel: Zone ranges:
+Sep 13 07:33:16.336945 odroid kernel:   Normal   [mem 0x0000000040000000-0x000000006fffffff]
+Sep 13 07:33:16.337188 odroid kernel:   HighMem  [mem 0x0000000070000000-0x00000000bd2fffff]
+Sep 13 07:33:16.337348 odroid kernel: Movable zone start for each node
+Sep 13 07:33:16.337497 odroid kernel: Early memory node ranges
+Sep 13 07:33:16.337657 odroid kernel:   node   0: [mem 0x0000000040000000-0x00000000bd2fffff]
+Sep 13 07:33:16.337807 odroid kernel: Initmem setup node 0 [mem 0x0000000040000000-0x00000000bd2fffff]
+Sep 13 07:33:16.337956 odroid kernel: On node 0 totalpages: 512768
+Sep 13 07:33:16.338117 odroid kernel:   Normal zone: 1536 pages used for memmap
+Sep 13 07:33:16.338276 odroid kernel:   Normal zone: 0 pages reserved
+Sep 13 07:33:16.338426 odroid kernel:   Normal zone: 196608 pages, LIFO batch:63
+Sep 13 07:33:16.338575 odroid kernel:   HighMem zone: 316160 pages, LIFO batch:63
+Sep 13 07:33:16.338723 odroid kernel: Running under secure firmware.
+Sep 13 07:33:16.338900 odroid kernel: percpu: Embedded 20 pages/cpu s52076 r8192 d21652 u81920
+Sep 13 07:33:16.339052 odroid kernel: pcpu-alloc: s52076 r8192 d21652 u81920 alloc=20*4096
+Sep 13 07:33:16.339212 odroid kernel: pcpu-alloc: [0] 0 [0] 1 [0] 2 [0] 3 
+Sep 13 07:33:16.339361 odroid kernel: Built 1 zonelists, mobility grouping on.  Total pages: 511232
+Sep 13 07:33:16.339513 odroid kernel: Kernel command line: console=tty1 console=ttySAC1,115200n8 root=UUID=566eb0b4-668c-4f9f-86e4-e620ba006fba rootwait ro mem=2047M vout=dvi 
+Sep 13 07:33:16.339674 odroid kernel: Dentry cache hash table entries: 131072 (order: 7, 524288 bytes, linear)
+Sep 13 07:33:16.339823 odroid kernel: Inode-cache hash table entries: 65536 (order: 6, 262144 bytes, linear)
+Sep 13 07:33:16.339974 odroid kernel: mem auto-init: stack:off, heap alloc:off, heap free:off
+Sep 13 07:33:16.340125 odroid kernel: Memory: 1900852K/2051072K available (12288K kernel code, 1508K rwdata, 4236K rodata, 1024K init, 6553K bss, 51916K reserved, 98304K cma-reserved, 1166336K highmem)
+Sep 13 07:33:16.340276 odroid kernel: SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=4, Nodes=1
+Sep 13 07:33:16.340425 odroid kernel: Running RCU self tests
+Sep 13 07:33:16.340602 odroid kernel: rcu: Preemptible hierarchical RCU implementation.
+Sep 13 07:33:16.340755 odroid kernel: rcu:         RCU event tracing is enabled.
+Sep 13 07:33:16.340912 odroid kernel: rcu:         RCU lockdep checking is enabled.
+Sep 13 07:33:16.341072 odroid kernel: rcu:         RCU restricting CPUs from NR_CPUS=8 to nr_cpu_ids=4.
+Sep 13 07:33:16.341317 odroid kernel:         Trampoline variant of Tasks RCU enabled.
+Sep 13 07:33:16.341470 odroid kernel: rcu: RCU calculated value of scheduler-enlistment delay is 10 jiffies.
+Sep 13 07:33:16.341620 odroid kernel: rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=4
+Sep 13 07:33:16.341855 odroid kernel: NR_IRQS: 16, nr_irqs: 16, preallocated irqs: 16
+Sep 13 07:33:16.342024 odroid kernel: L2C: platform modifies aux control register: 0x02070000 -> 0x3a470000
+Sep 13 07:33:16.342227 odroid kernel: L2C: DT/platform modifies aux control register: 0x02070000 -> 0x3a470000
+Sep 13 07:33:16.342390 odroid kernel: L2C-310 enabling early BRESP for Cortex-A9
+Sep 13 07:33:16.342541 odroid kernel: L2C-310 ID prefetch enabled, offset 8 lines
+Sep 13 07:33:16.342692 odroid kernel: L2C-310 dynamic clock gating enabled, standby mode enabled
+Sep 13 07:33:16.342844 odroid kernel: L2C-310 cache controller enabled, 16 ways, 1024 kB
+Sep 13 07:33:16.342995 odroid kernel: L2C-310: CACHE_ID 0x4100c4c8, AUX_CTRL 0x7e470000
+Sep 13 07:33:16.343157 odroid kernel: random: get_random_bytes called from start_kernel+0x3b4/0x574 with crng_init=0
+Sep 13 07:33:16.343311 odroid kernel: Exynos4x12 clocks: sclk_apll = 1000000000, sclk_mpll = 800000000
+Sep 13 07:33:16.343463 odroid kernel: Switching to timer-based delay loop, resolution 41ns
+Sep 13 07:33:16.343615 odroid kernel: clocksource: mct-frc: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 79635851949 ns
+Sep 13 07:33:16.343796 odroid kernel: sched_clock: 32 bits at 24MHz, resolution 41ns, wraps every 89478484971ns
+Sep 13 07:33:16.343958 odroid kernel: Console: colour dummy device 80x30
+Sep 13 07:33:16.344120 odroid kernel: printk: console [tty1] enabled
+Sep 13 07:33:16.344282 odroid kernel: Lock dependency validator: Copyright (c) 2006 Red Hat, Inc., Ingo Molnar
+Sep 13 07:33:16.344454 odroid kernel: ... MAX_LOCKDEP_SUBCLASSES:  8
+Sep 13 07:33:16.344615 odroid kernel: ... MAX_LOCK_DEPTH:          48
+Sep 13 07:33:16.344776 odroid kernel: ... MAX_LOCKDEP_KEYS:        8192
+Sep 13 07:33:16.344947 odroid kernel: ... CLASSHASH_SIZE:          4096
+Sep 13 07:33:16.345108 odroid kernel: ... MAX_LOCKDEP_ENTRIES:     32768
+Sep 13 07:33:16.345296 odroid kernel: ... MAX_LOCKDEP_CHAINS:      65536
+Sep 13 07:33:16.345459 odroid kernel: ... CHAINHASH_SIZE:          32768
+Sep 13 07:33:16.345621 odroid kernel:  memory used by lock dependency info: 4061 kB
+Sep 13 07:33:16.345782 odroid kernel:  memory used for stack traces: 2112 kB
+Sep 13 07:33:16.345942 odroid kernel:  per task-struct memory footprint: 1536 bytes
+Sep 13 07:33:16.346105 odroid kernel: Calibrating delay loop (skipped), value calculated using timer frequency.. 48.00 BogoMIPS (lpj=240000)
+Sep 13 07:33:16.346267 odroid kernel: pid_max: default: 32768 minimum: 301
+Sep 13 07:33:16.346430 odroid kernel: Mount-cache hash table entries: 2048 (order: 1, 8192 bytes, linear)
+Sep 13 07:33:16.346592 odroid kernel: Mountpoint-cache hash table entries: 2048 (order: 1, 8192 bytes, linear)
+Sep 13 07:33:16.346753 odroid kernel: CPU: Testing write buffer coherency: ok
+Sep 13 07:33:16.346944 odroid kernel: CPU0: Spectre v2: using BPIALL workaround
+Sep 13 07:33:16.347107 odroid kernel: CPU0: thread -1, cpu 0, socket 10, mpidr 80000a00
+Sep 13 07:33:16.347269 odroid kernel: Setting up static identity map for 0x40100000 - 0x40100060
+Sep 13 07:33:16.347431 odroid kernel: rcu: Hierarchical SRCU implementation.
+Sep 13 07:33:16.347593 odroid kernel: soc soc0: Exynos: CPU[EXYNOS4412] PRO_ID[0xe4412220] REV[0x20] Detected
+Sep 13 07:33:16.347756 odroid kernel: smp: Bringing up secondary CPUs ...
+Sep 13 07:33:16.347925 odroid kernel: CPU1: thread -1, cpu 1, socket 10, mpidr 80000a01
+Sep 13 07:33:16.348087 odroid kernel: CPU1: Spectre v2: using BPIALL workaround
+Sep 13 07:33:16.348248 odroid kernel: CPU2: thread -1, cpu 2, socket 10, mpidr 80000a02
+Sep 13 07:33:16.348437 odroid kernel: CPU2: Spectre v2: using BPIALL workaround
+Sep 13 07:33:16.348601 odroid kernel: CPU3: thread -1, cpu 3, socket 10, mpidr 80000a03
+Sep 13 07:33:16.348764 odroid kernel: CPU3: Spectre v2: using BPIALL workaround
+Sep 13 07:33:16.348925 odroid kernel: smp: Brought up 1 node, 4 CPUs
+Sep 13 07:33:16.349086 odroid kernel: SMP: Total of 4 processors activated (192.00 BogoMIPS).
+Sep 13 07:33:16.349248 odroid kernel: CPU: All CPU(s) started in SVC mode.
+Sep 13 07:33:16.349409 odroid kernel: devtmpfs: initialized
+Sep 13 07:33:16.349571 odroid kernel: VFP support v0.3: implementor 41 architecture 3 part 30 variant 9 rev 4
+Sep 13 07:33:16.349734 odroid kernel: clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 19112604462750000 ns
+Sep 13 07:33:16.349895 odroid kernel: futex hash table entries: 1024 (order: 4, 65536 bytes, linear)
+Sep 13 07:33:16.350085 odroid kernel: pinctrl core: initialized pinctrl subsystem
+Sep 13 07:33:16.350248 odroid kernel: /soc/power-domain@10023c80 has as child subdomain: /soc/power-domain@10023c20.
+Sep 13 07:33:16.350410 odroid kernel: NET: Registered protocol family 16
+Sep 13 07:33:16.350572 odroid kernel: DMA: preallocated 256 KiB pool for atomic coherent allocations
+Sep 13 07:33:16.350734 odroid kernel: thermal_sys: Registered thermal governor 'step_wise'
+Sep 13 07:33:16.350896 odroid kernel: cpuidle: using governor menu
+Sep 13 07:33:16.351059 odroid kernel: hw-breakpoint: found 5 (+1 reserved) breakpoint and 1 watchpoint registers.
+Sep 13 07:33:16.351220 odroid kernel: hw-breakpoint: maximum watchpoint size is 4 bytes.
+Sep 13 07:33:16.351391 odroid kernel: genirq: irq_chip COMBINER did not update eff. affinity mask of irq 92
+Sep 13 07:33:16.353707 odroid kernel: gpio gpiochip0: (gpa0): added GPIO chardev (254:0)
+Sep 13 07:33:16.355498 odroid kernel: gpio gpiochip0: registered GPIOs 0 to 7 on gpa0
+Sep 13 07:33:16.357637 odroid kernel: gpio gpiochip1: (gpa1): added GPIO chardev (254:1)
+Sep 13 07:33:16.359702 odroid kernel: gpio gpiochip1: registered GPIOs 8 to 13 on gpa1
+Sep 13 07:33:16.361729 odroid kernel: gpio gpiochip2: (gpb): added GPIO chardev (254:2)
+Sep 13 07:33:16.363523 odroid kernel: gpio gpiochip2: registered GPIOs 14 to 21 on gpb
+Sep 13 07:33:16.365567 odroid kernel: gpio gpiochip3: (gpc0): added GPIO chardev (254:3)
+Sep 13 07:33:16.367608 odroid kernel: gpio gpiochip3: registered GPIOs 22 to 26 on gpc0
+Sep 13 07:33:16.369516 odroid kernel: gpio gpiochip4: (gpc1): added GPIO chardev (254:4)
+Sep 13 07:33:16.371334 odroid kernel: gpio gpiochip4: registered GPIOs 27 to 31 on gpc1
+Sep 13 07:33:16.373886 odroid kernel: gpio gpiochip5: (gpd0): added GPIO chardev (254:5)
+Sep 13 07:33:16.375758 odroid kernel: gpio gpiochip5: registered GPIOs 32 to 35 on gpd0
+Sep 13 07:33:16.377767 odroid kernel: gpio gpiochip6: (gpd1): added GPIO chardev (254:6)
+Sep 13 07:33:16.379619 odroid kernel: gpio gpiochip6: registered GPIOs 36 to 39 on gpd1
+Sep 13 07:33:16.381648 odroid kernel: gpio gpiochip7: (gpf0): added GPIO chardev (254:7)
+Sep 13 07:33:16.383489 odroid kernel: gpio gpiochip7: registered GPIOs 40 to 47 on gpf0
+Sep 13 07:33:16.385308 odroid kernel: gpio gpiochip8: (gpf1): added GPIO chardev (254:8)
+Sep 13 07:33:16.386956 odroid kernel: gpio gpiochip8: registered GPIOs 48 to 55 on gpf1
+Sep 13 07:33:16.389450 odroid kernel: gpio gpiochip9: (gpf2): added GPIO chardev (254:9)
+Sep 13 07:33:16.391715 odroid kernel: gpio gpiochip9: registered GPIOs 56 to 63 on gpf2
+Sep 13 07:33:16.393774 odroid kernel: gpio gpiochip10: (gpf3): added GPIO chardev (254:10)
+Sep 13 07:33:16.395404 odroid kernel: gpio gpiochip10: registered GPIOs 64 to 69 on gpf3
+Sep 13 07:33:16.397030 odroid kernel: gpio gpiochip11: (gpj0): added GPIO chardev (254:11)
+Sep 13 07:33:16.398603 odroid kernel: gpio gpiochip11: registered GPIOs 70 to 77 on gpj0
+Sep 13 07:33:16.400215 odroid kernel: gpio gpiochip12: (gpj1): added GPIO chardev (254:12)
+Sep 13 07:33:16.402198 odroid kernel: gpio gpiochip12: registered GPIOs 78 to 82 on gpj1
+Sep 13 07:33:16.403879 odroid kernel: gpio gpiochip13: (gpk0): added GPIO chardev (254:13)
+Sep 13 07:33:16.405454 odroid kernel: gpio gpiochip13: registered GPIOs 83 to 89 on gpk0
+Sep 13 07:33:16.407063 odroid kernel: gpio gpiochip14: (gpk1): added GPIO chardev (254:14)
+Sep 13 07:33:16.408639 odroid kernel: gpio gpiochip14: registered GPIOs 90 to 96 on gpk1
+Sep 13 07:33:16.410247 odroid kernel: gpio gpiochip15: (gpk2): added GPIO chardev (254:15)
+Sep 13 07:33:16.412041 odroid kernel: gpio gpiochip15: registered GPIOs 97 to 103 on gpk2
+Sep 13 07:33:16.414412 odroid kernel: gpio gpiochip16: (gpk3): added GPIO chardev (254:16)
+Sep 13 07:33:16.416375 odroid kernel: gpio gpiochip16: registered GPIOs 104 to 110 on gpk3
+Sep 13 07:33:16.418519 odroid kernel: gpio gpiochip17: (gpl0): added GPIO chardev (254:17)
+Sep 13 07:33:16.420535 odroid kernel: gpio gpiochip17: registered GPIOs 111 to 117 on gpl0
+Sep 13 07:33:16.422661 odroid kernel: gpio gpiochip18: (gpl1): added GPIO chardev (254:18)
+Sep 13 07:33:16.424504 odroid kernel: gpio gpiochip18: registered GPIOs 118 to 119 on gpl1
+Sep 13 07:33:16.426397 odroid kernel: gpio gpiochip19: (gpl2): added GPIO chardev (254:19)
+Sep 13 07:33:16.428186 odroid kernel: gpio gpiochip19: registered GPIOs 120 to 127 on gpl2
+Sep 13 07:33:16.430037 odroid kernel: gpio gpiochip20: (gpm0): added GPIO chardev (254:20)
+Sep 13 07:33:16.431967 odroid kernel: gpio gpiochip20: registered GPIOs 128 to 135 on gpm0
+Sep 13 07:33:16.433913 odroid kernel: gpio gpiochip21: (gpm1): added GPIO chardev (254:21)
+Sep 13 07:33:16.435638 odroid kernel: gpio gpiochip21: registered GPIOs 136 to 142 on gpm1
+Sep 13 07:33:16.437637 odroid kernel: gpio gpiochip22: (gpm2): added GPIO chardev (254:22)
+Sep 13 07:33:16.440129 odroid kernel: gpio gpiochip22: registered GPIOs 143 to 147 on gpm2
+Sep 13 07:33:16.442306 odroid kernel: gpio gpiochip23: (gpm3): added GPIO chardev (254:23)
+Sep 13 07:33:16.444341 odroid kernel: gpio gpiochip23: registered GPIOs 148 to 155 on gpm3
+Sep 13 07:33:16.446347 odroid kernel: gpio gpiochip24: (gpm4): added GPIO chardev (254:24)
+Sep 13 07:33:16.448590 odroid kernel: gpio gpiochip24: registered GPIOs 156 to 163 on gpm4
+Sep 13 07:33:16.450591 odroid kernel: gpio gpiochip25: (gpy0): added GPIO chardev (254:25)
+Sep 13 07:33:16.452752 odroid kernel: gpio gpiochip25: registered GPIOs 164 to 169 on gpy0
+Sep 13 07:33:16.454785 odroid kernel: gpio gpiochip26: (gpy1): added GPIO chardev (254:26)
+Sep 13 07:33:16.456527 odroid kernel: gpio gpiochip26: registered GPIOs 170 to 173 on gpy1
+Sep 13 07:33:16.458673 odroid kernel: gpio gpiochip27: (gpy2): added GPIO chardev (254:27)
+Sep 13 07:33:16.460794 odroid kernel: gpio gpiochip27: registered GPIOs 174 to 179 on gpy2
+Sep 13 07:33:16.462803 odroid kernel: gpio gpiochip28: (gpy3): added GPIO chardev (254:28)
+Sep 13 07:33:16.464945 odroid kernel: gpio gpiochip28: registered GPIOs 180 to 187 on gpy3
+Sep 13 07:33:16.467009 odroid kernel: gpio gpiochip29: (gpy4): added GPIO chardev (254:29)
+Sep 13 07:33:16.468762 odroid kernel: gpio gpiochip29: registered GPIOs 188 to 195 on gpy4
+Sep 13 07:33:16.470478 odroid kernel: gpio gpiochip30: (gpy5): added GPIO chardev (254:30)
+Sep 13 07:33:16.472587 odroid kernel: gpio gpiochip30: registered GPIOs 196 to 203 on gpy5
+Sep 13 07:33:16.474545 odroid kernel: gpio gpiochip31: (gpy6): added GPIO chardev (254:31)
+Sep 13 07:33:16.476364 odroid kernel: gpio gpiochip31: registered GPIOs 204 to 211 on gpy6
+Sep 13 07:33:16.478287 odroid kernel: gpio gpiochip32: (gpx0): added GPIO chardev (254:32)
+Sep 13 07:33:16.480135 odroid kernel: gpio gpiochip32: registered GPIOs 212 to 219 on gpx0
+Sep 13 07:33:16.482211 odroid kernel: gpio gpiochip33: (gpx1): added GPIO chardev (254:33)
+Sep 13 07:33:16.483907 odroid kernel: gpio gpiochip33: registered GPIOs 220 to 227 on gpx1
+Sep 13 07:33:16.485763 odroid kernel: gpio gpiochip34: (gpx2): added GPIO chardev (254:34)
+Sep 13 07:33:16.487730 odroid kernel: gpio gpiochip34: registered GPIOs 228 to 235 on gpx2
+Sep 13 07:33:16.490013 odroid kernel: gpio gpiochip35: (gpx3): added GPIO chardev (254:35)
+Sep 13 07:33:16.492012 odroid kernel: gpio gpiochip35: registered GPIOs 236 to 243 on gpx3
+Sep 13 07:33:16.494538 odroid kernel: gpio gpiochip36: (gpz): added GPIO chardev (254:36)
+Sep 13 07:33:16.496478 odroid kernel: gpio gpiochip36: registered GPIOs 244 to 250 on gpz
+Sep 13 07:33:16.498667 odroid kernel: gpio gpiochip37: (gpv0): added GPIO chardev (254:37)
+Sep 13 07:33:16.500560 odroid kernel: gpio gpiochip37: registered GPIOs 251 to 258 on gpv0
+Sep 13 07:33:16.502825 odroid kernel: gpio gpiochip38: (gpv1): added GPIO chardev (254:38)
+Sep 13 07:33:16.504890 odroid kernel: gpio gpiochip38: registered GPIOs 259 to 266 on gpv1
+Sep 13 07:33:16.506916 odroid kernel: gpio gpiochip39: (gpv2): added GPIO chardev (254:39)
+Sep 13 07:33:16.508851 odroid kernel: gpio gpiochip39: registered GPIOs 267 to 274 on gpv2
+Sep 13 07:33:16.510760 odroid kernel: gpio gpiochip40: (gpv3): added GPIO chardev (254:40)
+Sep 13 07:33:16.514346 odroid kernel: gpio gpiochip40: registered GPIOs 275 to 282 on gpv3
+Sep 13 07:33:16.516331 odroid kernel: gpio gpiochip41: (gpv4): added GPIO chardev (254:41)
+Sep 13 07:33:16.518308 odroid kernel: gpio gpiochip41: registered GPIOs 283 to 284 on gpv4
+Sep 13 07:33:16.518608 odroid kernel: iommu: Default domain type: Translated 
+Sep 13 07:33:16.518836 odroid kernel: SCSI subsystem initialized
+Sep 13 07:33:16.519035 odroid kernel: libata version 3.00 loaded.
+Sep 13 07:33:16.519281 odroid kernel: usbcore: registered new interface driver usbfs
+Sep 13 07:33:16.519488 odroid kernel: usbcore: registered new interface driver hub
+Sep 13 07:33:16.519681 odroid kernel: usbcore: registered new device driver usb
+Sep 13 07:33:16.522249 odroid kernel: s3c-i2c 13860000.i2c: slave address 0x00
+Sep 13 07:33:16.524590 odroid kernel: s3c-i2c 13860000.i2c: bus frequency set to 390 KHz
+Sep 13 07:33:16.527651 odroid kernel: s3c-i2c 13860000.i2c: i2c-0: S3C I2C adapter
+Sep 13 07:33:16.530036 odroid kernel: s3c-i2c 13870000.i2c: slave address 0x00
+Sep 13 07:33:16.532476 odroid kernel: s3c-i2c 13870000.i2c: bus frequency set to 97 KHz
+Sep 13 07:33:16.534957 odroid kernel: s3c-i2c 13870000.i2c: i2c-1: S3C I2C adapter
+Sep 13 07:33:16.537385 odroid kernel: s3c-i2c 13880000.i2c: slave address 0x00
+Sep 13 07:33:16.539345 odroid kernel: s3c-i2c 13880000.i2c: bus frequency set to 97 KHz
+Sep 13 07:33:16.541257 odroid kernel: s3c-i2c 13880000.i2c: i2c-2: S3C I2C adapter
+Sep 13 07:33:16.545252 odroid kernel: s3c-i2c 138e0000.i2c: slave address 0x00
+Sep 13 07:33:16.547162 odroid kernel: s3c-i2c 138e0000.i2c: bus frequency set to 97 KHz
+Sep 13 07:33:16.548995 odroid kernel: s3c-i2c 138e0000.i2c: i2c-8: S3C I2C adapter
+Sep 13 07:33:16.549174 odroid kernel: Advanced Linux Sound Architecture Driver Initialized.
+Sep 13 07:33:16.549339 odroid kernel: nfc: nfc_init: NFC Core ver 0.1
+Sep 13 07:33:16.549503 odroid kernel: NET: Registered protocol family 39
+Sep 13 07:33:16.549670 odroid kernel: clocksource: Switched to clocksource mct-frc
+Sep 13 07:33:16.549834 odroid kernel: NET: Registered protocol family 2
+Sep 13 07:33:16.550000 odroid kernel: IP idents hash table entries: 16384 (order: 5, 131072 bytes, linear)
+Sep 13 07:33:16.550165 odroid kernel: tcp_listen_portaddr_hash hash table entries: 512 (order: 2, 22528 bytes, linear)
+Sep 13 07:33:16.550329 odroid kernel: TCP established hash table entries: 8192 (order: 3, 32768 bytes, linear)
+Sep 13 07:33:16.550524 odroid kernel: TCP bind hash table entries: 8192 (order: 6, 327680 bytes, linear)
+Sep 13 07:33:16.550690 odroid kernel: TCP: Hash tables configured (established 8192 bind 8192)
+Sep 13 07:33:16.550854 odroid kernel: UDP hash table entries: 512 (order: 3, 49152 bytes, linear)
+Sep 13 07:33:16.551017 odroid kernel: UDP-Lite hash table entries: 512 (order: 3, 49152 bytes, linear)
+Sep 13 07:33:16.551180 odroid kernel: NET: Registered protocol family 1
+Sep 13 07:33:16.551344 odroid kernel: RPC: Registered named UNIX socket transport module.
+Sep 13 07:33:16.551506 odroid kernel: RPC: Registered udp transport module.
+Sep 13 07:33:16.551669 odroid kernel: RPC: Registered tcp transport module.
+Sep 13 07:33:16.551906 odroid kernel: RPC: Registered tcp NFSv4.1 backchannel transport module.
+Sep 13 07:33:16.552082 odroid kernel: Trying to unpack rootfs image as initramfs...
+Sep 13 07:33:16.552282 odroid kernel: Freeing initrd memory: 8016K
+Sep 13 07:33:16.552451 odroid kernel: hw perfevents: enabled with armv7_cortex_a9 PMU driver, 7 counters available
+Sep 13 07:33:16.552614 odroid kernel: Initialise system trusted keyrings
+Sep 13 07:33:16.552778 odroid kernel: workingset: timestamp_bits=30 max_order=19 bucket_order=0
+Sep 13 07:33:16.552942 odroid kernel: NFS: Registering the id_resolver key type
+Sep 13 07:33:16.553115 odroid kernel: Key type id_resolver registered
+Sep 13 07:33:16.553277 odroid kernel: Key type id_legacy registered
+Sep 13 07:33:16.553440 odroid kernel: nfs4filelayout_init: NFSv4 File Layout Driver Registering...
+Sep 13 07:33:16.553603 odroid kernel: nfs4flexfilelayout_init: NFSv4 Flexfile Layout Driver Registering...
+Sep 13 07:33:16.553802 odroid kernel: romfs: ROMFS MTD (C) 2007 Red Hat, Inc.
+Sep 13 07:33:16.554002 odroid kernel: Key type asymmetric registered
+Sep 13 07:33:16.554193 odroid kernel: Asymmetric key parser 'x509' registered
+Sep 13 07:33:16.554385 odroid kernel: bounce: pool size: 64 pages
+Sep 13 07:33:16.554574 odroid kernel: Block layer SCSI generic (bsg) driver version 0.4 loaded (major 248)
+Sep 13 07:33:16.554793 odroid kernel: io scheduler mq-deadline registered
+Sep 13 07:33:16.555009 odroid kernel: io scheduler kyber registered
+Sep 13 07:33:16.557413 odroid kernel: samsung-usb2-phy 125b0000.exynos-usbphy: supply vbus not found, using dummy regulator
+Sep 13 07:33:16.559406 odroid kernel: samsung-pwm 139d0000.pwm: Driver needs updating to atomic API
+Sep 13 07:33:16.561514 odroid kernel: dma-pl330 12680000.pdma: Loaded driver for PL330 DMAC-141330
+Sep 13 07:33:16.563505 odroid kernel: dma-pl330 12680000.pdma:         DBUFF-32x4bytes Num_Chans-8 Num_Peri-32 Num_Events-32
+Sep 13 07:33:16.565488 odroid kernel: dma-pl330 12690000.pdma: Loaded driver for PL330 DMAC-141330
+Sep 13 07:33:16.567288 odroid kernel: dma-pl330 12690000.pdma:         DBUFF-32x4bytes Num_Chans-8 Num_Peri-32 Num_Events-32
+Sep 13 07:33:16.569077 odroid kernel: dma-pl330 12850000.mdma: Loaded driver for PL330 DMAC-141330
+Sep 13 07:33:16.570835 odroid kernel: dma-pl330 12850000.mdma:         DBUFF-64x8bytes Num_Chans-8 Num_Peri-1 Num_Events-32
+Sep 13 07:33:16.571039 odroid kernel: Serial: 8250/16550 driver, 4 ports, IRQ sharing disabled
+Sep 13 07:33:16.571207 odroid kernel: 13800000.serial: ttySAC0 at MMIO 0x13800000 (irq = 71, base_baud = 0) is a S3C6400/10
+Sep 13 07:33:16.571372 odroid kernel: 13810000.serial: ttySAC1 at MMIO 0x13810000 (irq = 72, base_baud = 0) is a S3C6400/10
+Sep 13 07:33:16.571578 odroid kernel: printk: console [ttySAC1] enabled
+Sep 13 07:33:16.573666 odroid kernel: exynos-mixer 12c10000.mixer: Adding to iommu group 0
+Sep 13 07:33:16.575809 odroid kernel: exynos-hdmi 12d00000.hdmi: GPIO lookup for consumer hpd
+Sep 13 07:33:16.577907 odroid kernel: exynos-hdmi 12d00000.hdmi: using device tree for GPIO lookup
+Sep 13 07:33:16.578191 odroid kernel: of_get_named_gpiod_flags: parsed 'hpd-gpios' property of node '/soc/hdmi@12d00000[0]' - status (0)
+Sep 13 07:33:16.578413 odroid kernel: brd: module loaded
+Sep 13 07:33:16.578623 odroid kernel: loop: module loaded
+Sep 13 07:33:16.578834 odroid kernel: VDDQ_M1_2_1.8V: Bringing 1200000uV into 1800000-1800000uV
+Sep 13 07:33:16.579076 odroid kernel: VDD10_MPLL_1.0V: Bringing 1100000uV into 1000000-1000000uV
+Sep 13 07:33:16.579251 odroid kernel: VDD10_XPLL_1.0V: Bringing 1100000uV into 1000000-1000000uV
+Sep 13 07:33:16.579419 odroid kernel: VDD33_USB_3.3V: Bringing 3000000uV into 3300000-3300000uV
+Sep 13 07:33:16.579586 odroid kernel: random: fast init done
+Sep 13 07:33:16.579754 odroid kernel: of_get_named_gpiod_flags: can't parse 'maxim,ena-gpios' property of node '/soc/i2c@13860000/pmic@9/voltage-regulators/LDO20[0]'
+Sep 13 07:33:16.579924 odroid kernel: of_get_named_gpiod_flags: can't parse 'maxim,ena-gpio' property of node '/soc/i2c@13860000/pmic@9/voltage-regulators/LDO20[0]'
+Sep 13 07:33:16.580095 odroid kernel: of_get_named_gpiod_flags: can't parse 'maxim,ena-gpios' property of node '/soc/i2c@13860000/pmic@9/voltage-regulators/LDO21[0]'
+Sep 13 07:33:16.580272 odroid kernel: of_get_named_gpiod_flags: can't parse 'maxim,ena-gpio' property of node '/soc/i2c@13860000/pmic@9/voltage-regulators/LDO21[0]'
+Sep 13 07:33:16.580438 odroid kernel: of_get_named_gpiod_flags: can't parse 'maxim,ena-gpios' property of node '/soc/i2c@13860000/pmic@9/voltage-regulators/LDO22[0]'
+Sep 13 07:33:16.580634 odroid kernel: of_get_named_gpiod_flags: can't parse 'maxim,ena-gpio' property of node '/soc/i2c@13860000/pmic@9/voltage-regulators/LDO22[0]'
+Sep 13 07:33:16.580802 odroid kernel: VDDQ_LCD_1.8V: Bringing 3000000uV into 1800000-1800000uV
+Sep 13 07:33:16.580969 odroid kernel: of_get_named_gpiod_flags: can't parse 'maxim,ena-gpios' property of node '/soc/i2c@13860000/pmic@9/voltage-regulators/BUCK8[0]'
+Sep 13 07:33:16.581141 odroid kernel: of_get_named_gpiod_flags: can't parse 'maxim,ena-gpio' property of node '/soc/i2c@13860000/pmic@9/voltage-regulators/BUCK8[0]'
+Sep 13 07:33:16.581308 odroid kernel: BUCK8_P3V3: Bringing 2850000uV into 3300000-3300000uV
+Sep 13 07:33:16.583815 odroid kernel: s3c64xx-spi 13930000.spi: spi bus clock parent not specified, using clock at index 0 as parent
+Sep 13 07:33:16.586443 odroid kernel: s3c64xx-spi 13930000.spi: number of chip select lines not specified, assuming 1 chip select line
+Sep 13 07:33:16.586809 odroid kernel: of_get_named_gpiod_flags: parsed 'cs-gpios' property of node '/soc/spi@13930000[0]' - status (0)
+Sep 13 07:33:16.588844 odroid kernel: mdio_bus fixed-0: GPIO lookup for consumer reset
+Sep 13 07:33:16.590803 odroid kernel: mdio_bus fixed-0: using lookup tables for GPIO lookup
+Sep 13 07:33:16.592736 odroid kernel: mdio_bus fixed-0: No GPIO consumer reset found
+Sep 13 07:33:16.592942 odroid kernel: libphy: Fixed MDIO Bus: probed
+Sep 13 07:33:16.593121 odroid kernel: usbcore: registered new interface driver r8152
+Sep 13 07:33:16.593331 odroid kernel: usbcore: registered new interface driver asix
+Sep 13 07:33:16.593541 odroid kernel: usbcore: registered new interface driver ax88179_178a
+Sep 13 07:33:16.593804 odroid kernel: usbcore: registered new interface driver cdc_ether
+Sep 13 07:33:16.594031 odroid kernel: usbcore: registered new interface driver smsc75xx
+Sep 13 07:33:16.594255 odroid kernel: usbcore: registered new interface driver smsc95xx
+Sep 13 07:33:16.594489 odroid kernel: usbcore: registered new interface driver net1080
+Sep 13 07:33:16.594708 odroid kernel: usbcore: registered new interface driver cdc_subset
+Sep 13 07:33:16.594908 odroid kernel: usbcore: registered new interface driver zaurus
+Sep 13 07:33:16.595123 odroid kernel: usbcore: registered new interface driver cdc_ncm
+Sep 13 07:33:16.597049 odroid kernel: dwc2 12480000.hsotg: dwc2_check_params: Invalid parameter besl=1
+Sep 13 07:33:16.599159 odroid kernel: dwc2 12480000.hsotg: dwc2_check_params: Invalid parameter g_np_tx_fifo_size=1024
+Sep 13 07:33:16.601369 odroid kernel: dwc2 12480000.hsotg: EPs: 16, dedicated fifos, 7808 entries in SPRAM
+Sep 13 07:33:16.601610 odroid kernel: ehci_hcd: USB 2.0 'Enhanced' Host Controller (EHCI) Driver
+Sep 13 07:33:16.601905 odroid kernel: ehci-exynos: EHCI Exynos driver
+Sep 13 07:33:16.602129 odroid kernel: of_get_named_gpiod_flags: can't parse 'samsung,vbus-gpio' property of node '/soc/ehci@12580000[0]'
+Sep 13 07:33:16.604154 odroid kernel: exynos-ehci 12580000.ehci: EHCI Host Controller
+Sep 13 07:33:16.606214 odroid kernel: exynos-ehci 12580000.ehci: new USB bus registered, assigned bus number 1
+Sep 13 07:33:16.608375 odroid kernel: exynos-ehci 12580000.ehci: irq 58, io mem 0x12580000
+Sep 13 07:33:16.611065 odroid kernel: exynos-ehci 12580000.ehci: USB 2.0 started, EHCI 1.00
+Sep 13 07:33:16.613566 odroid kernel: usb usb1: New USB device found, idVendor=1d6b, idProduct=0002, bcdDevice= 5.10
+Sep 13 07:33:16.615989 odroid kernel: usb usb1: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+Sep 13 07:33:16.618388 odroid kernel: usb usb1: Product: EHCI Host Controller
+Sep 13 07:33:16.620704 odroid kernel: usb usb1: Manufacturer: Linux 5.10.41 ehci_hcd
+Sep 13 07:33:16.625757 odroid kernel: usb usb1: SerialNumber: 12580000.ehci
+Sep 13 07:33:16.627965 odroid kernel: hub 1-0:1.0: USB hub found
+Sep 13 07:33:16.630319 odroid kernel: hub 1-0:1.0: 3 ports detected
+Sep 13 07:33:16.630646 odroid kernel: ohci_hcd: USB 1.1 'Open' Host Controller (OHCI) Driver
+Sep 13 07:33:16.630838 odroid kernel: ohci-exynos: OHCI Exynos driver
+Sep 13 07:33:16.631019 odroid kernel: usbcore: registered new interface driver uas
+Sep 13 07:33:16.631197 odroid kernel: usbcore: registered new interface driver usb-storage
+Sep 13 07:33:16.631383 odroid kernel: usbcore: registered new interface driver usbserial_generic
+Sep 13 07:33:16.631583 odroid kernel: usbserial: USB Serial support registered for generic
+Sep 13 07:33:16.634273 odroid kernel: usb3503 0-0008: GPIO lookup for consumer intn
+Sep 13 07:33:16.636684 odroid kernel: usb3503 0-0008: using device tree for GPIO lookup
+Sep 13 07:33:16.637022 odroid kernel: of_get_named_gpiod_flags: parsed 'intn-gpios' property of node '/soc/i2c@13860000/usb3503@8[0]' - status (0)
+Sep 13 07:33:16.639606 odroid kernel: usb3503 0-0008: GPIO lookup for consumer connect
+Sep 13 07:33:16.642338 odroid kernel: usb3503 0-0008: using device tree for GPIO lookup
+Sep 13 07:33:16.642550 odroid kernel: of_get_named_gpiod_flags: parsed 'connect-gpios' property of node '/soc/i2c@13860000/usb3503@8[0]' - status (0)
+Sep 13 07:33:16.644778 odroid kernel: usb3503 0-0008: GPIO lookup for consumer reset
+Sep 13 07:33:16.647038 odroid kernel: usb3503 0-0008: using device tree for GPIO lookup
+Sep 13 07:33:16.647283 odroid kernel: of_get_named_gpiod_flags: parsed 'reset-gpios' property of node '/soc/i2c@13860000/usb3503@8[0]' - status (0)
+Sep 13 07:33:16.649634 odroid kernel: usb3503 0-0008: switched to HUB mode
+Sep 13 07:33:16.653300 odroid kernel: usb3503 0-0008: usb3503_probe: probed in hub mode
+Sep 13 07:33:16.653520 odroid kernel: using random self ethernet address
+Sep 13 07:33:16.653696 odroid kernel: using random host ethernet address
+Sep 13 07:33:16.653866 odroid kernel: usb0: HOST MAC 8a:f8:1b:81:7d:9f
+Sep 13 07:33:16.654038 odroid kernel: usb0: MAC ba:56:a6:4c:e9:c6
+Sep 13 07:33:16.654209 odroid kernel: using random self ethernet address
+Sep 13 07:33:16.654380 odroid kernel: using random host ethernet address
+Sep 13 07:33:16.654549 odroid kernel: g_ether gadget: Ethernet Gadget, version: Memorial Day 2008
+Sep 13 07:33:16.654716 odroid kernel: g_ether gadget: g_ether ready
+Sep 13 07:33:16.656859 odroid kernel: dwc2 12480000.hsotg: bound driver g_ether
+Sep 13 07:33:16.659376 odroid kernel: max77686-rtc max77686-rtc: registered as rtc0
+Sep 13 07:33:16.664046 odroid kernel: max77686-rtc max77686-rtc: setting system clock to 2021-09-13T07:33:07 UTC (1631518387)
+Sep 13 07:33:16.666173 odroid kernel: s3c-rtc 10070000.rtc: rtc disabled, re-enabling
+Sep 13 07:33:16.668353 odroid kernel: s3c-rtc 10070000.rtc: registered as rtc1
+Sep 13 07:33:16.668743 odroid kernel: i2c /dev entries driver
+Sep 13 07:33:16.670848 odroid kernel: s3c2410-wdt 10060000.watchdog: watchdog inactive, reset disabled, irq disabled
+Sep 13 07:33:16.671125 odroid kernel: device-mapper: ioctl: 4.43.0-ioctl (2020-10-01) initialised: dm-devel@redhat.com
+Sep 13 07:33:16.673036 odroid kernel: pwrseq_emmc pwrseq: GPIO lookup for consumer reset
+Sep 13 07:33:16.674963 odroid kernel: pwrseq_emmc pwrseq: using device tree for GPIO lookup
+Sep 13 07:33:16.675233 odroid kernel: of_get_named_gpiod_flags: parsed 'reset-gpios' property of node '/pwrseq[0]' - status (0)
+Sep 13 07:33:16.675491 odroid kernel: sdhci: Secure Digital Host Controller Interface driver
+Sep 13 07:33:16.675678 odroid kernel: sdhci: Copyright(c) Pierre Ossman
+Sep 13 07:33:16.675904 odroid kernel: Synopsys Designware Multimedia Card Interface Driver
+Sep 13 07:33:16.676144 odroid kernel: of_get_named_gpiod_flags: parsed 'cd-gpios' property of node '/soc/sdhci@12530000[0]' - status (0)
+Sep 13 07:33:16.678452 odroid kernel: s3c-sdhci 12530000.sdhci: clock source 2: mmc_busclk.2 (100000000 Hz)
+Sep 13 07:33:16.678753 odroid kernel: of_get_named_gpiod_flags: parsed 'gpios' property of node '/leds/led1[0]' - status (0)
+Sep 13 07:33:16.680868 odroid kernel: dwmmc_exynos 12550000.mmc: IDMAC supports 32-bit address mode.
+Sep 13 07:33:16.691400 odroid kernel: dwmmc_exynos 12550000.mmc: Using internal DMA controller.
+Sep 13 07:33:16.694330 odroid kernel: dwmmc_exynos 12550000.mmc: Version ID is 240a
+Sep 13 07:33:16.696674 odroid kernel: dwmmc_exynos 12550000.mmc: DW MMC controller at irq 112,32 bit host data width,128 deep fifo
+Sep 13 07:33:16.699026 odroid kernel: dwmmc_exynos 12550000.mmc: GPIO lookup for consumer cd
+Sep 13 07:33:16.701440 odroid kernel: dwmmc_exynos 12550000.mmc: using device tree for GPIO lookup
+Sep 13 07:33:16.701720 odroid kernel: of_get_named_gpiod_flags: can't parse 'cd-gpios' property of node '/soc/mmc@12550000[0]'
+Sep 13 07:33:16.712135 odroid kernel: of_get_named_gpiod_flags: can't parse 'cd-gpio' property of node '/soc/mmc@12550000[0]'
+Sep 13 07:33:16.716165 odroid kernel: dwmmc_exynos 12550000.mmc: using lookup tables for GPIO lookup
+Sep 13 07:33:16.718387 odroid kernel: dwmmc_exynos 12550000.mmc: No GPIO consumer cd found
+Sep 13 07:33:16.720400 odroid kernel: dwmmc_exynos 12550000.mmc: GPIO lookup for consumer wp
+Sep 13 07:33:16.723485 odroid kernel: dwmmc_exynos 12550000.mmc: using device tree for GPIO lookup
+Sep 13 07:33:16.723932 odroid kernel: of_get_named_gpiod_flags: can't parse 'wp-gpios' property of node '/soc/mmc@12550000[0]'
+Sep 13 07:33:16.724353 odroid kernel: of_get_named_gpiod_flags: can't parse 'wp-gpio' property of node '/soc/mmc@12550000[0]'
+Sep 13 07:33:16.727867 odroid kernel: dwmmc_exynos 12550000.mmc: using lookup tables for GPIO lookup
+Sep 13 07:33:16.730106 odroid kernel: dwmmc_exynos 12550000.mmc: No GPIO consumer wp found
+Sep 13 07:33:16.732762 odroid kernel: dwmmc_exynos 12550000.mmc: allocated mmc-pwrseq
+Sep 13 07:33:16.734970 odroid kernel: mmc_host mmc1: card is polling.
+Sep 13 07:33:16.737012 odroid kernel: s3c-sdhci 12530000.sdhci: GPIO lookup for consumer cd
+Sep 13 07:33:16.737293 odroid kernel: gpio-27 (?): no flags found for gpios
+Sep 13 07:33:16.739400 odroid kernel: s3c-sdhci 12530000.sdhci: using device tree for GPIO lookup
+Sep 13 07:33:16.739663 odroid kernel: of_get_named_gpiod_flags: parsed 'cd-gpios' property of node '/soc/sdhci@12530000[0]' - status (0)
+Sep 13 07:33:16.742689 odroid kernel: usb 1-2: new high-speed USB device number 2 using exynos-ehci
+Sep 13 07:33:16.744904 odroid kernel: s3c-sdhci 12530000.sdhci: Got CD GPIO
+Sep 13 07:33:16.747076 odroid kernel: s5p-secss 10830000.sss: s5p-sss driver registered
+Sep 13 07:33:16.749182 odroid kernel: s3c-sdhci 12530000.sdhci: GPIO lookup for consumer wp
+Sep 13 07:33:16.751334 odroid kernel: s3c-sdhci 12530000.sdhci: using device tree for GPIO lookup
+Sep 13 07:33:16.751664 odroid kernel: of_get_named_gpiod_flags: can't parse 'wp-gpios' property of node '/soc/sdhci@12530000[0]'
+Sep 13 07:33:16.751982 odroid kernel: usbcore: registered new interface driver usbhid
+Sep 13 07:33:16.752173 odroid kernel: of_get_named_gpiod_flags: can't parse 'wp-gpio' property of node '/soc/sdhci@12530000[0]'
+Sep 13 07:33:16.754258 odroid kernel: mmc_host mmc1: Bus speed (slot 0) = 50000000Hz (slot req 400000Hz, actual 396825HZ div = 63)
+Sep 13 07:33:16.754537 odroid kernel: usbhid: USB HID core driver
+Sep 13 07:33:16.756404 odroid kernel: s3c-sdhci 12530000.sdhci: using lookup tables for GPIO lookup
+Sep 13 07:33:16.758331 odroid kernel: s3c-sdhci 12530000.sdhci: No GPIO consumer wp found
+Sep 13 07:33:16.758534 odroid kernel: exynos-ppmu: new PPMU device registered 106a0000.ppmu_dmc0 (ppmu-event3-dmc0)
+Sep 13 07:33:16.758759 odroid kernel: exynos-ppmu: new PPMU device registered 106b0000.ppmu_dmc1 (ppmu-event3-dmc1)
+Sep 13 07:33:16.758936 odroid kernel: mmc0: SDHCI controller on samsung-hsmmc [12530000.sdhci] using ADMA
+Sep 13 07:33:16.759108 odroid kernel: exynos-ppmu: new PPMU device registered 112a0000.ppmu_rightbus (ppmu-event3-rightbus)
+Sep 13 07:33:16.759276 odroid kernel: exynos-ppmu: new PPMU device registered 116a0000.ppmu_leftbus0 (ppmu-event3-leftbus)
+Sep 13 07:33:16.761139 odroid kernel: mmc_host mmc1: Bus speed (slot 0) = 50000000Hz (slot req 52000000Hz, actual 50000000HZ div = 0)
+Sep 13 07:33:16.761353 odroid kernel: mmc1: new DDR MMC card at address 0001
+Sep 13 07:33:16.763617 odroid kernel: samsung-i2s 3830000.i2s-sec: DMA channels sourced from device 3830000.i2s
+Sep 13 07:33:16.763869 odroid kernel: mmcblk1: mmc1:0001 008G92 7.28 GiB 
+Sep 13 07:33:16.764048 odroid kernel: mmc0: new high speed SDHC card at address 0001
+Sep 13 07:33:16.764271 odroid kernel: mmcblk0: mmc0:0001 ASTC 14.6 GiB 
+Sep 13 07:33:16.764462 odroid kernel:  mmcblk0: p1 p2
+Sep 13 07:33:16.764651 odroid kernel: mmcblk1boot0: mmc1:0001 008G92 partition 1 4.00 MiB
+Sep 13 07:33:16.764840 odroid kernel: NET: Registered protocol family 10
+Sep 13 07:33:16.765047 odroid kernel: Segment Routing with IPv6
+Sep 13 07:33:16.765264 odroid kernel: mmcblk1boot1: mmc1:0001 008G92 partition 2 4.00 MiB
+Sep 13 07:33:16.765447 odroid kernel: sit: IPv6, IPv4 and MPLS over IPv4 tunneling driver
+Sep 13 07:33:16.765625 odroid kernel: mmcblk1rpmb: mmc1:0001 008G92 partition 3 512 KiB, chardev (247:0)
+Sep 13 07:33:16.765800 odroid kernel: NET: Registered protocol family 17
+Sep 13 07:33:16.766016 odroid kernel:  mmcblk1: p1 p2
+Sep 13 07:33:16.766221 odroid kernel: NET: Registered protocol family 15
+Sep 13 07:33:16.766444 odroid kernel: Key type dns_resolver registered
+Sep 13 07:33:16.766635 odroid kernel: Registering SWP/SWPB emulation handler
+Sep 13 07:33:16.766848 odroid kernel: Loading compiled-in X.509 certificates
+Sep 13 07:33:16.769172 odroid kernel: usb 1-2: New USB device found, idVendor=0424, idProduct=9730, bcdDevice= 1.00
+Sep 13 07:33:16.771208 odroid kernel: usb 1-2: New USB device strings: Mfr=0, Product=0, SerialNumber=0
+Sep 13 07:33:16.771459 odroid kernel: smsc95xx v2.0.0
+Sep 13 07:33:16.773787 odroid kernel: mdio_bus usb-001:002: GPIO lookup for consumer reset
+Sep 13 07:33:16.775966 odroid kernel: mdio_bus usb-001:002: using lookup tables for GPIO lookup
+Sep 13 07:33:16.778192 odroid kernel: mdio_bus usb-001:002: No GPIO consumer reset found
+Sep 13 07:33:16.780532 odroid kernel: mdio_bus usb-001:002:01: GPIO lookup for consumer reset
+Sep 13 07:33:16.783732 odroid kernel: mdio_bus usb-001:002:01: using lookup tables for GPIO lookup
+Sep 13 07:33:16.786193 odroid kernel: mdio_bus usb-001:002:01: No GPIO consumer reset found
+Sep 13 07:33:16.786403 odroid kernel: libphy: smsc95xx-mdiobus: probed
+Sep 13 07:33:16.788585 odroid kernel: smsc95xx 1-2:1.0 eth0: register 'smsc95xx' at usb-12580000.ehci-2, smsc95xx USB 2.0 Ethernet, 6e:e4:54:7d:5e:f0
+Sep 13 07:33:16.790607 odroid kernel: exynos-hdmi 12d00000.hdmi: GPIO lookup for consumer hpd
+Sep 13 07:33:16.792707 odroid kernel: exynos-hdmi 12d00000.hdmi: using device tree for GPIO lookup
+Sep 13 07:33:16.792939 odroid kernel: of_get_named_gpiod_flags: parsed 'hpd-gpios' property of node '/soc/hdmi@12d00000[0]' - status (0)
+Sep 13 07:33:16.793121 odroid kernel: OF: graph: no port node found in /soc/hdmi@12d00000
+Sep 13 07:33:16.793307 odroid kernel: [drm] Exynos DRM: using 12c10000.mixer device for DMA mapping operations
+Sep 13 07:33:16.795121 odroid kernel: exynos-drm exynos-drm: bound 12c10000.mixer (ops mixer_component_ops)
+Sep 13 07:33:16.796830 odroid kernel: exynos-drm exynos-drm: bound 12d00000.hdmi (ops hdmi_component_ops)
+Sep 13 07:33:16.799438 odroid kernel: usb 1-3: new high-speed USB device number 3 using exynos-ehci
+Sep 13 07:33:16.799702 odroid kernel: Console: switching to colour frame buffer device 160x64
+Sep 13 07:33:16.801454 odroid kernel: exynos-drm exynos-drm: [drm] fb0: exynosdrmfb frame buffer device
+Sep 13 07:33:16.801683 odroid kernel: [drm] Initialized exynos 1.1.0 20180330 for exynos-drm on minor 0
+Sep 13 07:33:16.805231 odroid kernel: usb 1-3: New USB device found, idVendor=0424, idProduct=3503, bcdDevice=a1.a0
+Sep 13 07:33:16.808758 odroid kernel: usb 1-3: New USB device strings: Mfr=0, Product=0, SerialNumber=0
+Sep 13 07:33:16.811526 odroid kernel: hub 1-3:1.0: USB hub found
+Sep 13 07:33:16.814114 odroid kernel: lima 13000000.gpu: gp - mali400 version major 1 minor 1
+Sep 13 07:33:16.816354 odroid kernel: hub 1-3:1.0: 3 ports detected
+Sep 13 07:33:16.819402 odroid kernel: lima 13000000.gpu: pp0 - mali400 version major 1 minor 1
+Sep 13 07:33:16.821333 odroid kernel: lima 13000000.gpu: pp1 - mali400 version major 1 minor 1
+Sep 13 07:33:16.823620 odroid kernel: lima 13000000.gpu: pp2 - mali400 version major 1 minor 1
+Sep 13 07:33:16.825514 odroid kernel: lima 13000000.gpu: pp3 - mali400 version major 1 minor 1
+Sep 13 07:33:16.826797 odroid systemd-sysctl[218]: Couldn't write '1' to 'kernel/yama/ptrace_scope', ignoring: No such file or directory
+Sep 13 07:33:16.827379 odroid kernel: lima 13000000.gpu: l2 cache 128K, 4-way, 64byte cache line, 64bit external bus
+Sep 13 07:33:16.828750 odroid systemd-sysctl[218]: Not setting net/ipv4/conf/all/promote_secondaries (explicit setting exists).
+Sep 13 07:33:16.828790 odroid systemd-sysctl[218]: Not setting net/ipv4/conf/default/promote_secondaries (explicit setting exists).
+Sep 13 07:33:16.829336 odroid kernel: lima 13000000.gpu: bus rate = 24000000
+Sep 13 07:33:16.830094 odroid systemd-sysctl[218]: Couldn't write 'fq_codel' to 'net/core/default_qdisc', ignoring: No such file or directory
+Sep 13 07:33:16.831362 odroid kernel: lima 13000000.gpu: mod rate = 50000000
+Sep 13 07:33:16.831614 odroid kernel: core: _opp_supported_by_regulators: OPP minuV: 875000 maxuV: 875000, not supported by regulator
+Sep 13 07:33:16.833730 odroid kernel: lima 13000000.gpu: _opp_add: OPP not supported by regulators (160000000)
+Sep 13 07:33:16.833942 odroid kernel: [drm] Initialized lima 1.1.0 20191231 for 13000000.gpu on minor 1
+Sep 13 07:33:16.834123 odroid kernel: exynos-bus: new bus device registered: soc:bus_dmc (100000 KHz ~ 400000 KHz)
+Sep 13 07:33:16.834298 odroid kernel: exynos-bus: new bus device registered: soc:bus_acp (100000 KHz ~ 267000 KHz)
+Sep 13 07:33:16.834467 odroid kernel: exynos-bus: new bus device registered: soc:bus_c2c (100000 KHz ~ 400000 KHz)
+Sep 13 07:33:16.834688 odroid kernel: exynos-bus: new bus device registered: soc:bus_leftbus (100000 KHz ~ 200000 KHz)
+Sep 13 07:33:16.834871 odroid kernel: exynos-bus: new bus device registered: soc:bus_rightbus (100000 KHz ~ 200000 KHz)
+Sep 13 07:33:16.835051 odroid kernel: exynos-bus: new bus device registered: soc:bus_display (160000 KHz ~ 200000 KHz)
+Sep 13 07:33:16.835222 odroid kernel: exynos-bus: new bus device registered: soc:bus_fsys (100000 KHz ~ 134000 KHz)
+Sep 13 07:33:16.835391 odroid kernel: exynos-bus: new bus device registered: soc:bus_peri ( 50000 KHz ~ 100000 KHz)
+Sep 13 07:33:16.835560 odroid kernel: exynos-bus: new bus device registered: soc:bus_mfc (100000 KHz ~ 200000 KHz)
+Sep 13 07:33:16.837585 odroid kernel: max98090 1-0010: MAX98090 REVID=0x43
+Sep 13 07:33:16.839595 odroid kernel: max98090 1-0010: use default 2.8v micbias
+Sep 13 07:33:16.839839 odroid kernel: of_get_named_gpiod_flags: parsed 'gpios' property of node '/gpio_keys/power_key[0]' - status (0)
+Sep 13 07:33:16.840015 odroid kernel: input: gpio_keys as /devices/platform/gpio_keys/input/input0
+Sep 13 07:33:16.840183 odroid kernel: cfg80211: Loading compiled-in X.509 certificates for regulatory database
+Sep 13 07:33:16.840351 odroid kernel: cfg80211: Loaded X.509 cert 'sforshee: 00b28ddf47aef9cea7'
+Sep 13 07:33:16.842106 odroid kernel: platform regulatory.0: Direct firmware load for regulatory.db failed with error -2
+Sep 13 07:33:16.842335 odroid kernel: cfg80211: failed to load regulatory.db
+Sep 13 07:33:16.842516 odroid kernel: ALSA device list:
+Sep 13 07:33:16.842689 odroid kernel:   #0: Odroid-U3
+Sep 13 07:33:16.842861 odroid kernel: Freeing unused kernel memory: 1024K
+Sep 13 07:33:16.843076 odroid kernel: Run /init as init process
+Sep 13 07:33:16.843255 odroid kernel:   with arguments:
+Sep 13 07:33:16.843444 odroid kernel:     /init
+Sep 13 07:33:16.843622 odroid kernel:   with environment:
+Sep 13 07:33:16.843792 odroid kernel:     HOME=/
+Sep 13 07:33:16.843958 odroid kernel:     TERM=linux
+Sep 13 07:33:16.844125 odroid kernel:     vout=dvi
+Sep 13 07:33:16.844292 odroid kernel: EXT4-fs (mmcblk0p2): mounted filesystem without journal. Opts: (null)
+Sep 13 07:33:16.844467 odroid systemd[1]: systemd 245.4-4ubuntu3.11 running in system mode. (+PAM +AUDIT +SELINUX +IMA +APPARMOR +SMACK +SYSVINIT +UTMP +LIBCRYPTSETUP +GCRYPT +GNUTLS +ACL +XZ +LZ4 +SECCOMP +BLKID +ELFUTILS +KMOD +IDN2 -IDN +PCRE2 default-hierarchy=hybrid)
+Sep 13 07:33:16.844719 odroid systemd[1]: Detected architecture arm.
+Sep 13 07:33:16.844920 odroid systemd[1]: Set hostname to <odroid>.
+Sep 13 07:33:16.845089 odroid kernel: random: systemd: uninitialized urandom read (16 bytes read)
+Sep 13 07:33:16.845261 odroid systemd[1]: system-modprobe.slice: unit configures an IP firewall, but the local system does not support BPF/cgroup firewalling.
+Sep 13 07:33:16.845433 odroid systemd[1]: (This warning is only shown for the first unit using IP firewalling.)
+Sep 13 07:33:16.845603 odroid systemd[1]: Created slice system-modprobe.slice.
+Sep 13 07:33:16.845799 odroid kernel: random: systemd: uninitialized urandom read (16 bytes read)
+Sep 13 07:33:16.845970 odroid systemd[1]: Created slice system-serial\x2dgetty.slice.
+Sep 13 07:33:16.846172 odroid kernel: random: systemd: uninitialized urandom read (16 bytes read)
+Sep 13 07:33:16.846334 odroid systemd[1]: Created slice system-systemd\x2dfsck.slice.
+Sep 13 07:33:16.846506 odroid systemd[1]: Created slice User and Session Slice.
+Sep 13 07:33:16.846677 odroid systemd[1]: Started Dispatch Password Requests to Console Directory Watch.
+Sep 13 07:33:16.846847 odroid systemd[1]: Started Forward Password Requests to Wall Directory Watch.
+Sep 13 07:33:16.847018 odroid systemd[1]: Condition check resulted in Arbitrary Executable File Formats File System Automount Point being skipped.
+Sep 13 07:33:16.847191 odroid systemd[1]: Reached target Local Encrypted Volumes.
+Sep 13 07:33:16.847362 odroid systemd[1]: Reached target Paths.
+Sep 13 07:33:16.847590 odroid systemd[1]: Reached target Slices.
+Sep 13 07:33:16.847788 odroid systemd[1]: Reached target Swap.
+Sep 13 07:33:16.847961 odroid systemd[1]: Listening on RPCbind Server Activation Socket.
+Sep 13 07:33:16.848135 odroid systemd[1]: Listening on Syslog Socket.
+Sep 13 07:33:16.848312 odroid systemd[1]: Listening on fsck to fsckd communication Socket.
+Sep 13 07:33:16.848488 odroid systemd[1]: Listening on initctl Compatibility Named Pipe.
+Sep 13 07:33:16.848664 odroid systemd[1]: Condition check resulted in Journal Audit Socket being skipped.
+Sep 13 07:33:16.848836 odroid systemd[1]: Listening on Journal Socket (/dev/log).
+Sep 13 07:33:16.849012 odroid systemd[1]: Listening on Journal Socket.
+Sep 13 07:33:16.849221 odroid systemd[1]: Listening on udev Control Socket.
+Sep 13 07:33:16.849393 odroid systemd[1]: Listening on udev Kernel Socket.
+Sep 13 07:33:16.849565 odroid systemd[1]: Condition check resulted in Huge Pages File System being skipped.
+Sep 13 07:33:16.849738 odroid systemd[1]: Condition check resulted in POSIX Message Queue File System being skipped.
+Sep 13 07:33:16.849910 odroid systemd[1]: Mounting NFSD configuration filesystem...
+Sep 13 07:33:16.850081 odroid systemd[1]: Mounting RPC Pipe File System...
+Sep 13 07:33:16.850252 odroid systemd[1]: Mounting Kernel Debug File System...
+Sep 13 07:33:16.850423 odroid systemd[1]: Mounting Kernel Trace File System...
+Sep 13 07:33:16.850593 odroid systemd[1]: Starting Journal Service...
+Sep 13 07:33:16.850794 odroid systemd[1]: Condition check resulted in Kernel Module supporting RPCSEC_GSS being skipped.
+Sep 13 07:33:16.850966 odroid systemd[1]: Starting Set the console keyboard layout...
+Sep 13 07:33:16.851139 odroid systemd[1]: Starting Create list of static device nodes for the current kernel...
+Sep 13 07:33:16.851313 odroid systemd[1]: Condition check resulted in Load Kernel Module drm being skipped.
+Sep 13 07:33:16.851485 odroid systemd[1]: Condition check resulted in Set Up Additional Binary Formats being skipped.
+Sep 13 07:33:16.851656 odroid systemd[1]: Starting File System Check on Root Device...
+Sep 13 07:33:16.851905 odroid systemd[1]: Starting Load Kernel Modules...
+Sep 13 07:33:16.852091 odroid systemd[1]: Starting udev Coldplug all Devices...
+Sep 13 07:33:16.852344 odroid systemd[1]: Mounted RPC Pipe File System.
+Sep 13 07:33:16.852524 odroid systemd[1]: Mounted Kernel Debug File System.
+Sep 13 07:33:16.852704 odroid systemd[1]: Mounted Kernel Trace File System.
+Sep 13 07:33:16.852879 odroid systemd[1]: Finished Create list of static device nodes for the current kernel.
+Sep 13 07:33:16.853053 odroid systemd[1]: Starting pNFS block layout mapping daemon...
+Sep 13 07:33:16.853224 odroid systemd[1]: Started File System Check Daemon to report status.
+Sep 13 07:33:16.853428 odroid systemd[1]: Finished Load Kernel Modules.
+Sep 13 07:33:16.853601 odroid systemd[1]: Condition check resulted in FUSE Control File System being skipped.
+Sep 13 07:33:16.853773 odroid systemd[1]: Mounting Kernel Configuration File System...
+Sep 13 07:33:16.853942 odroid kernel: Installing knfsd (copyright (C) 1996 okir@monad.swb.de).
+Sep 13 07:33:16.854116 odroid systemd[1]: Starting Apply Kernel Variables...
+Sep 13 07:33:16.854288 odroid systemd[1]: Mounted NFSD configuration filesystem.
+Sep 13 07:33:16.854458 odroid systemd[1]: nfs-blkmap.service: Can't open PID file /run/blkmapd.pid (yet?) after start: Operation not permitted
+Sep 13 07:33:16.854630 odroid systemd[1]: Started pNFS block layout mapping daemon.
+Sep 13 07:33:16.854801 odroid systemd[1]: Mounted Kernel Configuration File System.
+Sep 13 07:33:16.855001 odroid systemd[1]: Finished File System Check on Root Device.
+Sep 13 07:33:16.855173 odroid systemd-journald[196]: Journal started
+Sep 13 07:33:16.855862 odroid systemd-journald[196]: Runtime Journal (/run/log/journal/dc87f36fc06c441a85ff7269ba4d50fb) is 2.4M, max 19.6M, 17.1M free.
+Sep 13 07:33:16.871012 odroid systemd-fsck[220]: rootfs: clean, 193707/950272 files, 2922384/3791616 blocks
+Sep 13 07:33:16.891952 odroid systemd[1]: Started Journal Service.
+Sep 13 07:33:16.930436 odroid systemd[1]: Finished Apply Kernel Variables.
+Sep 13 07:33:16.978745 odroid systemd[1]: Finished Set the console keyboard layout.
+Sep 13 07:33:17.037742 odroid systemd[1]: Starting Remount Root and Kernel File Systems...
+Sep 13 07:33:17.112296 odroid kernel: EXT4-fs (mmcblk0p2): re-mounted. Opts: errors=remount-ro
+Sep 13 07:33:17.120616 odroid systemd[1]: Finished Remount Root and Kernel File Systems.
+Sep 13 07:33:17.156352 odroid systemd[1]: Condition check resulted in Rebuild Hardware Database being skipped.
+Sep 13 07:33:17.164645 odroid systemd[1]: Starting Flush Journal to Persistent Storage...
+Sep 13 07:33:17.192560 odroid systemd[1]: Condition check resulted in Platform Persistent Storage Archival being skipped.
+Sep 13 07:33:17.201741 odroid systemd[1]: Starting Load/Save Random Seed...
+Sep 13 07:33:17.212313 odroid systemd-journald[196]: System Journal (/var/log/journal/dc87f36fc06c441a85ff7269ba4d50fb) is 928.1M, max 1.4G, 529.6M free.
+Sep 13 07:33:17.212313 odroid systemd-journald[196]: Time spent on flushing to /var/log/journal/dc87f36fc06c441a85ff7269ba4d50fb is 883.662ms for 546 entries.
+Sep 13 07:33:17.260727 odroid systemd[1]: Starting Create System Users...
+Sep 13 07:33:17.277522 odroid systemd-random-seed[225]: Kernel entropy pool is not initialized yet, waiting until it is.
+Sep 13 07:33:17.439096 odroid systemd[1]: Finished Create System Users.
+Sep 13 07:33:17.493201 odroid systemd[1]: Starting Create Static Device Nodes in /dev...
+Sep 13 07:33:17.661747 odroid systemd[1]: Finished Create Static Device Nodes in /dev.
+Sep 13 07:33:17.703947 odroid systemd[1]: Reached target Local File Systems (Pre).
+Sep 13 07:33:17.751381 odroid systemd[1]: Starting udev Kernel Device Manager...
+Sep 13 07:33:18.767030 odroid systemd[1]: Finished udev Coldplug all Devices.
+Sep 13 07:33:19.149294 odroid systemd[1]: Finished Load/Save Random Seed.
+Sep 13 07:33:19.196145 odroid systemd[1]: Started udev Kernel Device Manager.
+Sep 13 07:33:19.476851 odroid kernel: random: crng init done
+Sep 13 07:33:19.477374 odroid kernel: random: 7 urandom warning(s) missed due to ratelimiting
+Sep 13 07:33:19.496035 odroid systemd[1]: Finished Flush Journal to Persistent Storage.
+Sep 13 07:33:20.119000 odroid systemd-udevd[235]: Using default interface naming scheme 'v245'.
+Sep 13 07:33:20.121227 odroid systemd-udevd[235]: ethtool: autonegotiation is unset or enabled, the speed and duplex are not writable.
+Sep 13 07:33:20.151940 odroid kernel: mc: Linux media interface: v0.10
+Sep 13 07:33:20.351929 odroid kernel: videodev: Linux video capture interface: v2.00
+Sep 13 07:33:20.395705 odroid systemd-udevd[233]: Using default interface naming scheme 'v245'.
+Sep 13 07:33:20.400874 odroid systemd-udevd[233]: ethtool: autonegotiation is unset or enabled, the speed and duplex are not writable.
+Sep 13 07:33:20.523315 odroid systemd[1]: Found device /dev/mmcblk1p1.
+Sep 13 07:33:20.570084 odroid kernel: s5p-jpeg 11840000.jpeg-codec: Adding to iommu group 1
+Sep 13 07:33:20.583961 odroid kernel: s5p-jpeg 11840000.jpeg-codec: encoder device registered as /dev/video0
+Sep 13 07:33:20.584421 odroid kernel: s5p-jpeg 11840000.jpeg-codec: decoder device registered as /dev/video1
+Sep 13 07:33:20.584758 odroid kernel: s5p-jpeg 11840000.jpeg-codec: Samsung S5P JPEG codec
+Sep 13 07:33:20.591054 odroid systemd[1]: Found device /dev/mmcblk0p1.
+Sep 13 07:33:20.656473 odroid systemd[1]: Found device /dev/ttySAC1.
+Sep 13 07:33:20.699519 odroid systemd[1]: Found device /dev/mmcblk1p2.
+Sep 13 07:33:20.713965 odroid kernel: s5p-mfc 13400000.codec: Adding to iommu group 2
+Sep 13 07:33:20.741874 odroid kernel: s5p-mfc 13400000.codec: preallocated 8 MiB buffer for the firmware and context buffers
+Sep 13 07:33:20.775936 odroid systemd[1]: Starting File System Check on /dev/mmcblk0p1...
+Sep 13 07:33:20.801903 odroid kernel: s5p-mfc 13400000.codec: decoder registered as /dev/video2
+Sep 13 07:33:20.802408 odroid kernel: s5p-mfc 13400000.codec: encoder registered as /dev/video3
+Sep 13 07:33:20.833510 odroid systemd[1]: Starting File System Check on /dev/mmcblk1p1...
+Sep 13 07:33:20.901259 odroid systemd[1]: Starting File System Check on /dev/mmcblk1p2...
+Sep 13 07:33:21.056839 odroid systemd-udevd[232]: ethtool: autonegotiation is unset or enabled, the speed and duplex are not writable.
+Sep 13 07:33:21.057656 odroid systemd-udevd[239]: ethtool: autonegotiation is unset or enabled, the speed and duplex are not writable.
+Sep 13 07:33:21.112803 odroid kernel: exynos4-fimc 11800000.fimc: Adding to iommu group 3
+Sep 13 07:33:21.115889 odroid kernel: exynos4-fimc 11810000.fimc: Adding to iommu group 4
+Sep 13 07:33:21.118778 odroid kernel: exynos4-fimc 11820000.fimc: Adding to iommu group 5
+Sep 13 07:33:21.121389 odroid kernel: exynos4-fimc 11830000.fimc: Adding to iommu group 6
+Sep 13 07:33:21.151900 odroid kernel: s5p-fimc-md: Registered fimc.0.m2m as /dev/video4
+Sep 13 07:33:21.152493 odroid kernel: s5p-fimc-md: Registered fimc.0.capture as /dev/video5
+Sep 13 07:33:21.152984 odroid kernel: s5p-fimc-md: Registered fimc.1.m2m as /dev/video6
+Sep 13 07:33:21.153409 odroid kernel: s5p-fimc-md: Registered fimc.1.capture as /dev/video7
+Sep 13 07:33:21.166663 odroid systemd[1]: Condition check resulted in Arbitrary Executable File Formats File System Automount Point being skipped.
+Sep 13 07:33:21.169510 odroid systemd[1]: Condition check resulted in Huge Pages File System being skipped.
+Sep 13 07:33:21.171141 odroid systemd[1]: Condition check resulted in POSIX Message Queue File System being skipped.
+Sep 13 07:33:21.173021 odroid systemd[1]: Condition check resulted in FUSE Control File System being skipped.
+Sep 13 07:33:21.175534 odroid systemd[1]: Condition check resulted in Set Up Additional Binary Formats being skipped.
+Sep 13 07:33:21.177143 odroid systemd[1]: Condition check resulted in Rebuild Hardware Database being skipped.
+Sep 13 07:33:21.177238 odroid systemd-fsck[260]: rootfs: clean, 38402/311296 files, 699077/1215239 blocks
+Sep 13 07:33:21.193774 odroid systemd[1]: Condition check resulted in Platform Persistent Storage Archival being skipped.
+Sep 13 07:33:21.227944 odroid systemd[1]: Finished File System Check on /dev/mmcblk1p2.
+Sep 13 07:33:21.277076 odroid systemd[1]: Mounting /home/odroid/mmc2_rootfs...
+Sep 13 07:33:21.335211 odroid systemd-fsck[261]: /dev/mmcblk0p1: 124 files, 24293/65399 clusters
+Sep 13 07:33:21.335211 odroid systemd-fsck[261]: fsck.fat 4.1 (2017-01-24)
+Sep 13 07:33:21.341355 odroid systemd-fsck[267]: /dev/mmcblk1p1: 101 files, 6001/65399 clusters
+Sep 13 07:33:21.341355 odroid systemd-fsck[267]: fsck.fat 4.1 (2017-01-24)
+Sep 13 07:33:21.350050 odroid systemd[1]: Finished File System Check on /dev/mmcblk0p1.
+Sep 13 07:33:21.391950 odroid kernel: EXT4-fs (mmcblk1p2): mounted filesystem without journal. Opts: (null)
+Sep 13 07:33:21.422703 odroid systemd[1]: Finished File System Check on /dev/mmcblk1p1.
+Sep 13 07:33:21.450429 odroid systemd[1]: Mounted /home/odroid/mmc2_rootfs.
+Sep 13 07:33:21.505909 odroid systemd[1]: Mounting /home/odroid/mmc1_boot...
+Sep 13 07:33:21.565064 odroid systemd[1]: Mounting /media/boot...
+Sep 13 07:33:21.671962 odroid systemd[1]: Mounted /home/odroid/mmc1_boot.
+Sep 13 07:33:21.686566 odroid systemd[1]: Mounted /media/boot.
+Sep 13 07:33:22.191980 odroid kernel: __fimc_pipeline_open(): No sensor subdev
+Sep 13 07:33:22.192639 odroid kernel: __fimc_pipeline_close(): No sensor subdev
+Sep 13 07:33:22.231928 odroid kernel: __fimc_pipeline_open(): No sensor subdev
+Sep 13 07:33:22.232537 odroid kernel: __fimc_pipeline_close(): No sensor subdev
+Sep 13 07:33:22.801525 odroid systemd[1]: Reached target Local File Systems.
+Sep 13 07:33:22.860820 odroid systemd[1]: Starting Set console font and keymap...
+Sep 13 07:33:22.916546 odroid systemd[1]: Starting Preprocess NFS configuration...
+Sep 13 07:33:22.944688 odroid systemd[1]: Condition check resulted in Store a System Token in an EFI Variable being skipped.
+Sep 13 07:33:22.945394 odroid systemd[1]: Condition check resulted in Commit a transient machine-id on disk being skipped.
+Sep 13 07:33:22.958729 odroid systemd[1]: Starting Create Volatile Files and Directories...
+Sep 13 07:33:22.998500 odroid systemd[1]: Finished Set console font and keymap.
+Sep 13 07:33:23.039343 odroid systemd[1]: nfs-config.service: Succeeded.
+Sep 13 07:33:23.043981 odroid systemd[1]: Finished Preprocess NFS configuration.
+Sep 13 07:33:23.092634 odroid systemd[1]: Starting NFSv4 ID-name mapping service...
+Sep 13 07:33:23.132502 odroid systemd[1]: Condition check resulted in RPC security service for NFS client and server being skipped.
+Sep 13 07:33:23.132787 odroid systemd[1]: Reached target NFS client services.
+Sep 13 07:33:23.172577 odroid systemd[1]: Condition check resulted in RPC security service for NFS server being skipped.
+Sep 13 07:33:23.196914 odroid systemd[1]: Finished Create Volatile Files and Directories.
+Sep 13 07:33:23.240775 odroid systemd[1]: Started NFSv4 ID-name mapping service.
+Sep 13 07:33:23.322064 odroid systemd[1]: Starting RPC bind portmap service...
+Sep 13 07:33:23.378719 odroid systemd[1]: Starting Network Name Resolution...
+Sep 13 07:33:23.413403 odroid systemd[1]: Starting Network Time Synchronization...
+Sep 13 07:33:23.451310 odroid systemd[1]: Starting Update UTMP about System Boot/Shutdown...
+Sep 13 07:33:23.485509 odroid systemd[1]: Started RPC bind portmap service.
+Sep 13 07:33:23.545720 odroid systemd[1]: Reached target Remote File Systems (Pre).
+Sep 13 07:33:23.592638 odroid systemd[1]: Reached target Remote File Systems.
+Sep 13 07:33:23.632373 odroid systemd[1]: Reached target RPC Port Mapper.
+Sep 13 07:33:23.667114 odroid systemd[1]: Finished Update UTMP about System Boot/Shutdown.
+Sep 13 07:33:23.784176 odroid systemd[1]: Started Network Time Synchronization.
+Sep 13 07:33:23.814681 odroid systemd[1]: Reached target System Initialization.
+Sep 13 07:33:23.852636 odroid systemd[1]: Started Daily Cleanup of Temporary Directories.
+Sep 13 07:33:23.893023 odroid systemd[1]: Reached target System Time Set.
+Sep 13 07:33:23.909581 odroid systemd-resolved[337]: Positive Trust Anchors:
+Sep 13 07:33:23.911977 odroid systemd-resolved[337]: . IN DS 20326 8 2 e06d44b80b8f1d39a95c0b0d7c65d08458e880409bbc683457104237c7f8ec8d
+Sep 13 07:33:23.912186 odroid systemd-resolved[337]: Negative trust anchors: 10.in-addr.arpa 16.172.in-addr.arpa 17.172.in-addr.arpa 18.172.in-addr.arpa 19.172.in-addr.arpa 20.172.in-addr.arpa 21.172.in-addr.arpa 22.172.in-addr.arpa 23.172.in-addr.arpa 24.172.in-addr.arpa 25.172.in-addr.arpa 26.172.in-addr.arpa 27.172.in-addr.arpa 28.172.in-addr.arpa 29.172.in-addr.arpa 30.172.in-addr.arpa 31.172.in-addr.arpa 168.192.in-addr.arpa d.f.ip6.arpa corp home internal intranet lan local private test
+Sep 13 07:33:23.922498 odroid systemd[1]: Reached target System Time Synchronized.
+Sep 13 07:33:23.957837 odroid systemd[1]: Started Daily apt download activities.
+Sep 13 07:33:23.993825 odroid systemd[1]: Started Daily apt upgrade and clean activities.
+Sep 13 07:33:24.023939 odroid systemd[1]: Started Periodic ext4 Online Metadata Check for All Filesystems.
+Sep 13 07:33:24.034834 odroid systemd-resolved[337]: Using system hostname 'odroid'.
+Sep 13 07:33:24.064640 odroid systemd[1]: Started Discard unused blocks once a week.
+Sep 13 07:33:24.098028 odroid systemd[1]: Started Daily rotation of log files.
+Sep 13 07:33:24.137525 odroid systemd[1]: Started Daily man-db regeneration.
+Sep 13 07:33:24.173704 odroid systemd[1]: Started Message of the Day.
+Sep 13 07:33:24.205322 odroid systemd[1]: Started Ubuntu Advantage update messaging.
+Sep 13 07:33:24.243148 odroid systemd[1]: Reached target Timers.
+Sep 13 07:33:24.276541 odroid systemd[1]: Listening on Avahi mDNS/DNS-SD Stack Activation Socket.
+Sep 13 07:33:24.315430 odroid systemd[1]: Listening on D-Bus System Message Bus Socket.
+Sep 13 07:33:24.365800 odroid systemd[1]: Listening on UUID daemon activation socket.
+Sep 13 07:33:24.402844 odroid systemd[1]: Reached target Sockets.
+Sep 13 07:33:24.439326 odroid systemd[1]: Reached target Basic System.
+Sep 13 07:33:24.458898 odroid systemd[1]: Condition check resulted in Manage Sound Card State (restore and store) being skipped.
+Sep 13 07:33:24.467169 odroid systemd[1]: Starting Save/Restore Sound Card State...
+Sep 13 07:33:24.515303 odroid systemd[1]: Starting Avahi mDNS/DNS-SD Stack...
+Sep 13 07:33:24.558460 odroid systemd[1]: Started Regular background program processing daemon.
+Sep 13 07:33:24.583705 odroid cron[344]: (CRON) INFO (pidfile fd = 3)
+Sep 13 07:33:24.603027 odroid systemd[1]: Started D-Bus System Message Bus.
+Sep 13 07:33:24.611637 odroid cron[344]: (CRON) INFO (Running @reboot jobs)
+Sep 13 07:33:24.615735 odroid avahi-daemon[343]: Found user 'avahi' (UID 111) and group 'avahi' (GID 117).
+Sep 13 07:33:24.650881 odroid systemd[1]: Starting Network Manager...
+Sep 13 07:33:24.692051 odroid systemd[1]: Started Save initial kernel messages after boot.
+Sep 13 07:33:24.736615 odroid systemd[1]: Starting Remove Stale Online ext4 Metadata Check Snapshots...
+Sep 13 07:33:24.748206 odroid systemd[1]: Condition check resulted in getty on tty2-tty6 if dbus and logind are not available being skipped.
+Sep 13 07:33:24.763443 odroid systemd[1]: Starting Dispatcher daemon for systemd-networkd...
+Sep 13 07:33:24.842093 odroid systemd[1]: Started Set the CPU Frequency Scaling governor.
+Sep 13 07:33:24.898092 odroid systemd[1]: Starting Restore /etc/resolv.conf if the system crashed before the ppp link was shut down...
+Sep 13 07:33:24.963764 odroid systemd[1]: Starting LSB: Run /etc/rc.local if it exist...
+Sep 13 07:33:25.015802 odroid systemd[1]: Starting System Logging Service...
+Sep 13 07:33:25.070792 odroid systemd[1]: Starting Login Service...
+Sep 13 07:33:25.136629 odroid systemd[1]: Condition check resulted in Ubuntu Advantage reboot cmds being skipped.
+Sep 13 07:33:25.144898 odroid systemd[1]: Starting WPA supplicant...
+Sep 13 07:33:25.178804 odroid systemd[1]: Started Network Name Resolution.
+Sep 13 07:33:25.206940 odroid systemd[1]: e2scrub_reap.service: Succeeded.
+Sep 13 07:33:25.210444 odroid systemd[1]: Finished Remove Stale Online ext4 Metadata Check Snapshots.
+Sep 13 07:33:25.264253 odroid systemd[1]: pppd-dns.service: Succeeded.
+Sep 13 07:33:25.269429 odroid systemd[1]: Finished Restore /etc/resolv.conf if the system crashed before the ppp link was shut down.
+Sep 13 07:33:25.324980 odroid systemd[1]: Finished Save/Restore Sound Card State.
+Sep 13 07:33:25.367866 odroid systemd-logind[357]: New seat seat0.
+Sep 13 07:33:25.387342 odroid avahi-daemon[343]: Successfully dropped root privileges.
+Sep 13 07:33:25.390499 odroid avahi-daemon[343]: avahi-daemon 0.7 starting up.
+Sep 13 07:33:25.395552 odroid systemd-logind[357]: Watching system buttons on /dev/input/event0 (gpio_keys)
+Sep 13 07:33:25.396835 odroid rsyslogd[355]: imuxsock: Acquired UNIX socket '/run/systemd/journal/syslog' (fd 3) from systemd.  [v8.2001.0]
+Sep 13 07:33:25.396901 odroid rsyslogd[355]: rsyslogd's groupid changed to 109
+Sep 13 07:33:25.396953 odroid rsyslogd[355]: rsyslogd's userid changed to 105
+Sep 13 07:33:25.397001 odroid rsyslogd[355]: [origin software="rsyslogd" swVersion="8.2001.0" x-pid="355" x-info="https://www.rsyslog.com"] start
+Sep 13 07:33:25.441263 odroid systemd[1]: Started System Logging Service.
+Sep 13 07:33:25.490084 odroid systemd[1]: Started LSB: Run /etc/rc.local if it exist.
+Sep 13 07:33:25.547064 odroid systemd[1]: Reached target Host and Network Name Lookups.
+Sep 13 07:33:25.558926 odroid systemd[1]: Reached target Sound Card.
+Sep 13 07:33:25.566109 odroid NetworkManager[346]: <info>  [1631518405.5650] NetworkManager (version 1.22.10) is starting... (for the first time)
+Sep 13 07:33:25.566240 odroid NetworkManager[346]: <info>  [1631518405.5661] Read config: /etc/NetworkManager/NetworkManager.conf (lib: 10-dns-resolved.conf, no-mac-addr-change.conf) (etc: 10-globally-managed-devices.conf, default-wifi-powersave-on.conf)
+Sep 13 07:33:25.603464 odroid systemd[1]: Starting Discard unused blocks on filesystems from /etc/fstab...
+Sep 13 07:33:25.642553 odroid systemd[1]: Starting Rotate log files...
+Sep 13 07:33:25.680552 odroid systemd[1]: Starting Daily man-db regeneration...
+Sep 13 07:33:25.720126 odroid dbus-daemon[345]: dbus[345]: Unknown username "whoopsie" in message bus configuration file
+Sep 13 07:33:26.338605 odroid systemd[1]: Started Login Service.
+Sep 13 07:33:26.339698 odroid wpa_supplicant[359]: Successfully initialized wpa_supplicant
+Sep 13 07:33:26.344606 odroid avahi-daemon[343]: Successfully called chroot().
+Sep 13 07:33:26.344711 odroid avahi-daemon[343]: Successfully dropped remaining capabilities.
+Sep 13 07:33:26.347459 odroid NetworkManager[346]: <info>  [1631518406.3473] bus-manager: acquired D-Bus service "org.freedesktop.NetworkManager"
+Sep 13 07:33:26.354013 odroid avahi-daemon[343]: No service file found in /etc/avahi/services.
+Sep 13 07:33:26.364156 odroid systemd[1]: Started WPA supplicant.
+Sep 13 07:33:26.390135 odroid avahi-daemon[343]: Joining mDNS multicast group on interface lo.IPv6 with address ::1.
+Sep 13 07:33:26.390837 odroid avahi-daemon[343]: New relevant interface lo.IPv6 for mDNS.
+Sep 13 07:33:26.390934 odroid avahi-daemon[343]: Joining mDNS multicast group on interface lo.IPv4 with address 127.0.0.1.
+Sep 13 07:33:26.391469 odroid avahi-daemon[343]: New relevant interface lo.IPv4 for mDNS.
+Sep 13 07:33:26.391559 odroid avahi-daemon[343]: Network interface enumeration completed.
+Sep 13 07:33:26.391687 odroid avahi-daemon[343]: Registering new address record for ::1 on lo.*.
+Sep 13 07:33:26.393313 odroid avahi-daemon[343]: Registering new address record for 127.0.0.1 on lo.IPv4.
+Sep 13 07:33:26.395299 odroid systemd[1]: Started Avahi mDNS/DNS-SD Stack.
+Sep 13 07:33:26.434428 odroid systemd[1]: Started Network Manager.
+Sep 13 07:33:26.450142 odroid NetworkManager[346]: <info>  [1631518406.4499] manager[0x713020]: monitoring kernel firmware directory '/lib/firmware'.
+Sep 13 07:33:26.450867 odroid NetworkManager[346]: <info>  [1631518406.4507] monitoring ifupdown state file '/run/network/ifstate'.
+Sep 13 07:33:26.463174 odroid dbus-daemon[345]: [system] Activating via systemd: service name='org.freedesktop.hostname1' unit='dbus-org.freedesktop.hostname1.service' requested by ':1.6' (uid=0 pid=346 comm="/usr/sbin/NetworkManager --no-daemon ")
+Sep 13 07:33:26.516296 odroid systemd[1]: Reached target Network.
+Sep 13 07:33:26.569375 odroid systemd[1]: Starting Network Manager Wait Online...
+Sep 13 07:33:26.601293 odroid systemd[1]: Starting NFS Mount Daemon...
+Sep 13 07:33:26.633384 odroid systemd[1]: Condition check resulted in fast remote file copy program daemon being skipped.
+Sep 13 07:33:26.646985 odroid systemd[1]: Starting LSB: SANE network scanner server...
+Sep 13 07:33:26.791478 odroid systemd[1]: Starting OpenBSD Secure Shell server...
+Sep 13 07:33:26.833502 odroid systemd[1]: Starting Hostname Service...
+Sep 13 07:33:26.878647 odroid systemd[1]: Starting Permit User Sessions...
+Sep 13 07:33:26.911021 odroid systemd[1]: Started Unattended Upgrades Shutdown.
+Sep 13 07:33:27.007708 odroid systemd[1]: Started LSB: SANE network scanner server.
+Sep 13 07:33:27.061044 odroid systemd[1]: Finished Permit User Sessions.
+Sep 13 07:33:27.065265 odroid rpc.mountd[391]: Version 1.3.3 starting
+Sep 13 07:33:27.106728 odroid systemd[1]: Started NFS Mount Daemon.
+Sep 13 07:33:27.127759 odroid dbus-daemon[345]: [system] Successfully activated service 'org.freedesktop.hostname1'
+Sep 13 07:33:27.134231 odroid NetworkManager[346]: <info>  [1631518407.1341] hostname: hostname: using hostnamed
+Sep 13 07:33:27.134378 odroid NetworkManager[346]: <info>  [1631518407.1342] hostname: hostname changed from (none) to "odroid"
+Sep 13 07:33:27.135691 odroid NetworkManager[346]: <info>  [1631518407.1355] dns-mgr[0x7168a8]: init: dns=systemd-resolved rc-manager=symlink, plugin=systemd-resolved
+Sep 13 07:33:27.157691 odroid systemd[1]: Started Hostname Service.
+Sep 13 07:33:27.201134 odroid systemd[1]: Starting NFS server and services...
+Sep 13 07:33:27.254093 odroid NetworkManager[346]: <info>  [1631518407.2539] Loaded device plugin: NMAtmManager (/usr/lib/arm-linux-gnueabihf/NetworkManager/1.22.10/libnm-device-plugin-adsl.so)
+Sep 13 07:33:27.264507 odroid systemd[1]: Starting Set console scheme...
+Sep 13 07:33:27.324058 odroid rsyslogd[355]: [origin software="rsyslogd" swVersion="8.2001.0" x-pid="355" x-info="https://www.rsyslog.com"] rsyslogd was HUPed
+Sep 13 07:33:27.397810 odroid avahi-daemon[343]: Server startup complete. Host name is odroid.local. Local service cookie is 2413240102.
+Sep 13 07:33:27.429194 odroid NetworkManager[346]: <info>  [1631518407.4290] Loaded device plugin: NMTeamFactory (/usr/lib/arm-linux-gnueabihf/NetworkManager/1.22.10/libnm-device-plugin-team.so)
+Sep 13 07:33:27.430880 odroid systemd[1]: Finished Set console scheme.
+Sep 13 07:33:27.496387 odroid systemd[1]: Created slice system-getty.slice.
+Sep 13 07:33:27.575258 odroid systemd[1]: logrotate.service: Succeeded.
+Sep 13 07:33:27.579709 odroid systemd[1]: Finished Rotate log files.
+Sep 13 07:33:27.615315 odroid sshd[400]: Server listening on 0.0.0.0 port 22.
+Sep 13 07:33:27.615631 odroid sshd[400]: Server listening on :: port 22.
+Sep 13 07:33:27.628710 odroid systemd[1]: Started OpenBSD Secure Shell server.
+Sep 13 07:33:27.765345 odroid NetworkManager[346]: <info>  [1631518407.7650] Loaded device plugin: NMWwanFactory (/usr/lib/arm-linux-gnueabihf/NetworkManager/1.22.10/libnm-device-plugin-wwan.so)
+Sep 13 07:33:27.874668 odroid NetworkManager[346]: <info>  [1631518407.8744] Loaded device plugin: NMWifiFactory (/usr/lib/arm-linux-gnueabihf/NetworkManager/1.22.10/libnm-device-plugin-wifi.so)
+Sep 13 07:33:28.026213 odroid NetworkManager[346]: <info>  [1631518408.0259] Loaded device plugin: NMBluezManager (/usr/lib/arm-linux-gnueabihf/NetworkManager/1.22.10/libnm-device-plugin-bluetooth.so)
+Sep 13 07:33:28.032133 odroid NetworkManager[346]: <info>  [1631518408.0319] manager: rfkill: Wi-Fi enabled by radio killswitch; enabled by state file
+Sep 13 07:33:28.033846 odroid NetworkManager[346]: <info>  [1631518408.0337] manager: rfkill: WWAN enabled by radio killswitch; enabled by state file
+Sep 13 07:33:28.034884 odroid NetworkManager[346]: <info>  [1631518408.0347] manager: Networking is enabled by state file
+Sep 13 07:33:28.036018 odroid NetworkManager[346]: <info>  [1631518408.0358] dhcp-init: Using DHCP client 'internal'
+Sep 13 07:33:28.037730 odroid dbus-daemon[345]: [system] Activating via systemd: service name='org.freedesktop.nm_dispatcher' unit='dbus-org.freedesktop.nm-dispatcher.service' requested by ':1.6' (uid=0 pid=346 comm="/usr/sbin/NetworkManager --no-daemon ")
+Sep 13 07:33:28.100934 odroid systemd[1]: Starting Network Manager Script Dispatcher Service...
+Sep 13 07:33:28.201167 odroid NetworkManager[346]: <info>  [1631518408.2008] settings: Loaded settings plugin: ifupdown ("/usr/lib/arm-linux-gnueabihf/NetworkManager/1.22.10/libnm-settings-plugin-ifupdown.so")
+Sep 13 07:33:28.201688 odroid NetworkManager[346]: <info>  [1631518408.2014] settings: Loaded settings plugin: keyfile (internal)
+Sep 13 07:33:28.202509 odroid NetworkManager[346]: <info>  [1631518408.2022] ifupdown: management mode: unmanaged
+Sep 13 07:33:28.287760 odroid NetworkManager[346]: <info>  [1631518408.2874] ifupdown:       interface-parser: parsing file /etc/network/interfaces
+Sep 13 07:33:28.339196 odroid dbus-daemon[345]: [system] Successfully activated service 'org.freedesktop.nm_dispatcher'
+Sep 13 07:33:28.340684 odroid systemd[1]: Started Network Manager Script Dispatcher Service.
+Sep 13 07:33:28.364525 odroid NetworkManager[346]: <info>  [1631518408.3643] ifupdown:       interface-parser: source line includes interfaces file(s) /etc/network/interfaces.d
+Sep 13 07:33:28.365061 odroid NetworkManager[346]: <warn>  [1631518408.3647] ifupdown: Failed to open directory /etc/network/interfaces.d: Error opening directory “/etc/network/interfaces.d”: No such file or directory
+Sep 13 07:33:28.365292 odroid NetworkManager[346]: <info>  [1631518408.3651] ifupdown:       interface-parser: finished parsing file /etc/network/interfaces
+Sep 13 07:33:28.524128 odroid NetworkManager[346]: <info>  [1631518408.5240] device (lo): carrier: link connected
+Sep 13 07:33:28.525505 odroid NetworkManager[346]: <info>  [1631518408.5253] manager: (lo): new Generic device (/org/freedesktop/NetworkManager/Devices/1)
+Sep 13 07:33:28.541962 odroid NetworkManager[346]: <info>  [1631518408.5418] manager: (eth0): new Ethernet device (/org/freedesktop/NetworkManager/Devices/2)
+Sep 13 07:33:28.553631 odroid NetworkManager[346]: <info>  [1631518408.5534] device (eth0): state change: unmanaged -> unavailable (reason 'managed', sys-iface-state: 'external')
+Sep 13 07:33:28.652017 odroid kernel: Generic PHY usb-001:002:01: attached PHY driver [Generic PHY] (mii_bus:phy_addr=usb-001:002:01, irq=POLL)
+Sep 13 07:33:28.671945 odroid kernel: smsc95xx 1-2:1.0 eth0: Link is Down
+Sep 13 07:33:28.692351 odroid NetworkManager[346]: <info>  [1631518408.6921] manager: (sit0): new IPTunnel device (/org/freedesktop/NetworkManager/Devices/3)
+Sep 13 07:33:28.702498 odroid NetworkManager[346]: <info>  [1631518408.7023] manager: (usb0): new Ethernet device (/org/freedesktop/NetworkManager/Devices/4)
+Sep 13 07:33:28.770896 odroid NetworkManager[346]: <warn>  [1631518408.7705] Error: failed to open /run/network/ifstate
+Sep 13 07:33:28.803951 odroid kernel: NFSD: Using UMH upcall client tracking operations.
+Sep 13 07:33:28.804857 odroid kernel: NFSD: starting 90-second grace period (net f0000109)
+Sep 13 07:33:28.826540 odroid networkd-dispatcher[408]: WARNING: systemd-networkd is not running, output will be incomplete.
+Sep 13 07:33:28.832511 odroid systemd[1]: Finished NFS server and services.
+Sep 13 07:33:28.939679 odroid systemd[1]: Started Dispatcher daemon for systemd-networkd.
+Sep 13 07:33:29.940161 odroid set-cpufreq[350]: Setting ondemand scheduler for all CPUs
+Sep 13 07:33:29.954640 odroid systemd[1]: ondemand.service: Succeeded.
+Sep 13 07:33:30.790728 odroid NetworkManager[346]: <info>  [1631518410.7905] device (eth0): carrier: link connected
+Sep 13 07:33:30.796711 odroid kernel: smsc95xx 1-2:1.0 eth0: Link is Up - 100Mbps/Full - flow control off
+Sep 13 07:33:30.798441 odroid NetworkManager[346]: <info>  [1631518410.7942] device (eth0): state change: unavailable -> disconnected (reason 'carrier-changed', sys-iface-state: 'managed')
+Sep 13 07:33:30.802593 odroid kernel: IPv6: ADDRCONF(NETDEV_CHANGE): eth0: link becomes ready
+Sep 13 07:33:30.811728 odroid NetworkManager[346]: <info>  [1631518410.8115] policy: auto-activating connection 'Wired connection 1' (d17eef77-138d-306c-9517-9a9930d9b291)
+Sep 13 07:33:30.816279 odroid NetworkManager[346]: <info>  [1631518410.8161] device (eth0): Activation: starting connection 'Wired connection 1' (d17eef77-138d-306c-9517-9a9930d9b291)
+Sep 13 07:33:30.819896 odroid NetworkManager[346]: <info>  [1631518410.8197] device (eth0): state change: disconnected -> prepare (reason 'none', sys-iface-state: 'managed')
+Sep 13 07:33:30.823238 odroid NetworkManager[346]: <info>  [1631518410.8231] manager: NetworkManager state is now CONNECTING
+Sep 13 07:33:30.829266 odroid NetworkManager[346]: <warn>  [1631518410.8291] platform-linux: do-change-link[4]: failure changing link: failure 16 (Device or resource busy)
+Sep 13 07:33:30.841917 odroid kernel: smsc95xx 1-2:1.0 eth0: Link is Down
+Sep 13 07:33:30.846277 odroid NetworkManager[346]: <info>  [1631518410.8461] device (eth0): set-hw-addr: set-cloned MAC address to 00:12:34:56:78:9A (00:12:34:56:78:9A)
+Sep 13 07:33:30.931906 odroid kernel: Generic PHY usb-001:002:01: attached PHY driver [Generic PHY] (mii_bus:phy_addr=usb-001:002:01, irq=POLL)
+Sep 13 07:33:30.942273 odroid kernel: smsc95xx 1-2:1.0 eth0: Link is Down
+Sep 13 07:33:30.946064 odroid NetworkManager[346]: <info>  [1631518410.9459] device (eth0): state change: prepare -> config (reason 'none', sys-iface-state: 'managed')
+Sep 13 07:33:30.951114 odroid NetworkManager[346]: <info>  [1631518410.9510] device (eth0): state change: config -> ip-config (reason 'none', sys-iface-state: 'managed')
+Sep 13 07:33:30.953218 odroid NetworkManager[346]: <info>  [1631518410.9531] dhcp4 (eth0): activation: beginning transaction (timeout in 45 seconds)
+Sep 13 07:33:31.021491 odroid avahi-daemon[343]: Joining mDNS multicast group on interface eth0.IPv6 with address fe80::11b6:7843:e271:3b42.
+Sep 13 07:33:31.022815 odroid avahi-daemon[343]: New relevant interface eth0.IPv6 for mDNS.
+Sep 13 07:33:31.022872 odroid avahi-daemon[343]: Registering new address record for fe80::11b6:7843:e271:3b42 on eth0.*.
+Sep 13 07:33:33.030817 odroid kernel: smsc95xx 1-2:1.0 eth0: Link is Up - 100Mbps/Full - flow control off
+Sep 13 07:33:33.038970 odroid NetworkManager[346]: <info>  [1631518413.0386] device (eth0): carrier: link connected
+Sep 13 07:33:33.045315 odroid kernel: IPv6: ADDRCONF(NETDEV_CHANGE): eth0: link becomes ready
+Sep 13 07:33:33.804122 odroid NetworkManager[346]: <info>  [1631518413.8038] dhcp4 (eth0): option dhcp_lease_time      => '4294967295'
+Sep 13 07:33:33.804418 odroid NetworkManager[346]: <info>  [1631518413.8042] dhcp4 (eth0): option domain_name_servers  => '192.168.0.1 91.144.186.3'
+Sep 13 07:33:33.804664 odroid NetworkManager[346]: <info>  [1631518413.8044] dhcp4 (eth0): option interface_mtu        => '576'
+Sep 13 07:33:33.804896 odroid NetworkManager[346]: <info>  [1631518413.8047] dhcp4 (eth0): option ip_address           => '192.168.0.199'
+Sep 13 07:33:33.805132 odroid NetworkManager[346]: <info>  [1631518413.8049] dhcp4 (eth0): option requested_broadcast_address => '1'
+Sep 13 07:33:33.805363 odroid NetworkManager[346]: <info>  [1631518413.8051] dhcp4 (eth0): option requested_domain_name => '1'
+Sep 13 07:33:33.805594 odroid NetworkManager[346]: <info>  [1631518413.8054] dhcp4 (eth0): option requested_domain_name_servers => '1'
+Sep 13 07:33:33.805828 odroid NetworkManager[346]: <info>  [1631518413.8056] dhcp4 (eth0): option requested_domain_search => '1'
+Sep 13 07:33:33.806057 odroid NetworkManager[346]: <info>  [1631518413.8058] dhcp4 (eth0): option requested_host_name  => '1'
+Sep 13 07:33:33.806293 odroid NetworkManager[346]: <info>  [1631518413.8061] dhcp4 (eth0): option requested_interface_mtu => '1'
+Sep 13 07:33:33.806525 odroid NetworkManager[346]: <info>  [1631518413.8063] dhcp4 (eth0): option requested_ms_classless_static_routes => '1'
+Sep 13 07:33:33.806752 odroid NetworkManager[346]: <info>  [1631518413.8065] dhcp4 (eth0): option requested_nis_domain => '1'
+Sep 13 07:33:33.806988 odroid NetworkManager[346]: <info>  [1631518413.8068] dhcp4 (eth0): option requested_nis_servers => '1'
+Sep 13 07:33:33.807220 odroid NetworkManager[346]: <info>  [1631518413.8070] dhcp4 (eth0): option requested_ntp_servers => '1'
+Sep 13 07:33:33.807454 odroid NetworkManager[346]: <info>  [1631518413.8072] dhcp4 (eth0): option requested_rfc3442_classless_static_routes => '1'
+Sep 13 07:33:33.807680 odroid NetworkManager[346]: <info>  [1631518413.8075] dhcp4 (eth0): option requested_root_path  => '1'
+Sep 13 07:33:33.807909 odroid NetworkManager[346]: <info>  [1631518413.8077] dhcp4 (eth0): option requested_routers    => '1'
+Sep 13 07:33:33.808224 odroid NetworkManager[346]: <info>  [1631518413.8079] dhcp4 (eth0): option requested_static_routes => '1'
+Sep 13 07:33:33.808501 odroid NetworkManager[346]: <info>  [1631518413.8082] dhcp4 (eth0): option requested_subnet_mask => '1'
+Sep 13 07:33:33.808747 odroid NetworkManager[346]: <info>  [1631518413.8085] dhcp4 (eth0): option requested_time_offset => '1'
+Sep 13 07:33:33.808985 odroid NetworkManager[346]: <info>  [1631518413.8087] dhcp4 (eth0): option requested_wpad       => '1'
+Sep 13 07:33:33.809218 odroid NetworkManager[346]: <info>  [1631518413.8090] dhcp4 (eth0): option routers              => '192.168.0.1'
+Sep 13 07:33:33.809448 odroid NetworkManager[346]: <info>  [1631518413.8092] dhcp4 (eth0): option subnet_mask          => '255.255.255.0'
+Sep 13 07:33:33.809680 odroid NetworkManager[346]: <info>  [1631518413.8094] dhcp4 (eth0): state changed unknown -> bound
+Sep 13 07:33:33.826959 odroid avahi-daemon[343]: Joining mDNS multicast group on interface eth0.IPv4 with address 192.168.0.199.
+Sep 13 07:33:33.827901 odroid avahi-daemon[343]: New relevant interface eth0.IPv4 for mDNS.
+Sep 13 07:33:33.828108 odroid avahi-daemon[343]: Registering new address record for 192.168.0.199 on eth0.IPv4.
+Sep 13 07:33:33.833071 odroid NetworkManager[346]: <info>  [1631518413.8328] device (eth0): state change: ip-config -> ip-check (reason 'none', sys-iface-state: 'managed')
+Sep 13 07:33:34.010955 odroid NetworkManager[346]: <info>  [1631518414.0105] device (eth0): state change: ip-check -> secondaries (reason 'none', sys-iface-state: 'managed')
+Sep 13 07:33:34.018964 odroid NetworkManager[346]: <info>  [1631518414.0183] device (eth0): state change: secondaries -> activated (reason 'none', sys-iface-state: 'managed')
+Sep 13 07:33:34.025762 odroid NetworkManager[346]: <info>  [1631518414.0255] manager: NetworkManager state is now CONNECTED_LOCAL
+Sep 13 07:33:34.034730 odroid NetworkManager[346]: <info>  [1631518414.0345] manager: NetworkManager state is now CONNECTED_SITE
+Sep 13 07:33:34.035347 odroid NetworkManager[346]: <info>  [1631518414.0352] policy: set 'Wired connection 1' (eth0) as default for IPv4 routing and DNS
+Sep 13 07:33:34.039887 odroid NetworkManager[346]: <info>  [1631518414.0397] device (eth0): Activation: successful, device activated.
+Sep 13 07:33:34.044766 odroid NetworkManager[346]: <info>  [1631518414.0446] manager: NetworkManager state is now CONNECTED_GLOBAL
+Sep 13 07:33:34.048368 odroid NetworkManager[346]: <info>  [1631518414.0482] manager: startup complete
+Sep 13 07:33:34.070140 odroid systemd[1]: Finished Network Manager Wait Online.
+Sep 13 07:33:34.073738 odroid systemd[1]: Reached target Network is Online.
+Sep 13 07:33:34.084253 odroid systemd[1]: Starting ODROID Specific System Tweaks...
+Sep 13 07:33:34.094147 odroid systemd[1]: Starting LSB: Start OpenHPI daemon at boot time...
+Sep 13 07:33:34.104315 odroid systemd[1]: Starting /etc/rc.local Compatibility...
+Sep 13 07:33:34.114118 odroid systemd[1]: openhpid.service: Can't open PID file /run/openhpid.pid (yet?) after start: Operation not permitted
+Sep 13 07:33:34.115339 odroid systemd[1]: openhpid.service: Failed with result 'protocol'.
+Sep 13 07:33:34.119642 odroid systemd[1]: Failed to start LSB: Start OpenHPI daemon at boot time.
+Sep 13 07:33:34.127563 odroid systemd[1]: Started /etc/rc.local Compatibility.
+Sep 13 07:33:34.141514 odroid systemd[1]: Started Getty on tty1.
+Sep 13 07:33:34.170697 odroid systemd[1]: Started Serial Getty on ttySAC1.
+Sep 13 07:33:34.175710 odroid systemd[1]: Reached target Login Prompts.
+Sep 13 07:33:34.708965 odroid odroid-tweaks[442]: /bin/odroid-tweaks: line 4: /proc/irq//smp_affinity_list: No such file or directory
+Sep 13 07:33:34.713968 odroid odroid-tweaks[442]: /bin/odroid-tweaks: line 5: /proc/irq//smp_affinity_list: No such file or directory
+Sep 13 07:33:34.761043 odroid fstrim[370]: /: 2.3 GiB (2432798720 bytes) trimmed on /dev/mmcblk1p2
+Sep 13 07:33:34.761043 odroid fstrim[370]: /media/boot: 79.4 MiB (83286016 bytes) trimmed on /dev/mmcblk0p1
+Sep 13 07:33:34.771667 odroid systemd[1]: fstrim.service: Succeeded.
+Sep 13 07:33:34.778369 odroid systemd[1]: Finished Discard unused blocks on filesystems from /etc/fstab.
+Sep 13 07:33:34.955980 odroid systemd[1]: Started ODROID Specific System Tweaks.
+Sep 13 07:33:34.959726 odroid systemd[1]: Reached target Multi-User System.
+Sep 13 07:33:34.974993 odroid systemd[1]: Starting Update UTMP about System Runlevel Changes...
+Sep 13 07:33:35.041740 odroid systemd[1]: systemd-update-utmp-runlevel.service: Succeeded.
+Sep 13 07:33:35.045289 odroid systemd[1]: Finished Update UTMP about System Runlevel Changes.
+Sep 13 07:33:37.171596 odroid systemd[1]: dmesg.service: Succeeded.
+Sep 13 07:33:37.812119 odroid systemd[1]: man-db.service: Succeeded.
+Sep 13 07:33:37.814996 odroid systemd[1]: Finished Daily man-db regeneration.
+Sep 13 07:33:37.817205 odroid systemd[1]: Startup finished in 10.109s (kernel) + 24.765s (userspace) = 34.875s.
+Sep 13 07:33:44.991289 odroid systemd[1]: NetworkManager-dispatcher.service: Succeeded.
+Sep 13 07:33:51.434521 odroid systemd[1]: systemd-fsckd.service: Succeeded.
+Sep 13 07:33:53.603929 odroid systemd-timesyncd[338]: Initial synchronization to time server 91.189.89.199:123 (ntp.ubuntu.com).
+Sep 13 07:33:56.685350 odroid systemd[1]: systemd-hostnamed.service: Succeeded.
+Sep 13 07:36:02.723817 odroid sshd[508]: Accepted publickey for odroid from 192.168.0.100 port 57588 ssh2: RSA SHA256:5EIYWylj3egRvmEp1Gq3pkF7Y6OWpZ+eu9Bzo4Dnsjg
+Sep 13 07:36:02.755981 odroid sshd[508]: pam_unix(sshd:session): session opened for user odroid by (uid=0)
+Sep 13 07:36:02.806662 odroid systemd[1]: Created slice User Slice of UID 1000.
+Sep 13 07:36:02.819161 odroid systemd[1]: Starting User Runtime Directory /run/user/1000...
+Sep 13 07:36:02.831713 odroid systemd-logind[357]: New session c1 of user odroid.
+Sep 13 07:36:02.888132 odroid systemd[1]: Finished User Runtime Directory /run/user/1000.
+Sep 13 07:36:02.901555 odroid systemd[1]: Starting User Manager for UID 1000...
+Sep 13 07:36:02.971290 odroid systemd[513]: pam_unix(systemd-user:session): session opened for user odroid by (uid=0)
+Sep 13 07:36:04.976020 odroid systemd[513]: Reached target Paths.
+Sep 13 07:36:04.979008 odroid systemd[513]: Reached target Timers.
+Sep 13 07:36:04.990058 odroid systemd[513]: Starting D-Bus User Message Bus Socket.
+Sep 13 07:36:04.993232 odroid systemd[513]: Listening on GnuPG network certificate management daemon.
+Sep 13 07:36:04.996887 odroid systemd[513]: Listening on GnuPG cryptographic agent and passphrase cache (access for web browsers).
+Sep 13 07:36:04.999144 odroid systemd[513]: Listening on GnuPG cryptographic agent and passphrase cache (restricted).
+Sep 13 07:36:05.000842 odroid systemd[513]: Listening on GnuPG cryptographic agent (ssh-agent emulation).
+Sep 13 07:36:05.002596 odroid systemd[513]: Listening on GnuPG cryptographic agent and passphrase cache.
+Sep 13 07:36:05.012993 odroid systemd[513]: Listening on debconf communication socket.
+Sep 13 07:36:05.039171 odroid systemd[513]: Listening on D-Bus User Message Bus Socket.
+Sep 13 07:36:05.040621 odroid systemd[513]: Reached target Sockets.
+Sep 13 07:36:05.040803 odroid systemd[513]: Reached target Basic System.
+Sep 13 07:36:05.041692 odroid systemd[1]: Started User Manager for UID 1000.
+Sep 13 07:36:05.042345 odroid systemd[513]: Reached target Main User Target.
+Sep 13 07:36:05.042637 odroid systemd[513]: Startup finished in 2.005s.
+Sep 13 07:36:05.049771 odroid systemd[1]: Started Session c1 of user odroid.
+Sep 13 07:40:30.672188 odroid sshd[567]: Accepted publickey for odroid from 192.168.0.100 port 57598 ssh2: RSA SHA256:5EIYWylj3egRvmEp1Gq3pkF7Y6OWpZ+eu9Bzo4Dnsjg
+Sep 13 07:40:30.701317 odroid sshd[567]: pam_unix(sshd:session): session opened for user odroid by (uid=0)
+Sep 13 07:40:30.727170 odroid systemd-logind[357]: New session c2 of user odroid.
+Sep 13 07:40:30.731876 odroid systemd[1]: Started Session c2 of user odroid.
+Sep 13 07:40:43.005233 odroid sudo[827]:   odroid : TTY=pts/0 ; PWD=/home/odroid/devel/module ; USER=root ; COMMAND=/bin/journalctl -ft kernel -o short-monotonic --no-hostname
+Sep 13 07:40:43.037328 odroid sudo[827]: pam_unix(sudo:session): session opened for user root by odroid(uid=0)
+Sep 13 07:41:26.366962 odroid sudo[1135]:   odroid : TTY=pts/1 ; PWD=/home/odroid/devel/module ; USER=root ; COMMAND=/sbin/insmod cdmx.ko cdmx_port_count=1
+Sep 13 07:41:26.404745 odroid sudo[1135]: pam_unix(sudo:session): session opened for user root by odroid(uid=0)
+Sep 13 07:41:26.453850 odroid kernel: cdmx: loading out-of-tree module taints kernel.
+Sep 13 07:41:26.455132 odroid kernel: cdmx: 891: cdmx_init: start
+Sep 13 07:41:26.455916 odroid kernel: cdmx: 899: cdmx_init: using port count 1
+Sep 13 07:41:26.456710 odroid kernel: cdmx: 790: cdmx_create_cdevs: start
+Sep 13 07:41:26.457300 odroid kernel: cdmx: 853: cdmx_create_cdevs: ->>> done
+Sep 13 07:41:26.457797 odroid kernel: cdmx: 930: cdmx_init: ->>> done
+Sep 13 07:41:26.459501 odroid sudo[1135]: pam_unix(sudo:session): session closed for user root
+Sep 13 07:41:44.861392 odroid sudo[1148]:   odroid : TTY=pts/1 ; PWD=/home/odroid/devel/module ; USER=root ; COMMAND=/usr/sbin/service olad start
+Sep 13 07:41:44.897419 odroid sudo[1148]: pam_unix(sudo:session): session opened for user root by odroid(uid=0)
+Sep 13 07:41:52.890114 odroid systemd[1]: Starting LSB: OLA daemon...
+Sep 13 07:41:52.961080 odroid olad[1161]:  * Starting OLA daemon olad
+Sep 13 07:41:52.984136 odroid olad[1161]:    ...done.
+Sep 13 07:41:52.987138 odroid systemd[1]: Started LSB: OLA daemon.
+Sep 13 07:41:53.003454 odroid sudo[1148]: pam_unix(sudo:session): session closed for user root
+Sep 13 07:41:53.900202 odroid olad[1166]: olad/Olad.cpp:94: OLA Daemon version 0.10.5
+Sep 13 07:41:53.909669 odroid olad[1166]: olad/OlaDaemon.cpp:121: Using configs in /etc/ola
+Sep 13 07:41:53.910975 odroid olad[1166]: common/thread/Thread.cpp:194: Thread pref-saver, policy SCHED_OTHER, priority 0
+Sep 13 07:41:54.008241 odroid olad[1166]: olad/OlaServer.cpp:194: Server UID is 7a70:c700a8c0
+Sep 13 07:41:54.020409 odroid olad[1166]: olad/OlaServer.cpp:206: Server instance name is OLA Server
+Sep 13 07:41:54.020695 odroid olad[1166]: olad/plugin_api/Preferences.cpp:424: Missing /etc/ola/ola-universe.conf: No such file or directory - this isn't an error, we'll just use the defaults
+Sep 13 07:41:54.025533 odroid olad[1166]: common/thread/Thread.cpp:194: Thread http, policy SCHED_OTHER, priority 0
+Sep 13 07:41:54.025640 odroid olad[1166]: common/http/HTTPServer.cpp:496: HTTP Server started on port 9090
+Sep 13 07:41:54.025845 odroid olad[1166]: olad/OlaServer.cpp:481: Updated PID definitions.
+Sep 13 07:41:54.025935 odroid olad[1166]: olad/OlaServer.cpp:489: PID store is at 0x57a650
+Sep 13 07:41:54.027290 odroid olad[1166]: common/thread/Thread.cpp:194: Thread signal-thread, policy SCHED_OTHER, priority 0
+Sep 13 07:41:54.030037 odroid olad[1166]: olad/PluginManager.cpp:73: Skipping ArtNet because it was disabled
+Sep 13 07:41:54.033457 odroid olad[1166]: olad/PluginManager.cpp:73: Skipping E1.31 (sACN) because it was disabled
+Sep 13 07:41:54.035590 odroid olad[1166]: olad/PluginManager.cpp:73: Skipping ESP Net because it was disabled
+Sep 13 07:41:54.037977 odroid olad[1166]: olad/PluginManager.cpp:73: Skipping GPIO because it was disabled
+Sep 13 07:41:54.040165 odroid olad[1166]: olad/PluginManager.cpp:73: Skipping KarateLight because it was disabled
+Sep 13 07:41:54.044820 odroid olad[1166]: olad/PluginManager.cpp:73: Skipping KiNET because it was disabled
+Sep 13 07:41:54.047086 odroid olad[1166]: olad/PluginManager.cpp:73: Skipping Milford Instruments because it was disabled
+Sep 13 07:41:54.049292 odroid olad[1166]: olad/PluginManager.cpp:73: Skipping Enttec Open DMX because it was disabled
+Sep 13 07:41:54.051921 odroid olad[1166]: olad/PluginManager.cpp:73: Skipping Open Pixel Control because it was disabled
+Sep 13 07:41:54.059605 odroid olad[1166]: olad/PluginManager.cpp:73: Skipping OSC because it was disabled
+Sep 13 07:41:54.061636 odroid olad[1166]: olad/PluginManager.cpp:73: Skipping Renard because it was disabled
+Sep 13 07:41:54.063956 odroid olad[1166]: olad/PluginManager.cpp:73: Skipping SandNet because it was disabled
+Sep 13 07:41:54.066403 odroid olad[1166]: olad/PluginManager.cpp:73: Skipping ShowNet because it was disabled
+Sep 13 07:41:54.071191 odroid olad[1166]: olad/PluginManager.cpp:73: Skipping SPI because it was disabled
+Sep 13 07:41:54.073085 odroid olad[1166]: olad/PluginManager.cpp:73: Skipping StageProfi because it was disabled
+Sep 13 07:41:54.077987 odroid olad[1166]: olad/PluginManager.cpp:73: Skipping USB because it was disabled
+Sep 13 07:41:54.079937 odroid olad[1166]: olad/PluginManager.cpp:73: Skipping Pathport because it was disabled
+Sep 13 07:41:54.082017 odroid olad[1166]: olad/PluginManager.cpp:73: Skipping FTDI USB DMX because it was disabled
+Sep 13 07:41:54.083659 odroid olad[1166]: olad/PluginManager.cpp:73: Skipping UART native DMX because it was disabled
+Sep 13 07:41:54.083914 odroid olad[1166]: olad/PluginManager.cpp:195: Trying to start Dummy
+Sep 13 07:41:54.086245 odroid olad[1166]: olad/plugin_api/DeviceManager.cpp:105: Installed device: Dummy Device:1-1
+Sep 13 07:41:54.086411 odroid olad[1166]: olad/PluginManager.cpp:200: Started Dummy
+Sep 13 07:41:54.086533 odroid olad[1166]: olad/PluginManager.cpp:195: Trying to start Serial USB
+Sep 13 07:41:54.087472 odroid olad[1166]: common/thread/Thread.cpp:194: Thread , policy SCHED_OTHER, priority 0
+Sep 13 07:41:54.107268 odroid olad[1166]: plugins/usbpro/WidgetDetectorThread.cpp:215: Found potential USB Serial device at /dev/cdmx000
+Sep 13 07:41:54.108086 odroid olad[1166]: common/io/Serial.cpp:197: Acquired /var/lock/LCK..cdmx000
+Sep 13 07:41:54.108614 odroid olad[1166]: plugins/usbpro/WidgetDetectorThread.cpp:384: trying stage 0 for 0xb3200e60
+Sep 13 07:41:54.110451 odroid olad[1166]: olad/PluginManager.cpp:200: Started Serial USB
+Sep 13 07:41:54.113807 odroid kernel: cdmx: 255: cdmx_open: file cdmx000, cdata 670215c7 dev_t F500000
+Sep 13 07:41:54.114783 odroid kernel: cdmx: 261: cdmx_open: ->>> done
+Sep 13 07:41:54.115281 odroid kernel: cdmx: 672: cdmx_ioctl: cmd 0x540C, param 0x4DBC4500
+Sep 13 07:41:54.115830 odroid kernel: cdmx: 672: cdmx_ioctl: cmd 0x5401, param 0xB3BFE778
+Sep 13 07:41:54.116232 odroid kernel: cdmx: 672: cdmx_ioctl: cmd 0x5402, param 0xB3BFE754
+Sep 13 07:41:54.116616 odroid kernel: cdmx: 652: cdmx_poll: port 0
+Sep 13 07:41:54.117095 odroid kernel: cdmx: 529: cdmx_write: port 0
+Sep 13 07:41:54.117590 odroid kernel: cdmx: 444: cdmx_enttec_msg: new message pending
+Sep 13 07:41:54.117995 odroid kernel: cdmx: 448: cdmx_enttec_msg: ->>> TX not implemented yet
+Sep 13 07:41:54.118374 odroid kernel: cdmx: 560: cdmx_write: ->>> done file cdmx000, id 0, result 5
+Sep 13 07:41:54.315285 odroid kernel: cdmx: 529: cdmx_write: port 0
+Sep 13 07:41:54.316192 odroid kernel: cdmx: 385: cdmx_enttec_msg: output frame is pending, message is dropped: port 0, label 78
+Sep 13 07:41:54.317520 odroid kernel: cdmx: 560: cdmx_write: ->>> done file cdmx000, id 0, result 5
+Sep 13 07:41:54.524508 odroid kernel: cdmx: 529: cdmx_write: port 0
+Sep 13 07:41:54.527424 odroid kernel: cdmx: 385: cdmx_enttec_msg: output frame is pending, message is dropped: port 0, label 10
+Sep 13 07:41:54.530913 odroid kernel: cdmx: 560: cdmx_write: ->>> done file cdmx000, id 0, result 5
+Sep 13 07:41:54.727203 odroid olad[1166]: plugins/usbpro/UsbProWidgetDetector.cpp:323: USB Widget didn't respond to messages, esta id 0, device id 0
+Sep 13 07:41:54.727544 odroid olad[1166]: plugins/usbpro/UsbProWidgetDetector.cpp:326: Is device in USB Controller mode if it's a Goddard?
+Sep 13 07:41:54.728028 odroid olad[1166]: plugins/usbpro/WidgetDetectorThread.cpp:384: trying stage 1 for 0xb3200e60
+Sep 13 07:41:54.738117 odroid kernel: cdmx: 652: cdmx_poll: port 0
+Sep 13 07:41:54.739856 odroid kernel: cdmx: 529: cdmx_write: port 0
+Sep 13 07:41:54.741126 odroid kernel: cdmx: 560: cdmx_write: ->>> done file cdmx000, id 0, result 6
+Sep 13 07:41:54.742790 odroid kernel: cdmx: 652: cdmx_poll: port 0
+Sep 13 07:41:54.744366 odroid kernel: cdmx: 672: cdmx_ioctl: cmd 0x541B, param 0xB3BFE338
+Sep 13 07:41:54.745910 odroid kernel: cdmx: 574: cdmx_read: port 0
+Sep 13 07:41:54.747384 odroid kernel: cdmx: 589: cdmx_read: size 9, lsb 1, msb 0
+Sep 13 07:41:54.748618 odroid kernel: cdmx: 607: cdmx_read: header 1 byte(s)
+Sep 13 07:41:54.749865 odroid kernel: cdmx: 630: cdmx_read: footer 1 byte(s)
+Sep 13 07:41:54.751172 odroid kernel: cdmx: 642: cdmx_read: ->>> 2 bytes total read
+Sep 13 07:41:54.752817 odroid kernel: cdmx: 672: cdmx_ioctl: cmd 0x541B, param 0xB3BFE338
+Sep 13 07:41:54.754310 odroid kernel: cdmx: 652: cdmx_poll: port 0
+Sep 13 07:41:54.930156 odroid olad[1166]: plugins/usbpro/WidgetDetectorThread.cpp:381: no more detectors to try for  0xb3200e60
+Sep 13 07:41:54.931971 odroid olad[1166]: common/io/Serial.cpp:245: Released /var/lock/LCK..cdmx000
+Sep 13 07:41:54.946657 odroid kernel: cdmx: 269: cdmx_release: file cdmx000, cdata 670215c7 dev_t F500000
+Sep 13 07:42:14.155212 odroid olad[1166]: plugins/usbpro/WidgetDetectorThread.cpp:215: Found potential USB Serial device at /dev/cdmx000
+Sep 13 07:42:14.155606 odroid olad[1166]: common/io/Serial.cpp:197: Acquired /var/lock/LCK..cdmx000
+Sep 13 07:42:14.155969 odroid olad[1166]: plugins/usbpro/WidgetDetectorThread.cpp:384: trying stage 0 for 0xb3200e60
+Sep 13 07:42:14.165824 odroid kernel: cdmx: 255: cdmx_open: file cdmx000, cdata 670215c7 dev_t F500000
+Sep 13 07:42:14.166646 odroid kernel: cdmx: 261: cdmx_open: ->>> done
+Sep 13 07:42:14.167188 odroid kernel: cdmx: 672: cdmx_ioctl: cmd 0x540C, param 0x4DBC4500
+Sep 13 07:42:14.167777 odroid kernel: cdmx: 672: cdmx_ioctl: cmd 0x5401, param 0xB3BFE400
+Sep 13 07:42:14.168266 odroid kernel: cdmx: 672: cdmx_ioctl: cmd 0x5402, param 0xB3BFE3DC
+Sep 13 07:42:14.168817 odroid kernel: cdmx: 652: cdmx_poll: port 0
+Sep 13 07:42:14.169291 odroid kernel: cdmx: 529: cdmx_write: port 0
+Sep 13 07:42:14.169758 odroid kernel: cdmx: 444: cdmx_enttec_msg: new message pending
+Sep 13 07:42:14.170169 odroid kernel: cdmx: 448: cdmx_enttec_msg: ->>> TX not implemented yet
+Sep 13 07:42:14.170588 odroid kernel: cdmx: 560: cdmx_write: ->>> done file cdmx000, id 0, result 5
+Sep 13 07:42:14.364500 odroid kernel: cdmx: 529: cdmx_write: port 0
+Sep 13 07:42:14.367343 odroid kernel: cdmx: 385: cdmx_enttec_msg: output frame is pending, message is dropped: port 0, label 78
+Sep 13 07:42:14.371082 odroid kernel: cdmx: 560: cdmx_write: ->>> done file cdmx000, id 0, result 5
+Sep 13 07:42:14.574067 odroid kernel: cdmx: 529: cdmx_write: port 0
+Sep 13 07:42:14.575719 odroid kernel: cdmx: 385: cdmx_enttec_msg: output frame is pending, message is dropped: port 0, label 10
+Sep 13 07:42:14.577187 odroid kernel: cdmx: 560: cdmx_write: ->>> done file cdmx000, id 0, result 5
+Sep 13 07:42:14.771464 odroid olad[1166]: plugins/usbpro/UsbProWidgetDetector.cpp:323: USB Widget didn't respond to messages, esta id 0, device id 0
+Sep 13 07:42:14.771856 odroid olad[1166]: plugins/usbpro/UsbProWidgetDetector.cpp:326: Is device in USB Controller mode if it's a Goddard?
+Sep 13 07:42:14.772379 odroid olad[1166]: plugins/usbpro/WidgetDetectorThread.cpp:384: trying stage 1 for 0xb3200e60
+Sep 13 07:42:14.777689 odroid kernel: cdmx: 652: cdmx_poll: port 0
+Sep 13 07:42:14.779193 odroid kernel: cdmx: 529: cdmx_write: port 0
+Sep 13 07:42:14.779953 odroid kernel: cdmx: 560: cdmx_write: ->>> done file cdmx000, id 0, result 6
+Sep 13 07:42:14.780707 odroid kernel: cdmx: 652: cdmx_poll: port 0
+Sep 13 07:42:14.781354 odroid kernel: cdmx: 672: cdmx_ioctl: cmd 0x541B, param 0xB3BFE338
+Sep 13 07:42:14.782157 odroid kernel: cdmx: 574: cdmx_read: port 0
+Sep 13 07:42:14.782889 odroid kernel: cdmx: 589: cdmx_read: size 9, lsb 1, msb 0
+Sep 13 07:42:14.783517 odroid kernel: cdmx: 607: cdmx_read: header 1 byte(s)
+Sep 13 07:42:14.784475 odroid kernel: cdmx: 630: cdmx_read: footer 1 byte(s)
+Sep 13 07:42:14.785158 odroid kernel: cdmx: 642: cdmx_read: ->>> 2 bytes total read
+Sep 13 07:42:14.785806 odroid kernel: cdmx: 672: cdmx_ioctl: cmd 0x541B, param 0xB3BFE338
+Sep 13 07:42:14.786432 odroid kernel: cdmx: 652: cdmx_poll: port 0
+Sep 13 07:42:14.975286 odroid olad[1166]: common/io/TimeoutManager.cpp:92: timeout 0xb3201274 already in remove set
+Sep 13 07:42:14.975985 odroid olad[1166]: plugins/usbpro/WidgetDetectorThread.cpp:381: no more detectors to try for  0xb3200e60
+Sep 13 07:42:14.978218 odroid olad[1166]: common/io/Serial.cpp:245: Released /var/lock/LCK..cdmx000
+Sep 13 07:42:14.985427 odroid kernel: cdmx: 269: cdmx_release: file cdmx000, cdata 670215c7 dev_t F500000
+Sep 13 07:42:34.158236 odroid olad[1166]: plugins/usbpro/WidgetDetectorThread.cpp:215: Found potential USB Serial device at /dev/cdmx000
+Sep 13 07:42:34.161441 odroid olad[1166]: common/io/Serial.cpp:197: Acquired /var/lock/LCK..cdmx000
+Sep 13 07:42:34.161883 odroid olad[1166]: plugins/usbpro/WidgetDetectorThread.cpp:384: trying stage 0 for 0xb3200e60
+Sep 13 07:42:34.164191 odroid kernel: cdmx: 255: cdmx_open: file cdmx000, cdata 670215c7 dev_t F500000
+Sep 13 07:42:34.164963 odroid kernel: cdmx: 261: cdmx_open: ->>> done
+Sep 13 07:42:34.165443 odroid kernel: cdmx: 672: cdmx_ioctl: cmd 0x540C, param 0x4DBC4500
+Sep 13 07:42:34.165948 odroid kernel: cdmx: 672: cdmx_ioctl: cmd 0x5401, param 0xB3BFE400
+Sep 13 07:42:34.166347 odroid kernel: cdmx: 672: cdmx_ioctl: cmd 0x5402, param 0xB3BFE3DC
+Sep 13 07:42:34.166691 odroid kernel: cdmx: 652: cdmx_poll: port 0
+Sep 13 07:42:34.167115 odroid kernel: cdmx: 529: cdmx_write: port 0
+Sep 13 07:42:34.167514 odroid kernel: cdmx: 444: cdmx_enttec_msg: new message pending
+Sep 13 07:42:34.167898 odroid kernel: cdmx: 448: cdmx_enttec_msg: ->>> TX not implemented yet
+Sep 13 07:42:34.168326 odroid kernel: cdmx: 560: cdmx_write: ->>> done file cdmx000, id 0, result 5
+Sep 13 07:42:34.368130 odroid kernel: cdmx: 529: cdmx_write: port 0
+Sep 13 07:42:34.369643 odroid kernel: cdmx: 385: cdmx_enttec_msg: output frame is pending, message is dropped: port 0, label 78
+Sep 13 07:42:34.371573 odroid kernel: cdmx: 560: cdmx_write: ->>> done file cdmx000, id 0, result 5
+Sep 13 07:42:34.574296 odroid kernel: cdmx: 529: cdmx_write: port 0
+Sep 13 07:42:34.575980 odroid kernel: cdmx: 385: cdmx_enttec_msg: output frame is pending, message is dropped: port 0, label 10
+Sep 13 07:42:34.577433 odroid kernel: cdmx: 560: cdmx_write: ->>> done file cdmx000, id 0, result 5
+Sep 13 07:42:34.776131 odroid olad[1166]: plugins/usbpro/UsbProWidgetDetector.cpp:323: USB Widget didn't respond to messages, esta id 0, device id 0
+Sep 13 07:42:34.776626 odroid olad[1166]: plugins/usbpro/UsbProWidgetDetector.cpp:326: Is device in USB Controller mode if it's a Goddard?
+Sep 13 07:42:34.777234 odroid olad[1166]: plugins/usbpro/WidgetDetectorThread.cpp:384: trying stage 1 for 0xb3200e60
+Sep 13 07:42:34.790171 odroid kernel: cdmx: 652: cdmx_poll: port 0
+Sep 13 07:42:34.791492 odroid kernel: cdmx: 529: cdmx_write: port 0
+Sep 13 07:42:34.792989 odroid kernel: cdmx: 560: cdmx_write: ->>> done file cdmx000, id 0, result 6
+Sep 13 07:42:34.794821 odroid kernel: cdmx: 652: cdmx_poll: port 0
+Sep 13 07:42:34.796063 odroid kernel: cdmx: 672: cdmx_ioctl: cmd 0x541B, param 0xB3BFE338
+Sep 13 07:42:34.797103 odroid kernel: cdmx: 574: cdmx_read: port 0
+Sep 13 07:42:34.798526 odroid kernel: cdmx: 589: cdmx_read: size 9, lsb 1, msb 0
+Sep 13 07:42:34.799749 odroid kernel: cdmx: 607: cdmx_read: header 1 byte(s)
+Sep 13 07:42:34.801195 odroid kernel: cdmx: 630: cdmx_read: footer 1 byte(s)
+Sep 13 07:42:34.803002 odroid kernel: cdmx: 642: cdmx_read: ->>> 2 bytes total read
+Sep 13 07:42:34.804824 odroid kernel: cdmx: 672: cdmx_ioctl: cmd 0x541B, param 0xB3BFE338
+Sep 13 07:42:34.806128 odroid kernel: cdmx: 652: cdmx_poll: port 0
+Sep 13 07:42:34.978442 odroid olad[1166]: common/io/TimeoutManager.cpp:92: timeout 0xb3201274 already in remove set
+Sep 13 07:42:34.978774 odroid olad[1166]: plugins/usbpro/WidgetDetectorThread.cpp:381: no more detectors to try for  0xb3200e60
+Sep 13 07:42:34.981360 odroid olad[1166]: common/io/Serial.cpp:245: Released /var/lock/LCK..cdmx000
+Sep 13 07:42:34.985714 odroid kernel: cdmx: 269: cdmx_release: file cdmx000, cdata 670215c7 dev_t F500000
+Sep 13 07:42:54.170270 odroid olad[1166]: plugins/usbpro/WidgetDetectorThread.cpp:215: Found potential USB Serial device at /dev/cdmx000
+Sep 13 07:42:54.174221 odroid olad[1166]: common/io/Serial.cpp:197: Acquired /var/lock/LCK..cdmx000
+Sep 13 07:42:54.174590 odroid olad[1166]: plugins/usbpro/WidgetDetectorThread.cpp:384: trying stage 0 for 0xb3200e60
+Sep 13 07:42:54.184140 odroid kernel: cdmx: 255: cdmx_open: file cdmx000, cdata 670215c7 dev_t F500000
+Sep 13 07:42:54.184818 odroid kernel: cdmx: 261: cdmx_open: ->>> done
+Sep 13 07:42:54.185237 odroid kernel: cdmx: 672: cdmx_ioctl: cmd 0x540C, param 0x4DBC4500
+Sep 13 07:42:54.185628 odroid kernel: cdmx: 672: cdmx_ioctl: cmd 0x5401, param 0xB3BFE400
+Sep 13 07:42:54.185980 odroid kernel: cdmx: 672: cdmx_ioctl: cmd 0x5402, param 0xB3BFE3DC
+Sep 13 07:42:54.186285 odroid kernel: cdmx: 652: cdmx_poll: port 0
+Sep 13 07:42:54.192741 odroid kernel: cdmx: 529: cdmx_write: port 0
+Sep 13 07:42:54.193188 odroid kernel: cdmx: 444: cdmx_enttec_msg: new message pending
+Sep 13 07:42:54.193553 odroid kernel: cdmx: 448: cdmx_enttec_msg: ->>> TX not implemented yet
+Sep 13 07:42:54.194106 odroid kernel: cdmx: 560: cdmx_write: ->>> done file cdmx000, id 0, result 5
+Sep 13 07:42:54.383909 odroid kernel: cdmx: 529: cdmx_write: port 0
+Sep 13 07:42:54.385893 odroid kernel: cdmx: 385: cdmx_enttec_msg: output frame is pending, message is dropped: port 0, label 78
+Sep 13 07:42:54.386878 odroid kernel: cdmx: 560: cdmx_write: ->>> done file cdmx000, id 0, result 5
+Sep 13 07:42:54.585834 odroid kernel: cdmx: 529: cdmx_write: port 0
+Sep 13 07:42:54.587566 odroid kernel: cdmx: 385: cdmx_enttec_msg: output frame is pending, message is dropped: port 0, label 10
+Sep 13 07:42:54.588896 odroid kernel: cdmx: 560: cdmx_write: ->>> done file cdmx000, id 0, result 5
+Sep 13 07:42:54.787991 odroid olad[1166]: plugins/usbpro/UsbProWidgetDetector.cpp:323: USB Widget didn't respond to messages, esta id 0, device id 0
+Sep 13 07:42:54.788334 odroid olad[1166]: plugins/usbpro/UsbProWidgetDetector.cpp:326: Is device in USB Controller mode if it's a Goddard?
+Sep 13 07:42:54.788756 odroid olad[1166]: plugins/usbpro/WidgetDetectorThread.cpp:384: trying stage 1 for 0xb3200e60
+Sep 13 07:42:54.799095 odroid kernel: cdmx: 652: cdmx_poll: port 0
+Sep 13 07:42:54.805570 odroid kernel: cdmx: 529: cdmx_write: port 0
+Sep 13 07:42:54.806482 odroid kernel: cdmx: 560: cdmx_write: ->>> done file cdmx000, id 0, result 6
+Sep 13 07:42:54.807400 odroid kernel: cdmx: 652: cdmx_poll: port 0
+Sep 13 07:42:54.808121 odroid kernel: cdmx: 672: cdmx_ioctl: cmd 0x541B, param 0xB3BFE338
+Sep 13 07:42:54.808916 odroid kernel: cdmx: 574: cdmx_read: port 0
+Sep 13 07:42:54.809951 odroid kernel: cdmx: 589: cdmx_read: size 9, lsb 1, msb 0
+Sep 13 07:42:54.810659 odroid kernel: cdmx: 607: cdmx_read: header 1 byte(s)
+Sep 13 07:42:54.811356 odroid kernel: cdmx: 630: cdmx_read: footer 1 byte(s)
+Sep 13 07:42:54.812165 odroid kernel: cdmx: 642: cdmx_read: ->>> 2 bytes total read
+Sep 13 07:42:54.812862 odroid kernel: cdmx: 672: cdmx_ioctl: cmd 0x541B, param 0xB3BFE338
+Sep 13 07:42:54.813896 odroid kernel: cdmx: 652: cdmx_poll: port 0
+Sep 13 07:42:54.990463 odroid olad[1166]: common/io/TimeoutManager.cpp:92: timeout 0xb3201274 already in remove set
+Sep 13 07:42:54.991185 odroid olad[1166]: plugins/usbpro/WidgetDetectorThread.cpp:381: no more detectors to try for  0xb3200e60
+Sep 13 07:42:54.993469 odroid olad[1166]: common/io/Serial.cpp:245: Released /var/lock/LCK..cdmx000
+Sep 13 07:42:55.005685 odroid kernel: cdmx: 269: cdmx_release: file cdmx000, cdata 670215c7 dev_t F500000
+Sep 13 07:43:02.481234 odroid sudo[1174]:   odroid : TTY=pts/1 ; PWD=/home/odroid/devel/module ; USER=root ; COMMAND=/usr/sbin/service olad stop
+Sep 13 07:43:02.520667 odroid sudo[1174]: pam_unix(sudo:session): session opened for user root by odroid(uid=0)
+Sep 13 07:43:10.332721 odroid systemd[1]: Stopping LSB: OLA daemon...
+Sep 13 07:43:10.401996 odroid olad[1187]:  * Stopping OLA daemon olad
+Sep 13 07:43:10.410307 odroid olad[1166]: common/thread/SignalThread.cpp:105: Received signal: Terminated
+Sep 13 07:43:10.410600 odroid olad[1166]: common/http/HTTPServer.cpp:523: Notifying HTTP server thread to stop
+Sep 13 07:43:10.410707 odroid olad[1166]: common/http/HTTPServer.cpp:525: Waiting for HTTP server thread to exit
+Sep 13 07:43:10.411030 odroid olad[1166]: common/http/HTTPServer.cpp:527: HTTP server thread exited
+Sep 13 07:43:10.443485 odroid olad[1187]:    ...done.
+Sep 13 07:43:10.445919 odroid systemd[1]: olad.service: Succeeded.
+Sep 13 07:43:10.449117 odroid systemd[1]: Stopped LSB: OLA daemon.
+Sep 13 07:43:10.468728 odroid sudo[1174]: pam_unix(sudo:session): session closed for user root
+Sep 13 07:43:34.604810 odroid sudo[1458]:   odroid : TTY=pts/1 ; PWD=/home/odroid/devel/module ; USER=root ; COMMAND=/sbin/rmmod cdmx.ko
+Sep 13 07:43:34.639427 odroid sudo[1458]: pam_unix(sudo:session): session opened for user root by odroid(uid=0)
+Sep 13 07:43:34.684201 odroid kernel: cdmx: 944: cdmx_exit: start
+Sep 13 07:43:34.685478 odroid kernel: cdmx: 872: cdmx_remove_cdevs: start
+Sep 13 07:43:34.686304 odroid kernel: cdmx: 882: cdmx_remove_cdevs: ->>> done
+Sep 13 07:43:34.687073 odroid kernel: cdmx: 779: destroy_port_obj: port 0
+Sep 13 07:43:34.687858 odroid kernel: cdmx: 87: port_release: ->>> done
+Sep 13 07:43:34.688641 odroid kernel: cdmx: 952: cdmx_exit: ->>> done
+Sep 13 07:43:34.809477 odroid sudo[1458]: pam_unix(sudo:session): session closed for user root
+Sep 13 07:43:34.933547 odroid sudo[1471]:   odroid : TTY=pts/1 ; PWD=/home/odroid/devel/module ; USER=root ; COMMAND=/sbin/insmod cdmx.ko cdmx_port_count=1
+Sep 13 07:43:34.968659 odroid sudo[1471]: pam_unix(sudo:session): session opened for user root by odroid(uid=0)
+Sep 13 07:43:35.012269 odroid sudo[1471]: pam_unix(sudo:session): session closed for user root
+Sep 13 07:43:35.014473 odroid kernel: cdmx: 891: cdmx_init: start
+Sep 13 07:43:35.014926 odroid kernel: cdmx: 899: cdmx_init: using port count 1
+Sep 13 07:43:35.015279 odroid kernel: cdmx: 790: cdmx_create_cdevs: start
+Sep 13 07:43:35.015693 odroid kernel: cdmx: 853: cdmx_create_cdevs: ->>> done
+Sep 13 07:43:35.016086 odroid kernel: cdmx: 930: cdmx_init: ->>> done
+Sep 13 07:43:49.488611 odroid sudo[1482]:   odroid : TTY=pts/1 ; PWD=/home/odroid/devel/module ; USER=root ; COMMAND=/usr/sbin/service olad start
+Sep 13 07:43:49.529781 odroid sudo[1482]: pam_unix(sudo:session): session opened for user root by odroid(uid=0)
+Sep 13 07:43:57.407002 odroid systemd[1]: Starting LSB: OLA daemon...
+Sep 13 07:43:57.483031 odroid olad[1495]:  * Starting OLA daemon olad
+Sep 13 07:43:57.499074 odroid olad[1495]:    ...done.
+Sep 13 07:43:57.501388 odroid systemd[1]: Started LSB: OLA daemon.
+Sep 13 07:43:57.517496 odroid sudo[1482]: pam_unix(sudo:session): session closed for user root
+Sep 13 07:43:57.596132 odroid olad[1500]: olad/Olad.cpp:94: OLA Daemon version 0.10.5
+Sep 13 07:43:57.600868 odroid olad[1500]: olad/OlaDaemon.cpp:121: Using configs in /etc/ola
+Sep 13 07:43:57.601740 odroid olad[1500]: common/thread/Thread.cpp:194: Thread pref-saver, policy SCHED_OTHER, priority 0
+Sep 13 07:43:57.671240 odroid olad[1500]: olad/OlaServer.cpp:194: Server UID is 7a70:c700a8c0
+Sep 13 07:43:57.672257 odroid olad[1500]: olad/OlaServer.cpp:206: Server instance name is OLA Server
+Sep 13 07:43:57.672455 odroid olad[1500]: olad/plugin_api/Preferences.cpp:424: Missing /etc/ola/ola-universe.conf: No such file or directory - this isn't an error, we'll just use the defaults
+Sep 13 07:43:57.675503 odroid olad[1500]: common/thread/Thread.cpp:194: Thread http, policy SCHED_OTHER, priority 0
+Sep 13 07:43:57.675594 odroid olad[1500]: common/http/HTTPServer.cpp:496: HTTP Server started on port 9090
+Sep 13 07:43:57.675818 odroid olad[1500]: olad/OlaServer.cpp:481: Updated PID definitions.
+Sep 13 07:43:57.675908 odroid olad[1500]: olad/OlaServer.cpp:489: PID store is at 0x56a650
+Sep 13 07:43:57.676903 odroid olad[1500]: common/thread/Thread.cpp:194: Thread signal-thread, policy SCHED_OTHER, priority 0
+Sep 13 07:43:57.677785 odroid olad[1500]: olad/PluginManager.cpp:73: Skipping ArtNet because it was disabled
+Sep 13 07:43:57.678579 odroid olad[1500]: olad/PluginManager.cpp:73: Skipping E1.31 (sACN) because it was disabled
+Sep 13 07:43:57.678855 odroid olad[1500]: olad/PluginManager.cpp:73: Skipping ESP Net because it was disabled
+Sep 13 07:43:57.679251 odroid olad[1500]: olad/PluginManager.cpp:73: Skipping GPIO because it was disabled
+Sep 13 07:43:57.679532 odroid olad[1500]: olad/PluginManager.cpp:73: Skipping KarateLight because it was disabled
+Sep 13 07:43:57.679815 odroid olad[1500]: olad/PluginManager.cpp:73: Skipping KiNET because it was disabled
+Sep 13 07:43:57.680136 odroid olad[1500]: olad/PluginManager.cpp:73: Skipping Milford Instruments because it was disabled
+Sep 13 07:43:57.680437 odroid olad[1500]: olad/PluginManager.cpp:73: Skipping Enttec Open DMX because it was disabled
+Sep 13 07:43:57.680808 odroid olad[1500]: olad/PluginManager.cpp:73: Skipping Open Pixel Control because it was disabled
+Sep 13 07:43:57.681578 odroid olad[1500]: olad/PluginManager.cpp:73: Skipping OSC because it was disabled
+Sep 13 07:43:57.681948 odroid olad[1500]: olad/PluginManager.cpp:73: Skipping Renard because it was disabled
+Sep 13 07:43:57.682249 odroid olad[1500]: olad/PluginManager.cpp:73: Skipping SandNet because it was disabled
+Sep 13 07:43:57.682537 odroid olad[1500]: olad/PluginManager.cpp:73: Skipping ShowNet because it was disabled
+Sep 13 07:43:57.682833 odroid olad[1500]: olad/PluginManager.cpp:73: Skipping SPI because it was disabled
+Sep 13 07:43:57.683107 odroid olad[1500]: olad/PluginManager.cpp:73: Skipping StageProfi because it was disabled
+Sep 13 07:43:57.683635 odroid olad[1500]: olad/PluginManager.cpp:73: Skipping USB because it was disabled
+Sep 13 07:43:57.684259 odroid olad[1500]: olad/PluginManager.cpp:73: Skipping Pathport because it was disabled
+Sep 13 07:43:57.684598 odroid olad[1500]: olad/PluginManager.cpp:73: Skipping FTDI USB DMX because it was disabled
+Sep 13 07:43:57.684869 odroid olad[1500]: olad/PluginManager.cpp:73: Skipping UART native DMX because it was disabled
+Sep 13 07:43:57.684936 odroid olad[1500]: olad/PluginManager.cpp:195: Trying to start Dummy
+Sep 13 07:43:57.686304 odroid olad[1500]: olad/plugin_api/DeviceManager.cpp:105: Installed device: Dummy Device:1-1
+Sep 13 07:43:57.686414 odroid olad[1500]: olad/PluginManager.cpp:200: Started Dummy
+Sep 13 07:43:57.686508 odroid olad[1500]: olad/PluginManager.cpp:195: Trying to start Serial USB
+Sep 13 07:43:57.687350 odroid olad[1500]: common/thread/Thread.cpp:194: Thread , policy SCHED_OTHER, priority 0
+Sep 13 07:43:57.699311 odroid olad[1500]: plugins/usbpro/WidgetDetectorThread.cpp:215: Found potential USB Serial device at /dev/cdmx000
+Sep 13 07:43:57.699669 odroid olad[1500]: common/io/Serial.cpp:197: Acquired /var/lock/LCK..cdmx000
+Sep 13 07:43:57.700032 odroid olad[1500]: plugins/usbpro/WidgetDetectorThread.cpp:384: trying stage 0 for 0xb3200e60
+Sep 13 07:43:57.701063 odroid olad[1500]: olad/PluginManager.cpp:200: Started Serial USB
+Sep 13 07:43:57.703973 odroid kernel: cdmx: 255: cdmx_open: file cdmx000, cdata 6666a8d0 dev_t F500000
+Sep 13 07:43:57.704584 odroid kernel: cdmx: 261: cdmx_open: ->>> done
+Sep 13 07:43:57.704982 odroid kernel: cdmx: 672: cdmx_ioctl: cmd 0x540C, param 0x6A80E900
+Sep 13 07:43:57.705328 odroid kernel: cdmx: 672: cdmx_ioctl: cmd 0x5401, param 0xB3BFE778
+Sep 13 07:43:57.705670 odroid kernel: cdmx: 672: cdmx_ioctl: cmd 0x5402, param 0xB3BFE754
+Sep 13 07:43:57.705970 odroid kernel: cdmx: 652: cdmx_poll: port 0
+Sep 13 07:43:57.706302 odroid kernel: cdmx: 529: cdmx_write: port 0
+Sep 13 07:43:57.706633 odroid kernel: cdmx: 444: cdmx_enttec_msg: new message pending, label=77
+Sep 13 07:43:57.707038 odroid kernel: cdmx: 448: cdmx_enttec_msg: ->>> TX not implemented yet
+Sep 13 07:43:57.707405 odroid kernel: cdmx: 560: cdmx_write: ->>> done file cdmx000, id 0, result 5
+Sep 13 07:43:57.914369 odroid kernel: cdmx: 529: cdmx_write: port 0
+Sep 13 07:43:57.917202 odroid kernel: cdmx: 385: cdmx_enttec_msg: output frame is pending, message is dropped: port 0, label 78
+Sep 13 07:43:57.920985 odroid kernel: cdmx: 560: cdmx_write: ->>> done file cdmx000, id 0, result 5
+Sep 13 07:43:58.118600 odroid kernel: cdmx: 529: cdmx_write: port 0
+Sep 13 07:43:58.120909 odroid kernel: cdmx: 385: cdmx_enttec_msg: output frame is pending, message is dropped: port 0, label 10
+Sep 13 07:43:58.123280 odroid kernel: cdmx: 560: cdmx_write: ->>> done file cdmx000, id 0, result 5
+Sep 13 07:43:58.323063 odroid olad[1500]: plugins/usbpro/UsbProWidgetDetector.cpp:323: USB Widget didn't respond to messages, esta id 0, device id 0
+Sep 13 07:43:58.323563 odroid olad[1500]: plugins/usbpro/UsbProWidgetDetector.cpp:326: Is device in USB Controller mode if it's a Goddard?
+Sep 13 07:43:58.324646 odroid olad[1500]: plugins/usbpro/WidgetDetectorThread.cpp:384: trying stage 1 for 0xb3200e60
+Sep 13 07:43:58.340384 odroid kernel: cdmx: 652: cdmx_poll: port 0
+Sep 13 07:43:58.342945 odroid kernel: cdmx: 529: cdmx_write: port 0
+Sep 13 07:43:58.351400 odroid kernel: cdmx: 560: cdmx_write: ->>> done file cdmx000, id 0, result 6
+Sep 13 07:43:58.351954 odroid kernel: cdmx: 652: cdmx_poll: port 0
+Sep 13 07:43:58.352350 odroid kernel: cdmx: 672: cdmx_ioctl: cmd 0x541B, param 0xB3BFE338
+Sep 13 07:43:58.352734 odroid kernel: cdmx: 574: cdmx_read: port 0
+Sep 13 07:43:58.353168 odroid kernel: cdmx: 589: cdmx_read: size 9, lsb 1, msb 0
+Sep 13 07:43:58.353548 odroid kernel: cdmx: 607: cdmx_read: header 1 byte(s)
+Sep 13 07:43:58.354068 odroid kernel: cdmx: 630: cdmx_read: footer 1 byte(s)
+Sep 13 07:43:58.354525 odroid kernel: cdmx: 642: cdmx_read: ->>> 2 bytes total read
+Sep 13 07:43:58.354990 odroid kernel: cdmx: 672: cdmx_ioctl: cmd 0x541B, param 0xB3BFE338
+Sep 13 07:43:58.355380 odroid kernel: cdmx: 652: cdmx_poll: port 0
+Sep 13 07:43:58.526071 odroid olad[1500]: plugins/usbpro/WidgetDetectorThread.cpp:381: no more detectors to try for  0xb3200e60
+Sep 13 07:43:58.527629 odroid olad[1500]: common/io/Serial.cpp:245: Released /var/lock/LCK..cdmx000
+Sep 13 07:43:58.535289 odroid kernel: cdmx: 269: cdmx_release: file cdmx000, cdata 6666a8d0 dev_t F500000
+Sep 13 07:44:14.212372 odroid sudo[1508]:   odroid : TTY=pts/1 ; PWD=/home/odroid/devel/module ; USER=root ; COMMAND=/usr/sbin/service olad stop
+Sep 13 07:44:14.246601 odroid sudo[1508]: pam_unix(sudo:session): session opened for user root by odroid(uid=0)
+Sep 13 07:44:17.715479 odroid olad[1500]: plugins/usbpro/WidgetDetectorThread.cpp:215: Found potential USB Serial device at /dev/cdmx000
+Sep 13 07:44:17.715838 odroid olad[1500]: common/io/Serial.cpp:197: Acquired /var/lock/LCK..cdmx000
+Sep 13 07:44:17.716210 odroid olad[1500]: plugins/usbpro/WidgetDetectorThread.cpp:384: trying stage 0 for 0xb3200e60
+Sep 13 07:44:17.723930 odroid kernel: cdmx: 255: cdmx_open: file cdmx000, cdata 6666a8d0 dev_t F500000
+Sep 13 07:44:17.724441 odroid kernel: cdmx: 261: cdmx_open: ->>> done
+Sep 13 07:44:17.725051 odroid kernel: cdmx: 672: cdmx_ioctl: cmd 0x540C, param 0x6A80E900
+Sep 13 07:44:17.725647 odroid kernel: cdmx: 672: cdmx_ioctl: cmd 0x5401, param 0xB3BFE400
+Sep 13 07:44:17.726433 odroid kernel: cdmx: 672: cdmx_ioctl: cmd 0x5402, param 0xB3BFE3DC
+Sep 13 07:44:17.726898 odroid kernel: cdmx: 652: cdmx_poll: port 0
+Sep 13 07:44:17.727351 odroid kernel: cdmx: 529: cdmx_write: port 0
+Sep 13 07:44:17.727813 odroid kernel: cdmx: 444: cdmx_enttec_msg: new message pending, label=77
+Sep 13 07:44:17.728208 odroid kernel: cdmx: 448: cdmx_enttec_msg: ->>> TX not implemented yet
+Sep 13 07:44:17.728652 odroid kernel: cdmx: 560: cdmx_write: ->>> done file cdmx000, id 0, result 5
+Sep 13 07:44:17.923799 odroid kernel: cdmx: 529: cdmx_write: port 0
+Sep 13 07:44:17.924348 odroid kernel: cdmx: 385: cdmx_enttec_msg: output frame is pending, message is dropped: port 0, label 78
+Sep 13 07:44:17.924700 odroid kernel: cdmx: 560: cdmx_write: ->>> done file cdmx000, id 0, result 5
+Sep 13 07:44:18.125267 odroid kernel: cdmx: 529: cdmx_write: port 0
+Sep 13 07:44:18.125869 odroid kernel: cdmx: 385: cdmx_enttec_msg: output frame is pending, message is dropped: port 0, label 10
+Sep 13 07:44:18.126163 odroid kernel: cdmx: 560: cdmx_write: ->>> done file cdmx000, id 0, result 5
+Sep 13 07:44:18.325968 odroid olad[1500]: plugins/usbpro/UsbProWidgetDetector.cpp:323: USB Widget didn't respond to messages, esta id 0, device id 0
+Sep 13 07:44:18.326049 odroid olad[1500]: plugins/usbpro/UsbProWidgetDetector.cpp:326: Is device in USB Controller mode if it's a Goddard?
+Sep 13 07:44:18.326179 odroid olad[1500]: plugins/usbpro/WidgetDetectorThread.cpp:384: trying stage 1 for 0xb3200e60
+Sep 13 07:44:18.333801 odroid kernel: cdmx: 652: cdmx_poll: port 0
+Sep 13 07:44:18.334277 odroid kernel: cdmx: 529: cdmx_write: port 0
+Sep 13 07:44:18.334619 odroid kernel: cdmx: 560: cdmx_write: ->>> done file cdmx000, id 0, result 6
+Sep 13 07:44:18.334925 odroid kernel: cdmx: 652: cdmx_poll: port 0
+Sep 13 07:44:18.335223 odroid kernel: cdmx: 672: cdmx_ioctl: cmd 0x541B, param 0xB3BFE338
+Sep 13 07:44:18.335531 odroid kernel: cdmx: 574: cdmx_read: port 0
+Sep 13 07:44:18.335892 odroid kernel: cdmx: 589: cdmx_read: size 9, lsb 1, msb 0
+Sep 13 07:44:18.336187 odroid kernel: cdmx: 607: cdmx_read: header 1 byte(s)
+Sep 13 07:44:18.336482 odroid kernel: cdmx: 630: cdmx_read: footer 1 byte(s)
+Sep 13 07:44:18.336786 odroid kernel: cdmx: 642: cdmx_read: ->>> 2 bytes total read
+Sep 13 07:44:18.337042 odroid kernel: cdmx: 672: cdmx_ioctl: cmd 0x541B, param 0xB3BFE338
+Sep 13 07:44:18.337329 odroid kernel: cdmx: 652: cdmx_poll: port 0
+Sep 13 07:44:18.527179 odroid olad[1500]: common/io/TimeoutManager.cpp:92: timeout 0xb3201274 already in remove set
+Sep 13 07:44:18.527336 odroid olad[1500]: plugins/usbpro/WidgetDetectorThread.cpp:381: no more detectors to try for  0xb3200e60
+Sep 13 07:44:18.527760 odroid olad[1500]: common/io/Serial.cpp:245: Released /var/lock/LCK..cdmx000
+Sep 13 07:44:18.534493 odroid kernel: cdmx: 269: cdmx_release: file cdmx000, cdata 6666a8d0 dev_t F500000
+Sep 13 07:44:22.100786 odroid systemd[1]: Stopping LSB: OLA daemon...
+Sep 13 07:44:22.177852 odroid olad[1521]:  * Stopping OLA daemon olad
+Sep 13 07:44:22.191824 odroid olad[1500]: common/thread/SignalThread.cpp:105: Received signal: Terminated
+Sep 13 07:44:22.192326 odroid olad[1500]: common/http/HTTPServer.cpp:523: Notifying HTTP server thread to stop
+Sep 13 07:44:22.192477 odroid olad[1500]: common/http/HTTPServer.cpp:525: Waiting for HTTP server thread to exit
+Sep 13 07:44:22.192937 odroid olad[1500]: common/http/HTTPServer.cpp:527: HTTP server thread exited
+Sep 13 07:44:22.225194 odroid olad[1521]:    ...done.
+Sep 13 07:44:22.227945 odroid systemd[1]: olad.service: Succeeded.
+Sep 13 07:44:22.231708 odroid systemd[1]: Stopped LSB: OLA daemon.
+Sep 13 07:44:22.248558 odroid sudo[1508]: pam_unix(sudo:session): session closed for user root
+Sep 13 07:44:44.953992 odroid sudo[827]: pam_unix(sudo:session): session closed for user root
+Sep 13 07:44:50.968732 odroid sudo[1533]:   odroid : TTY=pts/0 ; PWD=/home/odroid/devel/module ; USER=root ; COMMAND=/bin/journalctl -ft kernel -o short-monotonic --no-hostname
+Sep 13 07:44:50.999825 odroid sudo[1533]: pam_unix(sudo:session): session opened for user root by odroid(uid=0)
+Sep 13 07:44:51.231179 odroid sudo[1533]: pam_unix(sudo:session): session closed for user root
+Sep 13 07:45:23.137887 odroid sudo[1543]:   odroid : TTY=pts/0 ; PWD=/home/odroid/devel/module ; USER=root ; COMMAND=/bin/journalctl -S today -o short-iso-precise
+Sep 13 07:45:23.182719 odroid sudo[1543]: pam_unix(sudo:session): session opened for user root by odroid(uid=0)
+Sep 13 07:45:24.806071 odroid sudo[1543]: pam_unix(sudo:session): session closed for user root
+Sep 13 07:45:39.228730 odroid sudo[1555]:   odroid : TTY=pts/0 ; PWD=/home/odroid/devel/module ; USER=root ; COMMAND=/bin/journalctl -S today -o precise
+Sep 13 07:45:39.267406 odroid sudo[1555]: pam_unix(sudo:session): session opened for user root by odroid(uid=0)
+Sep 13 07:45:39.335423 odroid sudo[1555]: pam_unix(sudo:session): session closed for user root
+Sep 13 07:45:49.753053 odroid sudo[1566]:   odroid : TTY=pts/0 ; PWD=/home/odroid/devel/module ; USER=root ; COMMAND=/bin/journalctl --help
+Sep 13 07:45:49.788535 odroid sudo[1566]: pam_unix(sudo:session): session opened for user root by odroid(uid=0)
+Sep 13 07:45:54.254626 odroid sudo[1566]: pam_unix(sudo:session): session closed for user root
+Sep 13 07:46:00.164796 odroid sudo[1577]:   odroid : TTY=pts/0 ; PWD=/home/odroid/devel/module ; USER=root ; COMMAND=/bin/journalctl -S today -o short-precise
+Sep 13 07:46:00.200306 odroid sudo[1577]: pam_unix(sudo:session): session opened for user root by odroid(uid=0)
+Sep 13 07:46:00.412246 odroid sudo[1577]: pam_unix(sudo:session): session closed for user root
+Sep 13 07:47:03.014662 odroid sudo[1589]:   odroid : TTY=pts/0 ; PWD=/home/odroid/devel/module ; USER=root ; COMMAND=/bin/journalctl -S today -o short-precise
+Sep 13 07:47:03.056729 odroid sudo[1589]: pam_unix(sudo:session): session opened for user root by odroid(uid=0)
+Sep 13 07:47:03.261231 odroid sudo[1589]: pam_unix(sudo:session): session closed for user root
+Sep 13 07:48:05.081012 odroid sudo[1603]:   odroid : TTY=pts/0 ; PWD=/home/odroid/devel/module ; USER=root ; COMMAND=/bin/journalctl -S today -o short-precise
+Sep 13 07:48:05.119353 odroid sudo[1603]: pam_unix(sudo:session): session opened for user root by odroid(uid=0)
