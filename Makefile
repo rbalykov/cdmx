@@ -20,7 +20,7 @@ rm:
 	sudo rmmod $(MODNAME).ko
 
 in:	
-	sudo insmod $(MODNAME).ko
+	sudo insmod $(MODNAME).ko cdmx_port_count=1
 	
 inp:
 	sudo insmod $(MODNAME).ko cdmx_port_count=6

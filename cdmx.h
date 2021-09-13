@@ -54,6 +54,10 @@
 #define CDMX_PORTS_MIN	(0x1u)
 #define CDMX_PORTS_DEFAULT	(0x4u)
 
+/* PORT FLAGS
+ * */
+#define CDMX_EXCLUSIVE	(1)
+
 #define MAX(a,b) ((a>b)?a:b)
 #define MIN(a,b) ((a<b)?a:b)
 
@@ -84,8 +88,8 @@
 #define ENT_EOM 			(0xE7)
 
 #define ENT_HEADER_SIZE	(4)
-#define ENT_HEADER_DMX	(5)
 #define ENT_FOOTER_SIZE (1)
+#define ENT_FRAME_OVERHEAD (ENT_HEADER_SIZE + ENT_FOOTER_SIZE)
 
 #define ENT_FW_DMX	(1)
 #define ENT_FW_RDM	(2)
@@ -94,8 +98,8 @@
 
 #define ENT_FLASH_PAGE	(64)
 #define ENT_FLASH_REPLY	(4)
-#define ENT_FLASH_TRUE  {'T','R','U','E'}
-#define ENT_FLASH_FALSE {'F','A','L','S'}
+#define ENT_FLASH_TRUE  ("TRUE")
+#define ENT_FLASH_FALSE ("FALS")
 
 #define ENT_PARAMS_MIN	(5)
 #define ENT_TIMEUNIT_NS		(10670)
@@ -302,17 +306,20 @@ struct dmx_port
 	char *ttyname;
 	int id;
 
+	// bool onchange;
+
 	struct cdev cdev;
 	struct device *fsdev;
 
 	struct mutex lock;
-//	struct mutex write_mutex;
 
 	struct usb_frame read_from;
 	struct usb_frame write_to;
 
 	struct uart_frame tx;
 	struct uart_frame rx;
+
+	unsigned long flags;
 };
 
 

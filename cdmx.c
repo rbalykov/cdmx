@@ -4,6 +4,8 @@
 #include <linux/ctype.h>
 #include <linux/printk.h>
 #include <uapi/asm-generic/errno-base.h>
+#include <uapi/asm-generic/ioctls.h>
+//#include <asm-generic/bitops/atomic.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Neutrino");
@@ -275,63 +277,105 @@ static int cdmx_release (struct inode *node, struct file *f)
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
 
-static int cdmx_enttec_getparams (struct dmx_port *port)
+static void cdmx_enttec_getparams (struct dmx_port *port)
 {
 	struct usb_frame *frame = &port->read_from;
 
-	if(frame->pending)
-		return -EBUSY;
-
-	frame->msglabel = LABEL_GET_PARAMS;
+	// supply timing info and firmware vervion
+	// ENT_FW_DMX, here we pretend to support just DMX, not RDM
 	frame->msgsize = ENT_PARAMS_MIN;
 	frame->data[0] = ENT_FW_LSB;
 	frame->data[1] = ENT_FW_DMX;
 
-	//TODO: think of more correct floating-point replacement
 	frame->data[2] = (port->breaktime * 1000) / ENT_TIMEUNIT_NS + 1;
 	frame->data[3] = (port->mabtime * 1000) / ENT_TIMEUNIT_NS + 1;
 
 	frame->data[4] = port->framerate;
 	frame->pending = true;
-
-	return 0;
 }
 
-static int cdmx_enttec_getserial (struct dmx_port *port)
+static void cdmx_enttec_setparams (struct dmx_port *port)
+{
+	struct usb_frame *frame = &port->read_from;
+	int a;
+
+//	uint16_t user_data_size;
+//	user_data_size = (frame->data[1] << 8) & frame->data[0];
+//	Datasheet says it's "User defined configuration data size, LSB & MSB"
+//	No more information if it ever useful or not. Ignoring.
+
+	a =(frame->data[2] * ENT_TIMEUNIT_NS ) / 1000;
+	NORMALISE_BREAK(a);
+	port->breaktime = a;
+
+	a = (frame->data[3] * ENT_TIMEUNIT_NS ) / 1000;
+	NORMALISE_MAB(a);
+	port->mabtime = a;
+
+	a = frame->data[4];
+	NORMALISE_FRAMERATE(a);
+	port->framerate = a;
+
+	K_DEBUG("break %d, mab %d, frame %d", port->breaktime, port->mabtime, port->framerate);
+}
+
+static void cdmx_enttec_getserial (struct dmx_port *port)
 {
 	struct usb_frame *frame = &port->read_from;
 
-	frame->msglabel = LABEL_GET_SERIAL;
+	// supply device serial number
 	frame->msgsize = ENT_SERIAL_SIZE;
 	memcpy(frame->data, USBPRO_SERIAL, ENT_SERIAL_SIZE);
 	frame->pending = true;
-
-	return 0;
 }
 
-static int cdmx_enttec_getvendor (struct dmx_port *port)
+static void cdmx_enttec_getvendor (struct dmx_port *port)
 {
 	struct usb_frame *frame = &port->read_from;
 
-	frame->msglabel = LABEL_VENDOR;
+	// supply vendor name and ESTA codes
 	frame->msgsize = MIN (ENT_NAME_MAX, sizeof(USBPRO_VENDOR));
 	memcpy(frame->data, USBPRO_VENDOR, frame->msgsize);
 	frame->pending = true;
-
-	return 0;
 }
 
-static int cdmx_enttec_getname (struct dmx_port *port)
+static void cdmx_enttec_getname (struct dmx_port *port)
 {
 	struct usb_frame *frame = &port->read_from;
 
-	frame->msglabel = LABEL_NAME;
+	// supply device name and ESTA codes
 	frame->msgsize = MIN (ENT_NAME_MAX, sizeof(USBPRO_NAME));
 	memcpy(frame->data, USBPRO_NAME, frame->msgsize);
 	frame->pending = true;
-
-	return 0;
 }
+
+static void cdmx_enttec_flash (struct dmx_port *port)
+{
+	struct usb_frame *frame = &port->read_from;
+
+	// report failed firmware flashing
+	frame->msgsize = ENT_FLASH_REPLY;
+	memcpy(frame->data, ENT_FLASH_FALSE, ENT_FLASH_REPLY);
+	frame->pending = true;
+}
+
+
+/* static void cdmx_enttec_onchange (struct dmx_port *port)
+ *
+ * TODO: This message also reinitializes the DMX receive processing,
+ * so that if change of state reception is selected,
+ * the initial received DMX data is cleared to all zeros.
+ * */
+
+/* static void cdmx_enttec_update (struct dmx_port *port)
+ *
+ * TODO: Datasheet on this label looks like a crap.
+ * It describes 1 byte as frame offset for 40-slot subframe.
+ * So, 256 + 40 = insuffitient to address 512-slots frame.
+ * Neither forums nor other source found to make it clear,
+ * so decision is made to leave ONCHANGE & UPDATE labes unsupported.
+ * */
+
 
 static int cdmx_enttec_msg(struct dmx_port *port)
 {
@@ -345,6 +389,7 @@ static int cdmx_enttec_msg(struct dmx_port *port)
 
 	switch (port->write_to.msglabel)
 	{
+		// labels that generate replies
 		case LABEL_GET_PARAMS:
 			cdmx_enttec_getparams(port);
 			break;
@@ -357,38 +402,49 @@ static int cdmx_enttec_msg(struct dmx_port *port)
 		case LABEL_NAME:
 			cdmx_enttec_getname(port);
 			break;
-
-		case LABEL_FLASH_FW:
-			break;
 		case LABEL_FLASH_PAGE:
+			cdmx_enttec_flash(port);
 			break;
+
+		// labels that don't need replies
 		case LABEL_SET_PARAMS:
+			cdmx_enttec_setparams(port);
 			break;
-		case LABEL_DMX_OUTPUT:
+
+		// labels that bring DMX/DRM data to TX
+		case LABEL_RDM_DISCOVERY:
 			break;
 		case LABEL_RDM_OUTPUT:
 			break;
-		case LABEL_ONCHANGE:
+		case LABEL_DMX_OUTPUT:
 			break;
-		case LABEL_DATA_UPDATE:
-			break;
-		case LABEL_RDM_DISCOVERY:
-			break;
-
-		case LABEL_RECEIVED_DMX:
 		case LABEL_UNIVERSE_0:
+			break;
 		case LABEL_UNIVERSE_1:
 			break;
 
+		// unsupported labels
+		case LABEL_RECEIVED_DMX:	// CAN'T BE INCOMING
+			break;					// brings data from RX to host
+		case LABEL_FLASH_FW:		// IGNORED
+			break;					// prepare for f/w flashing
+		case LABEL_ONCHANGE: 		// UNSUPPORTED
+			break;					// due lack of documentation
+		case LABEL_DATA_UPDATE: 	// UNSUPPORTED
+			break;					// due lack of documentation
 		default:
+		/*	K_INFO("port %d: unhandled label %d, raw data %d bytes",
+					port->id, port->write_to.msglabel, port->write_to.whead);
+		 */ // There exist some more vendor-specific labels, just ignoring
 		break;
 	}
 	port->write_to.whead = 0;
 	if (port->read_from.pending)
 	{
-		K_DEBUG("new message pending");
+		K_DEBUG("new message pending, label=%d", port->write_to.msglabel);
 	}
 
+	//TODO: implement TX
 	K_DEBUG("->>> TX not implemented yet");
 	return result;
 }
@@ -450,6 +506,19 @@ static void cdmx_enttec_parse(struct dmx_port *port)
 	write_to->rawsize = 0;
 }
 
+static inline size_t cdmx_space_left(struct dmx_port *cdata)
+{
+	return (sizeof(cdata->write_to.rawdata) - cdata->write_to.rawsize );
+}
+
+static int cdmx_bytes_to_read(struct dmx_port *cdata)
+{
+	struct usb_frame *frame = &cdata->read_from;
+	if (!frame->pending)
+		return 0;
+	return ENT_FRAME_OVERHEAD + frame->msgsize - frame->rhead;
+}
+
 static ssize_t cdmx_write (struct file *f, const char* src,
 		size_t len, loff_t * offset)
 {
@@ -500,7 +569,7 @@ static ssize_t cdmx_read 	(struct file *f, char* dest,
 	struct dmx_port *cdata = (struct dmx_port *) f->private_data;
 	struct usb_frame *frame = &cdata->read_from;
 	ssize_t result = 0, headsize, size;
-	uint8_t header[ENT_HEADER_DMX] = {0}, footer = ENT_EOM;
+	uint8_t header[ENT_HEADER_SIZE] = {0}, footer = ENT_EOM;
 
 	K_DEBUG("port %d", cdata->id);
 
@@ -524,11 +593,13 @@ static ssize_t cdmx_read 	(struct file *f, char* dest,
 	header[2] = (uint8_t) ((frame->msgsize) & 0x00FF);		// LSB
 	header[3] = (uint8_t) (frame->msgsize >> 8);// MSB
 
-	if (frame->msglabel == LABEL_RECEIVED_DMX)
-	{
-		header[4] = frame->flags;
-		headsize = ENT_HEADER_DMX;
-	}
+//	TODO: DMX RX should put 'flags' byte and increment msgzise ON ITS OWN
+//
+//	if (frame->msglabel == LABEL_RECEIVED_DMX)
+//	{
+//		header[4] = frame->flags;
+//		headsize = ENT_HEADER_DMX;
+//	}
 
 	size = MIN(len, (headsize - frame->rhead));
 	if(size > 0)
@@ -554,7 +625,7 @@ static ssize_t cdmx_read 	(struct file *f, char* dest,
 		frame->rhead += size;
 	}
 
-	if (len > 0)
+	if (len >= 0)
 	{
 		K_DEBUG("footer %d byte(s)", ENT_FOOTER_SIZE);
 		if (copy_to_user(dest, &footer, ENT_FOOTER_SIZE))
@@ -572,75 +643,65 @@ static ssize_t cdmx_read 	(struct file *f, char* dest,
 	return result;
 
 }
-/*
- static ssize_t scr24x_read(struct file *filp, char __user *buf, size_t count,
-								loff_t *ppos)
+
+__poll_t cdmx_poll (struct file *f, struct poll_table_struct *p)
 {
-	struct scr24x_dev *dev = filp->private_data;
-	int ret;
-	int len;
+	struct dmx_port *cdata = (struct dmx_port *) f->private_data;
+	__poll_t mask = 0;
 
-	if (count < CCID_HEADER_SIZE)
-		return -EINVAL;
+	K_DEBUG("port %d", cdata->id);
+	mutex_lock(&cdata->lock);
 
-	if (mutex_lock_interruptible(&dev->lock))
-		return -ERESTARTSYS;
+	if (cdata->read_from.pending)
+		mask |= (EPOLLIN | EPOLLRDNORM);
 
-	if (!dev->dev) {
-		ret = -ENODEV;
-		goto out;
-	}
+	if( cdmx_space_left(cdata) > 0)
+		mask |= EPOLLOUT | EPOLLWRNORM;
 
-	ret = scr24x_wait_ready(dev);
-	if (ret < 0)
-		goto out;
-	len = CCID_HEADER_SIZE;
-	ret = read_chunk(dev, 0, len);
-	if (ret < 0)
-		goto out;
-
-	len += le32_to_cpu(*(__le32 *)(&dev->buf[CCID_LENGTH_OFFSET]));
-	if (len > sizeof(dev->buf)) {
-		ret = -EIO;
-		goto out;
-	}
-	ret = read_chunk(dev, CCID_HEADER_SIZE, len);
-	if (ret < 0)
-		goto out;
-
-	if (len < count)
-		count = len;
-
-	if (copy_to_user(buf, dev->buf, count)) {
-		ret = -EFAULT;
-		goto out;
-	}
-
-	ret = count;
-out:
-	mutex_unlock(&dev->lock);
-	return ret;
+	mutex_unlock(&cdata->lock);
+	return mask;
 }
- */
-// ----------------------------------------------------------------------------
-// ----------------------------------------------------------------------------
-// ----------------------------------------------------------------------------
 
+long cdmx_ioctl (struct file *f, unsigned int cmd, unsigned long arg)
+{
+	//TODO: make more ioctls
+	struct dmx_port *cdata = (struct dmx_port *) f->private_data;
+	void __user *p = (void __user *)arg;
+	int i;
 
+	K_DEBUG("cmd 0x%X, param 0x%lX", cmd, arg);
+
+	switch(cmd)
+	{
+	case TIOCEXCL:
+		set_bit(CDMX_EXCLUSIVE, &cdata->flags);
+		return 0;
+	case TIOCNXCL:
+		clear_bit(CDMX_EXCLUSIVE, &cdata->flags);
+		return 0;
+	case 0x5440: //TIOCGEXCL:
+		i =  test_bit(CDMX_EXCLUSIVE, &cdata->flags);
+		return put_user(i, (int __user *)p);
+	case TIOCINQ:
+		i = cdmx_bytes_to_read(cdata);
+		return put_user(i, (int __user *)p);
+	case TIOCOUTQ:
+		i = cdata->write_to.rawsize;
+		return put_user(i, (int __user *)p);
+	default:
+		return -EINVAL;
+	}
+}
+
+long cdmx_compat_ioctl (struct file *f, unsigned int cmd, unsigned long p)
+{
+	K_DEBUG("cmd 0x%X, param 0x%lX", cmd, p);
+	return -EBUSY;
+}
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-
-
 
 
 static struct file_operations cdmx_ops =
@@ -649,7 +710,10 @@ static struct file_operations cdmx_ops =
 	.read		= cdmx_read,
 	.write		= cdmx_write,
 	.open		= cdmx_open,
-	.release 	= cdmx_release
+	.release 	= cdmx_release,
+	.poll		= cdmx_poll,
+	.unlocked_ioctl = cdmx_ioctl,
+	.compat_ioctl = cdmx_compat_ioctl,
 };
 
 static struct dmx_port *create_port_obj(int id)
@@ -733,7 +797,6 @@ static int cdmx_create_cdevs (void)
 		err = -ENOENT;
 		goto failure1;
 	}
-	K_DEBUG("allocated chrdev region, creating class");
 
 	// Returns &struct class pointer on success, or ERR_PTR() on error.
 	cdmx_devclass = class_create(THIS_MODULE, chrdev_name);
@@ -744,7 +807,6 @@ static int cdmx_create_cdevs (void)
 		goto failure2;
 	}
 	// handles chrdev CHMOD
-	K_DEBUG("created class, adding cdev");
 	cdmx_devclass->devnode = cdmx_devnode;
 
 
@@ -767,15 +829,7 @@ static int cdmx_create_cdevs (void)
 			goto failure3;
 		}
 	}
-	K_DEBUG("cdev added, creating devices");
 
-//	cdmx_ports = kzalloc(cdmx_port_count * sizeof(struct cdmx_data), GFP_KERNEL);
-//	if (!cdmx_ports)
-//	{
-//		K_ERR("out of memory");
-//		err = -ENOMEM;
-//		goto failure4;
-//	}
 	for (i=0; i< cdmx_port_count; i++)
 	{
 		// Returns &struct device pointer on success, or ERR_PTR() on error.
