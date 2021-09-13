@@ -274,10 +274,6 @@ static int cdmx_release (struct inode *node, struct file *f)
 	return 0;
 }
 
-// ----------------------------------------------------------------------------
-// ----------------------------------------------------------------------------
-// ----------------------------------------------------------------------------
-
 static void cdmx_enttec_mkframe(struct usb_frame *frame, uint8_t label, uint16_t size)
 {
 	frame->data[0] = ENT_SOM;
@@ -334,10 +330,10 @@ static void cdmx_enttec_setparams (struct dmx_port *port)
 static void cdmx_enttec_getserial (struct dmx_port *port)
 {
 	struct usb_frame *frame = &port->read_from;
-	unsigned int size = sizeof(USBPRO_SERIAL);
+	uint8_t serial[ENT_SERIAL_SIZE] = {port->id, 0,0,0};
 
-	memcpy(&frame->data[ENT_HEADER_SIZE], USBPRO_SERIAL, size);
-	cdmx_enttec_mkframe(frame, LABEL_GET_SERIAL, size);
+	memcpy(&frame->data[ENT_HEADER_SIZE], serial, ENT_SERIAL_SIZE);
+	cdmx_enttec_mkframe(frame, LABEL_GET_SERIAL, ENT_SERIAL_SIZE);
 
 	K_DEBUG("message %d bytes", frame->msgsize);
 }
@@ -772,29 +768,6 @@ int cdmx_check_flags (int i)
 	return 0;
 }
 
-/*
-
-	int (*iterate_shared) (struct file *, struct dir_context *);
-
-	int (*mmap) (struct file *, struct vm_area_struct *);
-
-
-	ssize_t (*sendpage) (struct file *, struct page *, int, size_t, loff_t *, int);
-	unsigned long (*get_unmapped_area)(struct file *, unsigned long, unsigned long, unsigned long, unsigned long);
-
-	long (*fallocate)(struct file *file, int mode, loff_t offset,
-			  loff_t len);
-	void (*show_fdinfo)(struct seq_file *m, struct file *f);
-#ifndef CONFIG_MMU
-	unsigned (*mmap_capabilities)(struct file *);
-#endif
-	ssize_t (*copy_file_range)(struct file *, loff_t, struct file *, loff_t, size_t, unsigned int);
-	loff_t (*remap_file_range)(struct file *file_in, loff_t pos_in,
-				   struct file *file_out, loff_t pos_out,
-				   loff_t len, unsigned int remap_flags);
-	int (*fadvise)(struct file *, loff_t, loff_t, int);
-
-	*/
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -814,8 +787,7 @@ static struct file_operations cdmx_ops =
 	.flock		= cdmx_flock,
 	.read_iter	= cdmx_read_iter,
 	.write_iter = cdmx_write_iter,
-//	.iopoll		= cdmx_iopoll,
-	.iopoll		= iomap_dio_iopoll,
+	.iopoll		= cdmx_iopoll,
 	.flush		= cdmx_flush,
 	.llseek		= cdmx_llseek,
 	.iterate	= cdmx_iterate,

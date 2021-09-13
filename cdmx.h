@@ -127,7 +127,6 @@
 #define DMXKING_512_MSB			(0x00)
 #define ENT_NAME_MAX		(32)
 
-static uint8_t USBPRO_SERIAL[] 	= {0xFF, 0xFF, 0xFF, 0xFF};
 static char	USBPRO_VENDOR[] 	= {ESTA_DMXKING_LSB, ESTA_DMXKING_MSB, 'D', 'M', 'X', 'k', 'i', 'n', 'g'};
 static char	USBPRO_NAME[] 		= {DMXKING_512_LSB, DMXKING_512_MSB, 'U', 'S', 'B', ' ', 'D', 'M', 'X', '5', '1', '2', '-', 'A', ' ',
 										   'E', 'm', 'u', 'l', 'a', 't', 'i', 'o', 'n'};
