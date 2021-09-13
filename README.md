@@ -12,17 +12,15 @@ Implemented for now:
 - /sys/cdmx/port00x/* files provide r/w access to port parameters
 - module parameter cdmx_port_count, min=1, max=256
 
-Tested using OLA (https://github.com/OpenLightingProject/ola)
-It needs '--no-use-epoll' option due using epoll() that is still not supported.
+Tests performed using OLA (https://github.com/OpenLightingProject/ola)
 
 TODO:
-- add epoll support
 - implement UART i/o
 - add RDM support
 
-Building:
+Building and testing:
 - apt install build-essential
 - apt install linux-headers-`uname -r` or build new kernel
-- clone repository; make; make in; make jo; make rm;
-- run olad --no-use-epoll to test
-- cat test/test.3.getparams | hexdump -C to test
+- clone cdmx repository; make; make in; make jo; make rm;
+- apt install ola; sudo service olad start
+- cat test/test.3.getparams | hexdump -C

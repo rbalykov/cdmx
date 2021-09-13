@@ -21,7 +21,6 @@
 #include <uapi/asm-generic/posix_types.h>
 
 
-
 #define _pp(severity, format, args...) \
   printk(severity "%s: %d: %s: " format "\n", THIS_MODULE->name, __LINE__, __func__, ##args)
 
@@ -319,6 +318,7 @@ struct dmx_port
 	struct uart_frame rx;
 
 	unsigned long flags;
+	wait_queue_head_t wait;
 };
 
 

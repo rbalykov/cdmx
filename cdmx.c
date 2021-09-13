@@ -7,6 +7,8 @@
 #include <uapi/asm-generic/ioctls.h>
 //#include <asm-generic/bitops/atomic.h>
 #include <linux/iomap.h>
+#include <linux/wait.h>
+#include <linux/poll.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Neutrino");
@@ -460,6 +462,7 @@ static int cdmx_enttec_msg(struct dmx_port *port)
 	if (port->read_from.pending)
 	{
 		K_DEBUG("new message pending, label=%d", port->write_to.msglabel);
+		wake_up(&port->wait);
 	}
 
 	//TODO: implement TX
@@ -634,6 +637,7 @@ __poll_t cdmx_poll (struct file *f, struct poll_table_struct *p)
 
 	mutex_lock(&cdata->lock);
 
+	poll_wait(f, &cdata->wait, p);
 	r = cdmx_bytes_to_read(cdata);
 	if (r > 0)
 		mask |= (EPOLLIN | EPOLLRDNORM | EPOLLPRI );
@@ -820,6 +824,7 @@ static struct dmx_port *create_port_obj(int id)
 		return NULL;
 
 	mutex_init(&port->lock);
+	init_waitqueue_head(&port->wait);
 	port->breaktime = DEFAULT_BREAK;
 	port->mabtime 	= DEFAULT_MAB;
 	port->framerate = DEFAULT_FRAMERATE;
