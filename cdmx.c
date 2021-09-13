@@ -411,7 +411,7 @@ static int cdmx_enttec_msg(struct dmx_port *port)
 			cdmx_enttec_setparams(port);
 			break;
 
-		// labels that bring DMX/DRM data to TX
+		// labels that bring DMX/RDM data to TX
 		case LABEL_RDM_DISCOVERY:
 			break;
 		case LABEL_RDM_OUTPUT:
