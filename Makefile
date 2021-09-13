@@ -26,7 +26,7 @@ inp:
 	sudo insmod $(MODNAME).ko cdmx_port_count=6
 
 jo:
-	sudo journalctl -ft kernel -o short-monotonic --no-hostname
+	sudo journalctl -f -o short-monotonic --no-hostname
 	
 
 	

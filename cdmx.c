@@ -6,6 +6,7 @@
 #include <uapi/asm-generic/errno-base.h>
 #include <uapi/asm-generic/ioctls.h>
 //#include <asm-generic/bitops/atomic.h>
+#include <linux/iomap.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Neutrino");
@@ -653,7 +654,7 @@ __poll_t cdmx_poll (struct file *f, struct poll_table_struct *p)
 	mutex_lock(&cdata->lock);
 
 	if (cdata->read_from.pending)
-		mask |= (EPOLLIN | EPOLLRDNORM);
+		mask |= (EPOLLIN | EPOLLRDNORM | EPOLLPRI | EPOLLRDBAND);
 
 	if( cdmx_space_left(cdata) > 0)
 		mask |= EPOLLOUT | EPOLLWRNORM;
@@ -695,10 +696,106 @@ long cdmx_ioctl (struct file *f, unsigned int cmd, unsigned long arg)
 
 long cdmx_compat_ioctl (struct file *f, unsigned int cmd, unsigned long p)
 {
-	K_DEBUG("cmd 0x%X, param 0x%lX", cmd, p);
-	return -EBUSY;
+	K_DEBUG("COMPAT cmd 0x%X, param 0x%lX", cmd, p);
+	return 0;
+}
+int cdmx_lock (struct file *f, int i, struct file_lock *lock)
+{
+	K_DEBUG("LOCK");
+	return 0;
+}
+int cdmx_flock (struct file *f, int i, struct file_lock *lock)
+{
+	K_DEBUG("FLOCK");
+	return 0;
+}
+ssize_t cdmx_read_iter (struct kiocb *k, struct iov_iter *i)
+{
+	K_DEBUG("READ ITER");
+	return 0;
+}
+ssize_t cdmx_write_iter (struct kiocb *k, struct iov_iter *i)
+{
+	K_DEBUG("WRITE ITER");
+	return 0;
 }
 
+int cdmx_iopoll (struct kiocb *kiocb, bool spin)
+{
+	K_DEBUG("IOPOLL");
+	return 0;
+}
+int cdmx_flush (struct file *f, fl_owner_t id)
+{
+	K_DEBUG("FLUSH");
+	return 0;
+}
+loff_t cdmx_llseek (struct file *f, loff_t o, int i)
+{
+	K_DEBUG("LSEEK");
+	return 0;
+}
+int cdmx_iterate (struct file *f, struct dir_context *c)
+{
+	K_DEBUG("ITERATE");
+	return 0;
+}
+int cdmx_setlease (struct file *f, long l, struct file_lock **lock, void **v)
+{
+	K_DEBUG("SETLEASE");
+	return 0;
+}
+ssize_t cdmx_splice_write (struct pipe_inode_info *i, struct file *f,
+		loff_t *l, size_t s, unsigned int ii)
+{
+	K_DEBUG("SPLICE WRITE");
+	return 0;
+}
+ssize_t cdmx_splice_read (struct file *f, loff_t *l,
+		struct pipe_inode_info *i, size_t s, unsigned int ii)
+{
+	K_DEBUG("SPLICE READ");
+	return 0;
+}
+int cdmx_fsync (struct file *f, loff_t l1, loff_t l2, int datasync)
+{
+	K_DEBUG("FSYNC");
+	return 0;
+}
+int cdmx_fasync (int i, struct file *f, int j)
+{
+	K_DEBUG("FASYNC");
+	return 0;
+}
+int cdmx_check_flags (int i)
+{
+	K_DEBUG("CHECK FLAGS");
+	return 0;
+}
+
+/*
+
+	int (*iterate_shared) (struct file *, struct dir_context *);
+
+	int (*mmap) (struct file *, struct vm_area_struct *);
+
+
+	ssize_t (*sendpage) (struct file *, struct page *, int, size_t, loff_t *, int);
+	unsigned long (*get_unmapped_area)(struct file *, unsigned long, unsigned long, unsigned long, unsigned long);
+
+	long (*fallocate)(struct file *file, int mode, loff_t offset,
+			  loff_t len);
+	void (*show_fdinfo)(struct seq_file *m, struct file *f);
+#ifndef CONFIG_MMU
+	unsigned (*mmap_capabilities)(struct file *);
+#endif
+	ssize_t (*copy_file_range)(struct file *, loff_t, struct file *, loff_t, size_t, unsigned int);
+	loff_t (*remap_file_range)(struct file *file_in, loff_t pos_in,
+				   struct file *file_out, loff_t pos_out,
+				   loff_t len, unsigned int remap_flags);
+	int (*fadvise)(struct file *, loff_t, loff_t, int);
+
+	*/
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -713,7 +810,21 @@ static struct file_operations cdmx_ops =
 	.release 	= cdmx_release,
 	.poll		= cdmx_poll,
 	.unlocked_ioctl = cdmx_ioctl,
-	.compat_ioctl = cdmx_compat_ioctl,
+	.compat_ioctl 	= cdmx_compat_ioctl,
+	.lock		= cdmx_lock,
+	.flock		= cdmx_flock,
+	.read_iter	= cdmx_read_iter,
+	.write_iter = cdmx_write_iter,
+//	.iopoll		= cdmx_iopoll,
+	.iopoll		= iomap_dio_iopoll,
+	.flush		= cdmx_flush,
+	.llseek		= cdmx_llseek,
+	.iterate	= cdmx_iterate,
+	.setlease	= cdmx_setlease,
+	.splice_write 	= cdmx_splice_write,
+	.splice_read 	= cdmx_splice_read,
+	.fsync		= cdmx_fsync,
+	.fasync		= cdmx_fasync,
 };
 
 static struct dmx_port *create_port_obj(int id)
