@@ -388,6 +388,9 @@ static int cdmx_enttec_msg(struct dmx_port *port)
 		return -EBUSY;
 	}
 
+	
+	K_DEBUG("port %d: received label %d, size %d bytes",
+			port->id, port->write_to.msglabel, port->write_to.whead);
 	switch (port->write_to.msglabel)
 	{
 		// labels that generate replies
@@ -412,7 +415,7 @@ static int cdmx_enttec_msg(struct dmx_port *port)
 			cdmx_enttec_setparams(port);
 			break;
 
-		// labels that bring DMX/DRM data to TX
+		// labels that bring DMX/RDM data to TX
 		case LABEL_RDM_DISCOVERY:
 			break;
 		case LABEL_RDM_OUTPUT:
