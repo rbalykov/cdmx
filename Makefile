@@ -6,7 +6,7 @@ MODNAME = cdmx
 
 obj-m += $(MODNAME).o
 
-N_DMX = 29
+N_DMX = 28
 TEST_DEVICE = /dev/ttyUSB0
 SEPR = "---------------------------------------------------------------"
 

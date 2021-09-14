@@ -19,7 +19,15 @@
 #include <linux/mutex.h>
 #include <linux/sysfs.h>
 #include <uapi/asm-generic/posix_types.h>
+#include <uapi/linux/stat.h>
+#include <linux/tty.h>
+#include <linux/tty_ldisc.h>
 
+/* Common stuff
+ * */
+#define MAX(a,b) ((a>b)?a:b)
+#define MIN(a,b) ((a<b)?a:b)
+#define TO_RANGE(a,min,max) (MIN(max,MAX(min,a)))
 
 #define _pp(severity, format, args...) \
   printk(severity "%s: %d: %s: " format "\n", THIS_MODULE->name, __LINE__, __func__, ##args)
@@ -31,36 +39,22 @@
 #define K_DEBUG(args...) _pp(KERN_DEBUG, args)
 
 
-#ifndef PAGE_SIZE
-#warning Redefining PAGE_SIZE (used to suppress Eclipse warning)
-#define PAGE_SIZE 4096
-#endif
+#define CHMOD_RW	(S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH)
+#define CHMOD_RO	(S_IRUSR | S_IRGRP | S_IROTH)
 
-//#define cdmx_port_count		(4u)
-#define BASE_MINOR		(0u)
+/*******************************************************************************
+ *
+ * DMX hardware
+ *
+ ******************************************************************************/
 
-#define PORT_INACTIVE	(-1)
-#define CDEV_VALID		(1)
-
-//#define port_active(p) 		((p) != PORT_INACTIVE)
-
-#define CHMOD_RW	0666
-#define CHMOD_RO	0444
-//NOTE S_IRUGO
-
-
-#define CDMX_PORTS_MAX	(0x100u)
-#define CDMX_PORTS_MIN	(0x1u)
+#define CDMX_PORTS_MAX		(0x100u)
+#define CDMX_PORTS_MIN		(0x1u)
 #define CDMX_PORTS_DEFAULT	(0x4u)
+#define BASE_MINOR			(0u)
+#define PORT_INACTIVE		(-1)
+#define CDMX_EXCLUSIVE		(1)
 
-/* PORT FLAGS
- * */
-#define CDMX_EXCLUSIVE	(1)
-
-#define MAX(a,b) ((a>b)?a:b)
-#define MIN(a,b) ((a<b)?a:b)
-
-#define TO_RANGE(a,min,max) (MIN(max,MAX(min,a)))
 
 #define NORMALISE_BREAK(a) 		(a=TO_RANGE(a, 88, 1000000))
 #define NORMALISE_MAB(a)   		(a=TO_RANGE(a, 8, 1000000))
@@ -70,7 +64,11 @@
 #define DEFAULT_MAB			(8)
 #define DEFAULT_FRAMERATE	(44)
 
-
+/*******************************************************************************
+ *
+ * DMX-512 protocol
+ *
+ ******************************************************************************/
 
 #define DMX_WORD_SIZE			(1)
 #define DMX_PAYLOAD_MAX 		(512)
@@ -81,33 +79,39 @@
 #define DMX_FRAME_MIN 			(DMX_STARTCODE_BYTES + DMX_PAYLOAD_MIN)
 #define DMX_BAUDRATE 			(250000)
 
-#define ENT_FRAME_MAX	(605)
-#define ENT_PAYLOAD_MAX	(600)
+/*******************************************************************************
+ *
+ * Enttec protocol
+ *
+ ******************************************************************************/
+
+#define ENT_FRAME_MAX		(605)
+#define ENT_PAYLOAD_MAX		(600)
 #define ENT_SOM 			(0x7E)
 #define ENT_EOM 			(0xE7)
 
-#define ENT_HEADER_SIZE	(4)
-#define ENT_FOOTER_SIZE (1)
-#define ENT_FRAME_OVERHEAD (ENT_HEADER_SIZE + ENT_FOOTER_SIZE)
+#define ENT_HEADER_SIZE		(4)
+#define ENT_FOOTER_SIZE 	(1)
+#define ENT_FRAME_OVERHEAD 	(ENT_HEADER_SIZE + ENT_FOOTER_SIZE)
 
-#define ENT_FW_DMX	(1)
-#define ENT_FW_RDM	(2)
-#define ENT_FW_RDMSNIFFER (3)
-#define ENT_FW_LSB	(0)
+#define ENT_FW_DMX			(1)
+#define ENT_FW_RDM			(2)
+#define ENT_FW_RDMSNIFFER 	(3)
+#define ENT_FW_LSB			(0)
 
-#define ENT_FLASH_PAGE	(64)
-#define ENT_FLASH_REPLY	(4)
-#define ENT_FLASH_TRUE  ("TRUE")
-#define ENT_FLASH_FALSE ("FALS")
+#define ENT_FLASH_PAGE		(64)
+#define ENT_FLASH_REPLY		(4)
+#define ENT_FLASH_TRUE  	("TRUE")
+#define ENT_FLASH_FALSE 	("FALS")
 
-#define ENT_PARAMS_MIN	(5)
+#define ENT_PARAMS_MIN		(5)
 #define ENT_TIMEUNIT_NS		(10670)
 #define ENT_TIMEUNIT_DIV 	(10)
 #define ENT_TIMEUNIT_MULT 	(10)
 
-#define ENT_TIME_MAX	(127)
-#define ENT_BREAK_MIN	(9)
-#define ENT_MAB_MIN		(1)
+#define ENT_TIME_MAX		(127)
+#define ENT_BREAK_MIN		(9)
+#define ENT_MAB_MIN			(1)
 #define ENT_FRAMERATE_MAX	(40)
 
 #define ENT_FLAG_CLEAR		(0)
@@ -120,31 +124,15 @@
 #define ENT_SERIAL_SIZE		(4)
 #define ENT_DISCOVERY_SLOTS	(38)
 
-#define ESTA_DMXKING_LSB		(0x6B)
-#define ESTA_DMXKING_MSB		(0x6A)
-#define DMXKING_512_LSB			(0x00)
-#define DMXKING_512_MSB			(0x00)
+#define ESTA_DMXKING_LSB	(0x6B)
+#define ESTA_DMXKING_MSB	(0x6A)
+#define DMXKING_512_LSB		(0x00)
+#define DMXKING_512_MSB		(0x00)
 #define ENT_NAME_MAX		(32)
 
 static char	USBPRO_VENDOR[] 	= {ESTA_DMXKING_LSB, ESTA_DMXKING_MSB, 'D', 'M', 'X', 'k', 'i', 'n', 'g'};
 static char	USBPRO_NAME[] 		= {DMXKING_512_LSB, DMXKING_512_MSB, 'U', 'S', 'B', ' ', 'D', 'M', 'X', '5', '1', '2', '-', 'A', ' ',
 										   'E', 'm', 'u', 'l', 'a', 't', 'i', 'o', 'n'};
-
-
-
-static int cdmx_open 		(struct inode *, struct file *);
-static int cdmx_release 	(struct inode *, struct file *);
-static ssize_t cdmx_read 	(struct file*, char*, size_t, loff_t *);
-static ssize_t cdmx_write 	(struct file*, const char*, size_t, loff_t *);
-static int 	 cdmx_init	(void);
-static void  cdmx_exit	(void);
-
-
-static char *cdmx_devnode(struct device *dev, umode_t *mode);
-
-static int 	cdmx_create_cdevs (void);
-static void cdmx_remove_cdevs (void);
-
 
 typedef enum usb_states
 {
@@ -247,28 +235,11 @@ typedef enum usb_labels
 } usbpro_labels_t;
 
 
-
-struct usb_frame
-{
-	// Enttec part
-	uint8_t msglabel;
-	uint16_t msgsize;
-	uint8_t flags;
-	uint8_t data[ENT_FRAME_MAX];
-	bool pending;
-
-	// reading raw stopped at this pointer
-	size_t rhead;
-	// writing DATA section stopped at this pointer
-	size_t whead;
-
-
-	// chrdev part to WRITE
-	uint8_t rawdata[ENT_FRAME_MAX];
-	size_t rawsize;
-	usb_states_t state;
-};
-
+/*******************************************************************************
+ *
+ * UART section
+ *
+ ******************************************************************************/
 typedef enum uart_states
 {
 	IDLE = 0,
@@ -295,16 +266,49 @@ struct uart_frame
 	bool pending;
 };
 
+/*******************************************************************************
+ *
+ * Line discipline
+ *
+ ******************************************************************************/
+
+#define CDMX_LD		(28)
+
+
+/*******************************************************************************
+ *
+ * Character device
+ *
+ ******************************************************************************/
+
+struct usb_frame
+{
+	// Enttec part
+	uint8_t msglabel;
+	uint16_t msgsize;
+	uint8_t flags;
+	uint8_t data[ENT_FRAME_MAX];
+
+	// reading raw stopped at this pointer
+	size_t rhead;
+	bool pending;
+
+	// chrdev part to WRITE
+	uint8_t rawdata[ENT_FRAME_MAX];
+	size_t rawsize;
+	usb_states_t state;
+
+	// writing stopped at this pointer
+	size_t whead;
+};
+
 struct dmx_port
 {
+	int id;
 	struct kobject kobj;
 	unsigned int breaktime;
 	unsigned int mabtime;
 	unsigned int framerate;
-	char *ttyname;
-	int id;
-
-	// bool onchange;
 
 	struct cdev cdev;
 	struct device *fsdev;
@@ -319,10 +323,23 @@ struct dmx_port
 
 	unsigned long flags;
 	wait_queue_head_t wait;
+
+	struct file *tty;
+	char *ttyname;
 };
 
 
-
+struct port_attribute
+{
+	struct attribute attr;
+	ssize_t (*show) (struct dmx_port *port,
+			struct port_attribute *attr,
+			char *buf);
+	ssize_t (*store)(struct dmx_port *port,
+			struct port_attribute *attr,
+			const char *buf,
+			size_t count);
+};
 
 
 #endif /* CDMX_H_ */

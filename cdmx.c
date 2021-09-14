@@ -5,10 +5,14 @@
 #include <linux/printk.h>
 #include <uapi/asm-generic/errno-base.h>
 #include <uapi/asm-generic/ioctls.h>
+#include <uapi/asm-generic/fcntl.h>
 //#include <asm-generic/bitops/atomic.h>
 #include <linux/iomap.h>
 #include <linux/wait.h>
 #include <linux/poll.h>
+#include <linux/uaccess.h>
+//#include <asm-generic/uaccess.h>
+//#include <linux/list.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Neutrino");
@@ -22,27 +26,149 @@ module_param(cdmx_port_count, hexint, CHMOD_RO);
 
 static struct class *cdmx_devclass 	= NULL;
 static dev_t 		cdmx_device_id;
-//struct cdev cdmx_cdev;
 
 static struct dmx_port **dmx_ports;
-
 static struct kset *dmx_ports_kset;
-static inline bool port_active(struct dmx_port * port)
+
+
+static int cld_open(struct tty_struct *tty)
 {
-	return (port->id >= 0);
+	int retval = -EEXIST;
+
+/*
+	mutex_lock(&routelock);
+	if (tr_data->opencalled == 0) {
+
+		tr_data->kref_tty = tty_kref_get(tty);
+		if (tr_data->kref_tty == NULL) {
+			retval = -EFAULT;
+		} else {
+			tr_data->opencalled = 1;
+			tty->disc_data      = tr_data;
+			tty->receive_room   = RECEIVE_ROOM;
+			tty_driver_flush_buffer(tty);
+			retval = 0;
+		}
+	}
+	mutex_unlock(&routelock);
+	*/
+	K_DEBUG("->>>");
+	return retval;
 }
 
-struct port_attribute
+static void cld_close(struct tty_struct *tty)
 {
-	struct attribute attr;
-	ssize_t (*show) (struct dmx_port *port,
-			struct port_attribute *attr,
-			char *buf);
-	ssize_t (*store)(struct dmx_port *port,
-			struct port_attribute *attr,
-			const char *buf,
-			size_t count);
+/*	struct tracerouter_data *tptr = tty->disc_data;
+
+	mutex_lock(&routelock);
+	WARN_ON(tptr->kref_tty != tr_data->kref_tty);
+	tty_driver_flush_buffer(tty);
+	tty_kref_put(tr_data->kref_tty);
+	tr_data->kref_tty = NULL;
+	tr_data->opencalled = 0;
+	tty->disc_data = NULL;
+	mutex_unlock(&routelock);
+*/
+	K_DEBUG("->>>");
+}
+
+static ssize_t cld_read(struct tty_struct *tty, struct file *file,
+				  unsigned char *buf, size_t nr,
+				  void **cookie, unsigned long offset)
+{
+	K_DEBUG("->>>");
+	return -EINVAL;
+}
+
+static ssize_t cld_write(struct tty_struct *tty, struct file *file,
+				   const unsigned char *buf, size_t nr)
+{
+	K_DEBUG("->>>");
+	return -EINVAL;
+}
+
+static void cld_receive_buf(struct tty_struct *tty,
+					const unsigned char *cp,
+					char *fp, int count)
+{
+	/*
+	mutex_lock(&routelock);
+	n_tracesink_datadrain((u8 *) cp, count);
+	mutex_unlock(&routelock);
+	*/
+	K_DEBUG("->>>");
+}
+
+static struct tty_ldisc_ops cld_ops =
+{
+	.owner			= THIS_MODULE,
+	.magic			= TTY_LDISC_MAGIC, // @suppress("Symbol is not resolved")
+	.name			= "cdmx",
+	.open			= cld_open,
+	.close			= cld_close,
+	.read			= cld_read,
+	.write			= cld_write,
+	.receive_buf	= cld_receive_buf,
 };
+/*
+	struct file *f = filp_open("/path/to/file", FLAGS, MODE);
+
+	mm_segment_t oldfs;
+	oldfs = get_fs();
+	set_fs (KERNEL_DS);
+
+//    oldfs = get_fs();
+//    set_fs(get_ds());
+//
+
+	vfs_read(f, buf, len, &f->f_pos);
+	vfs_write(f, otherbuf, otherlen, &f->f_pos);
+
+	set_fs(oldfs);
+
+	fput(f);
+
+
+#ifdef CONFIG_CONSOLE_POLL
+
+
+*/
+
+extern struct char_device_struct *chrdevs[255];
+
+static int cld_attach(struct dmx_port *pt, char *ttyname)
+{
+//	struct file *f = filp_open(ttyname, O_RDWR|O_NOCTTY|O_EXCL, 0);
+	struct file* port;
+	struct tty_struct *tty;
+	struct char_device_struct *ch = chrdevs[0];
+
+	K_DEBUG("%p", ch);
+//	mm_segment_t oldfs;
+//
+//	oldfs=get_fs(); // @suppress("Field cannot be resolved")
+//	set_fs(KERNEL_DS); // @suppress("Type cannot be resolved")
+//
+//	port = filp_open(ttyname, O_RDWR | O_NONBLOCK | O_NOCTTY, 0);
+//
+//	if (IS_ERR (port))
+//	{
+//		K_ERR("PORT: can't open PHY port '%s'\n", ttyname);
+//		goto exit;
+//	}
+//	else
+//	{
+//		tty=(struct tty_struct*)port->private_data;
+//		K_DEBUG("%d", tty->ldisc->ops->magic);
+//		filp_close(port, 0);
+//	}
+//
+//
+//
+//	exit:
+//	        set_fs(oldfs);
+	        return 0;
+}
 
 static ssize_t port_attr_show(struct kobject *kobj,
 			     struct attribute *attr,
@@ -135,7 +261,7 @@ static ssize_t port_str_show(struct dmx_port *port,
 {
 	if (!port->ttyname)
 		return 0;
-	return scnprintf(buf, PAGE_SIZE, "%s", port->ttyname);
+	return scnprintf(buf, PAGE_SIZE, "%s", port->ttyname); // @suppress("Symbol is not resolved")
 }
 
 static ssize_t port_str_store(struct dmx_port *port,
@@ -181,8 +307,8 @@ static ssize_t port_str_store(struct dmx_port *port,
 
 			//TODO: close previous TTY
 			kfree(port->ttyname);
-
 			//TODO: open new TTY
+			cld_attach(port, newname);
 			port->ttyname = newname;
 		}
 		else
@@ -195,6 +321,7 @@ static ssize_t port_str_store(struct dmx_port *port,
 	else
 	{
 		K_INFO("port %d attaching to TTY '%s'", port->id, newname);
+		cld_attach(port, newname);
 		//TODO: open new TTY
 		port->ttyname = newname;
 	}
@@ -379,14 +506,14 @@ static void cdmx_enttec_flash (struct dmx_port *port)
 
 /* static void cdmx_enttec_onchange (struct dmx_port *port)
  *
- * TODO: This message also reinitializes the DMX receive processing,
+ * This message also reinitializes the DMX receive processing,
  * so that if change of state reception is selected,
  * the initial received DMX data is cleared to all zeros.
  * */
 
 /* static void cdmx_enttec_update (struct dmx_port *port)
  *
- * TODO: Datasheet on this label looks like a crap.
+ * Datasheet on this label looks like a crap.
  * It describes 1 byte as frame offset for 40-slot subframe.
  * So, 256 + 40 = insuffitient to address 512-slots frame.
  * Neither forums nor other source found to make it clear,
@@ -543,7 +670,6 @@ static int cdmx_bytes_to_read(struct dmx_port *cdata)
 static ssize_t cdmx_write (struct file *f, const char* src,
 		size_t len, loff_t * offset)
 {
-	//TODO: rewrite using epoll()
 	struct dmx_port *cdata = f->private_data;
 	struct usb_frame *write_to = &cdata->write_to;
 	ssize_t result, size;
@@ -653,7 +779,6 @@ __poll_t cdmx_poll (struct file *f, struct poll_table_struct *p)
 
 long cdmx_ioctl (struct file *f, unsigned int cmd, unsigned long arg)
 {
-	//TODO: make more ioctls
 	struct dmx_port *cdata = (struct dmx_port *) f->private_data;
 	void __user *p = (void __user *)arg;
 	int i;
@@ -693,84 +818,10 @@ long cdmx_ioctl (struct file *f, unsigned int cmd, unsigned long arg)
 	}
 }
 
-long cdmx_compat_ioctl (struct file *f, unsigned int cmd, unsigned long p)
-{
-	K_DEBUG("cmd 0x%X, param 0x%lX", cmd, p);
-	return 0;
-}
-int cdmx_lock (struct file *f, int i, struct file_lock *lock)
-{
-	K_DEBUG("LOCK");
-	return 0;
-}
-int cdmx_flock (struct file *f, int i, struct file_lock *lock)
-{
-	K_DEBUG("FLOCK");
-	return 0;
-}
-ssize_t cdmx_read_iter (struct kiocb *k, struct iov_iter *i)
-{
-	K_DEBUG("READ ITER");
-	return 0;
-}
-ssize_t cdmx_write_iter (struct kiocb *k, struct iov_iter *i)
-{
-	K_DEBUG("WRITE ITER");
-	return 0;
-}
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
-int cdmx_iopoll (struct kiocb *kiocb, bool spin)
-{
-	K_DEBUG("IOPOLL");
-	return 0;
-}
-int cdmx_flush (struct file *f, fl_owner_t id)
-{
-	K_DEBUG("FLUSH");
-	return 0;
-}
-loff_t cdmx_llseek (struct file *f, loff_t o, int i)
-{
-	K_DEBUG("LSEEK");
-	return 0;
-}
-int cdmx_iterate (struct file *f, struct dir_context *c)
-{
-	K_DEBUG("ITERATE");
-	return 0;
-}
-int cdmx_setlease (struct file *f, long l, struct file_lock **lock, void **v)
-{
-	K_DEBUG("SETLEASE");
-	return 0;
-}
-ssize_t cdmx_splice_write (struct pipe_inode_info *i, struct file *f,
-		loff_t *l, size_t s, unsigned int ii)
-{
-	K_DEBUG("SPLICE WRITE");
-	return 0;
-}
-ssize_t cdmx_splice_read (struct file *f, loff_t *l,
-		struct pipe_inode_info *i, size_t s, unsigned int ii)
-{
-	K_DEBUG("SPLICE READ");
-	return 0;
-}
-int cdmx_fsync (struct file *f, loff_t l1, loff_t l2, int datasync)
-{
-	K_DEBUG("FSYNC");
-	return 0;
-}
-int cdmx_fasync (int i, struct file *f, int j)
-{
-	K_DEBUG("FASYNC");
-	return 0;
-}
-int cdmx_check_flags (int i)
-{
-	K_DEBUG("CHECK FLAGS");
-	return 0;
-}
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -786,20 +837,6 @@ static struct file_operations cdmx_ops =
 	.release 	= cdmx_release,
 	.poll		= cdmx_poll,
 	.unlocked_ioctl = cdmx_ioctl,
-	.compat_ioctl 	= cdmx_compat_ioctl,
-	.lock		= cdmx_lock,
-	.flock		= cdmx_flock,
-	.read_iter	= cdmx_read_iter,
-	.write_iter = cdmx_write_iter,
-	.iopoll		= cdmx_iopoll,
-	.flush		= cdmx_flush,
-	.llseek		= cdmx_llseek,
-	.iterate	= cdmx_iterate,
-	.setlease	= cdmx_setlease,
-	.splice_write 	= cdmx_splice_write,
-	.splice_read 	= cdmx_splice_read,
-	.fsync		= cdmx_fsync,
-	.fasync		= cdmx_fasync,
 };
 
 static struct dmx_port *create_port_obj(int id)
@@ -1014,9 +1051,15 @@ static int __init cdmx_init (void)
 	if (err)
 		goto failure2;
 
+	err = tty_register_ldisc(CDMX_LD, &cld_ops);
+	if (err)
+		goto failure3;
+
 	K_DEBUG("->>> done");
 	return 0;
 
+failure3:
+	cdmx_remove_cdevs();
 failure2:
 	kfree(dmx_ports);
 failure1:
@@ -1028,8 +1071,9 @@ failure1:
 static void  cdmx_exit(void)
 {
 	int i;
-	K_DEBUG("start");
+	K_DEBUG("clean up");
 
+	tty_unregister_ldisc(CDMX_LD);
 	cdmx_remove_cdevs();
 	for (i=0; i<cdmx_port_count; i++)
 		destroy_port_obj(dmx_ports[i]);
