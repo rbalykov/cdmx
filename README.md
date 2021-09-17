@@ -24,3 +24,13 @@ Building and testing:
 - clone cdmx repository; make; make in; make jo; make rm;
 - apt install ola; sudo service olad start
 - cat test/test.3.getparams | hexdump -C
+
+UART on RPi3:
+- sudo systemctl disable hciuart
+- sudo raspi-config, turn login shell off, serial hardware on
+- edit /boot/config.txt, make sure it has "enable_uart=1" and "dtoverlay=pi3-miniuart-bt"
+- use /dev/ttyAMA0, it's compiant with DMX
+
+Kernel headers on RPi3:
+- sudo apt install raspberrypi-kernel-headers - it should be fine
+- building the kernel: https://www.raspberrypi.org/documentation/computers/linux_kernel.html
