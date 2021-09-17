@@ -78,6 +78,7 @@
 #define DMX_FRAME_MAX 			(DMX_STARTCODE_BYTES + DMX_PAYLOAD_MAX)
 #define DMX_FRAME_MIN 			(DMX_STARTCODE_BYTES + DMX_PAYLOAD_MIN)
 #define DMX_BAUDRATE 			(250000)
+#define DMX_RECEIVE_ROOM		(1024)
 
 /*******************************************************************************
  *
@@ -240,29 +241,29 @@ typedef enum usb_labels
  * UART section
  *
  ******************************************************************************/
-typedef enum uart_states
+typedef enum rx_states
 {
 	IDLE = 0,
 	BREAK,
-	SC,
+	GOT_SC,
 	DATAFLOW,
 	OVERFILL
-}uart_states_t;
+}rx_states_t;
 
-typedef enum uart_flags
+typedef enum rx_flags
 {
 	CLEAR		= 0,
 	OVERFLOW 	= 1,
 	OVERRUN 	= 2
-} uart_flags_t;
+} rx_flags_t;
 
 struct uart_frame
 {
 	uint8_t data[DMX_FRAME_MAX];
 	size_t size;
 	size_t head;
-	uart_states_t state;
-	uart_flags_t flags;
+	rx_states_t state;
+	uint8_t flags;
 	bool pending;
 };
 
@@ -319,12 +320,16 @@ struct dmx_port
 	struct usb_frame write_to;
 
 	struct uart_frame tx;
-	struct uart_frame rx;
+//	struct uart_frame rx;
+	uint8_t	rxchars[DMX_RECEIVE_ROOM];
+	uint8_t	rxflags[DMX_RECEIVE_ROOM];
+	uint8_t rx_flags;
+	rx_states_t rx_state;
 
 	unsigned long flags;
 	wait_queue_head_t wait;
 
-	struct file *tty;
+	struct tty_struct *tty;
 	char *ttyname;
 };
 

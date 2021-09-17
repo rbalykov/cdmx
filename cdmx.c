@@ -29,47 +29,49 @@ static dev_t 		cdmx_device_id;
 
 static struct dmx_port **dmx_ports;
 static struct kset *dmx_ports_kset;
-
+static struct mutex cdl_lock;
 
 static int cld_open(struct tty_struct *tty)
 {
-	int retval = -EEXIST;
+	int i;
 
-/*
-	mutex_lock(&routelock);
-	if (tr_data->opencalled == 0) {
-
-		tr_data->kref_tty = tty_kref_get(tty);
-		if (tr_data->kref_tty == NULL) {
-			retval = -EFAULT;
-		} else {
-			tr_data->opencalled = 1;
-			tty->disc_data      = tr_data;
-			tty->receive_room   = RECEIVE_ROOM;
-			tty_driver_flush_buffer(tty);
-			retval = 0;
+	mutex_lock(&cdl_lock);
+	for (i=0; i< cdmx_port_count; i++)
+	{
+		if (dmx_ports[i]->tty == NULL)
+		{
+			dmx_ports[i]->tty = tty_kref_get(tty);
+			if (dmx_ports[i]->tty)
+			{
+				K_INFO("attaching %s to port %d", tty->name, i);
+				tty->disc_data = dmx_ports[i];
+				tty->receive_room = DMX_RECEIVE_ROOM;
+				tty_driver_flush_buffer(tty);
+				mutex_unlock(&cdl_lock);
+				return 0;
+			}
 		}
 	}
-	mutex_unlock(&routelock);
-	*/
-	K_DEBUG("->>>");
-	return retval;
+	K_DEBUG("no place to attach %s", tty->name);
+	mutex_unlock(&cdl_lock);
+	return -EINVAL;
 }
 
 static void cld_close(struct tty_struct *tty)
 {
-/*	struct tracerouter_data *tptr = tty->disc_data;
+	struct dmx_port *port = tty->disc_data;
+	if (port)
+	{
+		mutex_lock(&cdl_lock);
 
-	mutex_lock(&routelock);
-	WARN_ON(tptr->kref_tty != tr_data->kref_tty);
-	tty_driver_flush_buffer(tty);
-	tty_kref_put(tr_data->kref_tty);
-	tr_data->kref_tty = NULL;
-	tr_data->opencalled = 0;
-	tty->disc_data = NULL;
-	mutex_unlock(&routelock);
-*/
-	K_DEBUG("->>>");
+		tty_driver_flush_buffer(port->tty);
+		tty_kref_put(port->tty);
+		port->tty = NULL;
+		tty->disc_data = NULL;
+
+		mutex_unlock(&cdl_lock);
+		K_DEBUG("detached %s", tty->name);
+	}
 }
 
 static ssize_t cld_read(struct tty_struct *tty, struct file *file,
@@ -88,15 +90,24 @@ static ssize_t cld_write(struct tty_struct *tty, struct file *file,
 }
 
 static void cld_receive_buf(struct tty_struct *tty,
-					const unsigned char *cp,
-					char *fp, int count)
+					const unsigned char __user *cp,
+					char __user *fp, int __user count)
 {
-	/*
-	mutex_lock(&routelock);
-	n_tracesink_datadrain((u8 *) cp, count);
-	mutex_unlock(&routelock);
-	*/
-	K_DEBUG("->>>");
+	int i, c=0, b=0;
+	if (!fp)
+	{
+		K_DEBUG("null FP");
+		return;
+	}
+	for (i=0; i<count; i++)
+	{
+		if (fp[i] == TTY_BREAK)
+			b++;
+		else
+			c++;
+	}
+
+	K_DEBUG("chars: %d, breaks: %d, total: %d", c, b, count);
 }
 
 static struct tty_ldisc_ops cld_ops =
@@ -110,65 +121,50 @@ static struct tty_ldisc_ops cld_ops =
 	.write			= cld_write,
 	.receive_buf	= cld_receive_buf,
 };
-/*
-	struct file *f = filp_open("/path/to/file", FLAGS, MODE);
 
-	mm_segment_t oldfs;
-	oldfs = get_fs();
-	set_fs (KERNEL_DS);
 
-//    oldfs = get_fs();
-//    set_fs(get_ds());
+//static long cld_attach(struct dmx_port *port, char *ttyname)
+//{
+//	struct file *file;
+//	long result = 0;
 //
-
-	vfs_read(f, buf, len, &f->f_pos);
-	vfs_write(f, otherbuf, otherlen, &f->f_pos);
-
-	set_fs(oldfs);
-
-	fput(f);
-
-
-#ifdef CONFIG_CONSOLE_POLL
-
-
-*/
-
-extern struct char_device_struct *chrdevs[255];
-
-static int cld_attach(struct dmx_port *pt, char *ttyname)
-{
-//	struct file *f = filp_open(ttyname, O_RDWR|O_NOCTTY|O_EXCL, 0);
-	struct file* port;
-	struct tty_struct *tty;
-	struct char_device_struct *ch = chrdevs[0];
-
-	K_DEBUG("%p", ch);
-//	mm_segment_t oldfs;
-//
-//	oldfs=get_fs(); // @suppress("Field cannot be resolved")
-//	set_fs(KERNEL_DS); // @suppress("Type cannot be resolved")
-//
-//	port = filp_open(ttyname, O_RDWR | O_NONBLOCK | O_NOCTTY, 0);
-//
-//	if (IS_ERR (port))
+//	mm_segment_t oldfs; // @suppress("Type cannot be resolved")
+//	oldfs = get_fs();
+//	set_fs (KERNEL_DS); // @suppress("Symbol is not resolved")
+//	file = filp_open(ttyname, O_RDWR|O_NOCTTY|O_EXCL, 0);
+//	if (IS_ERR(file))
 //	{
-//		K_ERR("PORT: can't open PHY port '%s'\n", ttyname);
-//		goto exit;
-//	}
-//	else
-//	{
-//		tty=(struct tty_struct*)port->private_data;
-//		K_DEBUG("%d", tty->ldisc->ops->magic);
-//		filp_close(port, 0);
+//		set_fs(oldfs);
+//		K_ERR("unable to open file \"%s\"", ttyname);
+//		return PTR_ERR(file);
 //	}
 //
+//	result = tty_ioctl(file, TIOCSETD, CDMX_LD);
+//	if (result)
+//	{
+//		set_fs(oldfs);
+//		K_ERR("unable to change LDISC for \"%s\"", ttyname);
+//		return result;
+//	}
 //
+//	port->tty = file;
+//	set_fs(oldfs);
+//	return 0;
+//}
+
+//static int cld_detach(struct dmx_port *port)
+//{
+//	mm_segment_t oldfs; // @suppress("Type cannot be resolved")
+//	oldfs = get_fs();
+//	set_fs (KERNEL_DS); // @suppress("Symbol is not resolved")
 //
-//	exit:
-//	        set_fs(oldfs);
-	        return 0;
-}
+//	if (port->tty)
+//		filp_close(port->tty, 0);
+//
+//	set_fs(oldfs);
+//	return 0;
+//}
+
 
 static ssize_t port_attr_show(struct kobject *kobj,
 			     struct attribute *attr,
@@ -305,10 +301,9 @@ static ssize_t port_str_store(struct dmx_port *port,
 			K_INFO("port %d re-attaching TTY from '%s' to '%s'", \
 					port->id, port->ttyname, newname);
 
-			//TODO: close previous TTY
+			//TODO: close previous TTY here
 			kfree(port->ttyname);
-			//TODO: open new TTY
-			cld_attach(port, newname);
+			//TODO: open new TTY here
 			port->ttyname = newname;
 		}
 		else
@@ -321,8 +316,7 @@ static ssize_t port_str_store(struct dmx_port *port,
 	else
 	{
 		K_INFO("port %d attaching to TTY '%s'", port->id, newname);
-		cld_attach(port, newname);
-		//TODO: open new TTY
+		//TODO: open new TTY here
 		port->ttyname = newname;
 	}
 
@@ -1013,6 +1007,7 @@ static int __init cdmx_init (void)
 	int i, c, p, err;
 
 	K_DEBUG("start");
+	mutex_init(&cdl_lock);
 	p = TO_RANGE(cdmx_port_count, CDMX_PORTS_MIN, CDMX_PORTS_MAX);
 	if (p != cdmx_port_count)
 	{
