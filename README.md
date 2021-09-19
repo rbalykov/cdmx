@@ -24,8 +24,8 @@ Building and testing:
 - clone cdmx repository; make; make in
 - read Makefile to use 'make at', 'make rm' and so on
 - edit Makefile to replace TEST_DEVICE with your local TTY
-- apt install ola; sudo service olad start
-- cat test/test.3.getparams >$(TEST_DEVICE); cat $(TEST_DEVICE) | hexdump -C
+- test 1: cat test/test.3.getparams >$(TEST_DEVICE); cat $(TEST_DEVICE) | hexdump -C
+- test 2: apt install ola; sudo service olad start; ola_dev_info
 
 UART on RPi3:
 - sudo systemctl disable hciuart
