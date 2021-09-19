@@ -25,7 +25,7 @@ Building and testing:
 - read Makefile to use 'make at', 'make rm' and so on
 - edit Makefile to replace TEST_DEVICE with your local TTY
 - apt install ola; sudo service olad start
-- cat test/test.3.getparams | hexdump -C
+- cat test/test.3.getparams >$(TEST_DEVICE); cat $(TEST_DEVICE) | hexdump -C
 
 UART on RPi3:
 - sudo systemctl disable hciuart
