@@ -21,7 +21,9 @@ TODO:
 Building and testing:
 - apt install build-essential
 - apt install linux-headers-`uname -r` or build new kernel
-- clone cdmx repository; make; make in; make jo; make rm;
+- clone cdmx repository; make; make in
+- read Makefile to use 'make at', 'make rm' and so on
+- edit Makefile to replace TEST_DEVICE with your local TTY
 - apt install ola; sudo service olad start
 - cat test/test.3.getparams | hexdump -C
 
@@ -29,7 +31,7 @@ UART on RPi3:
 - sudo systemctl disable hciuart
 - sudo raspi-config, turn login shell off, serial hardware on
 - edit /boot/config.txt, make sure it has "enable_uart=1" and "dtoverlay=pi3-disable-bt"
-- use /dev/ttyAMA0, it's compliant with DMX
+- use /dev/ttyAMA0
 
 Kernel headers on RPi3:
 - sudo apt install raspberrypi-kernel-headers - it should be fine
