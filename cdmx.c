@@ -6,6 +6,7 @@
 #include <uapi/asm-generic/errno-base.h>
 #include <uapi/asm-generic/ioctls.h>
 #include <uapi/asm-generic/fcntl.h>
+#include <uapi/asm-generic/termbits.h>
 //#include <asm-generic/bitops/atomic.h>
 #include <linux/iomap.h>
 #include <linux/wait.h>
@@ -29,13 +30,36 @@ static dev_t 		cdmx_device_id;
 
 static struct dmx_port **dmx_ports;
 static struct kset *dmx_ports_kset;
-static struct mutex cdl_lock;
+static struct mutex cld_lock;
+
+static void cdmx_rx_enqueue(struct dmx_port *port)
+{
+	struct uart_frame_a *pending;
+
+	mutex_lock(&port->rx_read_lock);
+	pending = port->rx_pending;
+	if(!pending)
+	{
+		port->rx_pending = &port->rx[port->rx_current++];
+		port->rx_current %= CDMX_BUFFERING;
+	}
+	else
+	{
+		while (pending->next)
+			pending = pending->next;
+
+		pending->next = &port->rx[port->rx_current++];
+		port->rx_current %= CDMX_BUFFERING;
+	}
+	mutex_unlock(&port->rx_read_lock);
+}
 
 static int cld_open(struct tty_struct *tty)
 {
 	int i;
+	struct ktermios kt;
 
-	mutex_lock(&cdl_lock);
+	mutex_lock(&cld_lock);
 	for (i=0; i< cdmx_port_count; i++)
 	{
 		if (dmx_ports[i]->tty == NULL)
@@ -45,15 +69,34 @@ static int cld_open(struct tty_struct *tty)
 			{
 				K_INFO("attaching %s to port %d", tty->name, i);
 				tty->disc_data = dmx_ports[i];
-				tty->receive_room = DMX_RECEIVE_ROOM;
+				tty->receive_room = CDMX_RECEIVE_ROOM;
+
+				kt = tty->termios;
+				kt.c_iflag &= ~(IGNBRK|IGNPAR|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL|IUCLC|IXON|IXANY|IXOFF|IMAXBEL|IUTF8);
+				kt.c_iflag |= (BRKINT|INPCK);
+				kt.c_oflag &= ~(OPOST);
+				kt.c_lflag &= ~(ECHO|ECHONL|ICANON|ISIG|IEXTEN);
+				kt.c_cflag &= ~(CSIZE|PARENB|CBAUD|CRTSCTS);
+				kt.c_cflag |= (CS8|BOTHER|CSTOPB|CREAD|CLOCAL);
+				kt.c_ospeed	= DMX_BAUDRATE;
+				kt.c_ispeed = kt.c_ospeed;
+
+				if (tty_set_termios(tty, &kt))
+				{
+					K_ERR("failed to setup UART: %s", tty->name);
+					dmx_ports[i]->tty = NULL;
+					tty_kref_put(tty);
+					mutex_unlock(&cld_lock);
+					return -EINVAL;
+				}
 				tty_driver_flush_buffer(tty);
-				mutex_unlock(&cdl_lock);
+				mutex_unlock(&cld_lock);
 				return 0;
 			}
 		}
 	}
-	K_DEBUG("no place to attach %s", tty->name);
-	mutex_unlock(&cdl_lock);
+	K_INFO("no place to attach %s", tty->name);
+	mutex_unlock(&cld_lock);
 	return -EINVAL;
 }
 
@@ -62,14 +105,14 @@ static void cld_close(struct tty_struct *tty)
 	struct dmx_port *port = tty->disc_data;
 	if (port)
 	{
-		mutex_lock(&cdl_lock);
+		mutex_lock(&cld_lock);
 
 		tty_driver_flush_buffer(port->tty);
 		tty_kref_put(port->tty);
 		port->tty = NULL;
 		tty->disc_data = NULL;
 
-		mutex_unlock(&cdl_lock);
+		mutex_unlock(&cld_lock);
 		K_DEBUG("detached %s", tty->name);
 	}
 }
@@ -89,81 +132,83 @@ static ssize_t cld_write(struct tty_struct *tty, struct file *file,
 	return -EINVAL;
 }
 
-static void cld_receive_buf(struct tty_struct *tty,
-					const unsigned char __user *cp,
-					char __user *fp, int __user count)
+int	cld_receive_buf2(struct tty_struct *tty, const unsigned char *cp,
+			char *fp, int count)
 {
-	int i, c=0, b=0;
-	if (!fp)
-	{
-		K_DEBUG("null FP");
-		return;
-	}
+	struct dmx_port *port = tty->disc_data;
+	struct uart_frame_a *frame = &port->rx[port->rx_current];
+	int i;
+	uint8_t flag;
+
+	count = MIN(count, tty->receive_room);
 	for (i=0; i<count; i++)
 	{
-		if (fp[i] == TTY_BREAK)
-			b++;
-		else
-			c++;
-	}
+		flag = fp ? fp[i] : TTY_NORMAL;
 
-	K_DEBUG("chars: %d, breaks: %d, total: %d", c, b, count);
+		if (flag == TTY_NORMAL)
+		{
+			switch(frame->state)
+			{
+			case BREAK:
+				frame->state = DATA;
+				frame->data[frame->size++] = cp[i];
+				break;
+
+			case DATA:
+				frame->data[frame->size] = cp[i];
+				frame->size++;
+				if (frame->size >= DMX_FRAME_MAX)
+				{
+					frame->state = OVER;
+					cdmx_rx_enqueue(port);
+					//TODO: handle frame
+				}
+				break;
+			default:
+				break;
+			}
+		}
+		else if (flag == TTY_BREAK)
+		{
+			if(frame->state == DATA)
+			{
+				cdmx_rx_enqueue(port);
+			}
+			frame->state = BREAK;
+		}
+		else
+		{
+			frame->state = FAULT;
+		}
+	}
+	return count;
+}
+
+void cld_set_termios (struct tty_struct *tty, struct ktermios *old)
+{
+	K_DEBUG("cflags: %X, speed: %d", old->c_cflag, old->c_ispeed);
+}
+int	cld_ioctl(struct tty_struct *tty, struct file *file,
+		 unsigned int cmd, unsigned long arg)
+{
+	K_DEBUG("tty: %s, cmd: 0x%04X, arg: 0x%lx", tty->name, cmd, arg);
+	return n_tty_ioctl_helper(tty, file, cmd, arg);
 }
 
 static struct tty_ldisc_ops cld_ops =
 {
 	.owner			= THIS_MODULE,
-	.magic			= TTY_LDISC_MAGIC, // @suppress("Symbol is not resolved")
+	.magic			= TTY_LDISC_MAGIC,
 	.name			= "cdmx",
 	.open			= cld_open,
 	.close			= cld_close,
 	.read			= cld_read,
 	.write			= cld_write,
-	.receive_buf	= cld_receive_buf,
+//	.receive_buf	= cld_receive_buf,
+	.receive_buf2	= cld_receive_buf2,
+	.set_termios	= cld_set_termios,
+	.ioctl			= cld_ioctl,
 };
-
-
-//static long cld_attach(struct dmx_port *port, char *ttyname)
-//{
-//	struct file *file;
-//	long result = 0;
-//
-//	mm_segment_t oldfs; // @suppress("Type cannot be resolved")
-//	oldfs = get_fs();
-//	set_fs (KERNEL_DS); // @suppress("Symbol is not resolved")
-//	file = filp_open(ttyname, O_RDWR|O_NOCTTY|O_EXCL, 0);
-//	if (IS_ERR(file))
-//	{
-//		set_fs(oldfs);
-//		K_ERR("unable to open file \"%s\"", ttyname);
-//		return PTR_ERR(file);
-//	}
-//
-//	result = tty_ioctl(file, TIOCSETD, CDMX_LD);
-//	if (result)
-//	{
-//		set_fs(oldfs);
-//		K_ERR("unable to change LDISC for \"%s\"", ttyname);
-//		return result;
-//	}
-//
-//	port->tty = file;
-//	set_fs(oldfs);
-//	return 0;
-//}
-
-//static int cld_detach(struct dmx_port *port)
-//{
-//	mm_segment_t oldfs; // @suppress("Type cannot be resolved")
-//	oldfs = get_fs();
-//	set_fs (KERNEL_DS); // @suppress("Symbol is not resolved")
-//
-//	if (port->tty)
-//		filp_close(port->tty, 0);
-//
-//	set_fs(oldfs);
-//	return 0;
-//}
 
 
 static ssize_t port_attr_show(struct kobject *kobj,
@@ -247,7 +292,7 @@ static ssize_t port_store(struct dmx_port *port,
 	else if (strcmp(attr->attr.name, "framerate") == 0)
 		port->framerate = NORMALISE_FRAMERATE(var);
 
-	//TODO: handle value changes
+	//TODO: need semaphore
 	return count;
 }
 
@@ -397,7 +442,7 @@ static int cdmx_release (struct inode *node, struct file *f)
 	return 0;
 }
 
-static void cdmx_enttec_mkframe(struct usb_frame *frame, uint8_t label, uint16_t size)
+static void cdmx_enttec_mkframe(struct dmx_frame_a *frame, uint8_t label, uint16_t size)
 {
 	frame->data[0] = ENT_SOM;
 	frame->data[1] = label;
@@ -412,7 +457,7 @@ static void cdmx_enttec_mkframe(struct usb_frame *frame, uint8_t label, uint16_t
 
 static void cdmx_enttec_getparams (struct dmx_port *port)
 {
-	struct usb_frame *frame = &port->read_from;
+	struct dmx_frame_a *frame = &port->read_from;
 
 	// supply timing info and firmware vervion
 	// ENT_FW_DMX, here we pretend to support just DMX, not RDM
@@ -427,7 +472,7 @@ static void cdmx_enttec_getparams (struct dmx_port *port)
 
 static void cdmx_enttec_setparams (struct dmx_port *port)
 {
-	struct usb_frame *frame = &port->read_from;
+	struct dmx_frame_a *frame = &port->read_from;
 	int a;
 
 //	uint16_t user_data_size;
@@ -452,7 +497,7 @@ static void cdmx_enttec_setparams (struct dmx_port *port)
 
 static void cdmx_enttec_getserial (struct dmx_port *port)
 {
-	struct usb_frame *frame = &port->read_from;
+	struct dmx_frame_a *frame = &port->read_from;
 	uint8_t serial[ENT_SERIAL_SIZE] = {port->id, 0,0,0};
 
 	memcpy(&frame->data[ENT_HEADER_SIZE], serial, ENT_SERIAL_SIZE);
@@ -464,7 +509,7 @@ static void cdmx_enttec_getserial (struct dmx_port *port)
 
 static void cdmx_enttec_getvendor (struct dmx_port *port)
 {
-	struct usb_frame *frame = &port->read_from;
+	struct dmx_frame_a *frame = &port->read_from;
 	unsigned int size = sizeof(USBPRO_VENDOR);
 
 	// supply vendor name and ESTA codes
@@ -476,7 +521,7 @@ static void cdmx_enttec_getvendor (struct dmx_port *port)
 
 static void cdmx_enttec_getname (struct dmx_port *port)
 {
-	struct usb_frame *frame = &port->read_from;
+	struct dmx_frame_a *frame = &port->read_from;
 	unsigned int size = sizeof(USBPRO_NAME);
 
 	// supply device name and ESTA codes
@@ -488,7 +533,7 @@ static void cdmx_enttec_getname (struct dmx_port *port)
 
 static void cdmx_enttec_flash (struct dmx_port *port)
 {
-	struct usb_frame *frame = &port->read_from;
+	struct dmx_frame_a *frame = &port->read_from;
 
 	// report failed firmware flashing
 	memcpy(&frame->data[ENT_HEADER_SIZE], ENT_FLASH_FALSE, ENT_FLASH_REPLY);
@@ -593,7 +638,7 @@ static int cdmx_enttec_msg(struct dmx_port *port)
 
 static void cdmx_enttec_parse(struct dmx_port *port)
 {
-	struct usb_frame *write_to = &port->write_to;
+	struct dmx_frame_a *write_to = &port->write_to;
 	ssize_t count;
 	uint8_t nextbyte;
 
@@ -655,7 +700,7 @@ static inline size_t cdmx_space_left(struct dmx_port *cdata)
 
 static int cdmx_bytes_to_read(struct dmx_port *cdata)
 {
-	struct usb_frame *frame = &cdata->read_from;
+	struct dmx_frame_a *frame = &cdata->read_from;
 	if (!frame->pending)
 		return 0;
 	return frame->msgsize - frame->rhead;
@@ -665,12 +710,17 @@ static ssize_t cdmx_write (struct file *f, const char* src,
 		size_t len, loff_t * offset)
 {
 	struct dmx_port *cdata = f->private_data;
-	struct usb_frame *write_to = &cdata->write_to;
+	struct dmx_frame_a *write_to = &cdata->write_to;
 	ssize_t result, size;
 
 	K_DEBUG("port %d", cdata->id);
-	if (mutex_lock_interruptible(&cdata->lock))
+	if (mutex_lock_interruptible(&cdata->tx_write_lock))
 		return -ERESTARTSYS;
+	if (mutex_lock_interruptible(&cdata->rx_read_lock))
+	{
+		mutex_unlock(&cdata->tx_write_lock);
+		return -ERESTARTSYS;
+	}
 
 	if (!cdata->fsdev)
 	{
@@ -698,22 +748,39 @@ static ssize_t cdmx_write (struct file *f, const char* src,
 	cdmx_enttec_parse(cdata);
 
 	out:
-	mutex_unlock(&cdata->lock);
+	mutex_unlock(&cdata->rx_read_lock);
+	mutex_unlock(&cdata->tx_write_lock);
 	K_DEBUG("->>> port %d, bytes written %d", \
 			 cdata->id, result);
 	return result;
 }
 
+ssize_t cdmx_make_read(struct dmx_frame_a *frame, char* dest, size_t len)
+{
+	ssize_t size = frame->msgsize - frame->rhead;
+	size = MIN(size, len);
+
+	if (copy_to_user(dest, &frame->data[frame->rhead], size))
+		return 0;
+
+	frame->rhead += size;
+	if (frame->rhead == frame->msgsize)
+	{
+		frame->pending = false;
+	}
+	return size;
+}
 
 static ssize_t cdmx_read 	(struct file *f, char* dest,
 		size_t len, loff_t * offset)
 {
 	struct dmx_port *cdata = (struct dmx_port *) f->private_data;
-	struct usb_frame *frame = &cdata->read_from;
+	struct dmx_frame_a *frame = &cdata->read_from;
 	ssize_t result = 0, size = 0;
+	struct uart_frame_a *next;
 
 	K_DEBUG("port %d, max %d bytes to read", cdata->id, len);
-	if (mutex_lock_interruptible(&cdata->lock))
+	if (mutex_lock_interruptible(&cdata->rx_read_lock))
 		return -ERESTARTSYS;
 
 	if (!cdata->fsdev)
@@ -723,26 +790,38 @@ static ssize_t cdmx_read 	(struct file *f, char* dest,
 		goto out;
 	}
 
-	if (!frame->pending)
-		goto out;
-
-	size = frame->msgsize - frame->rhead;
-	K_DEBUG("message %d bytes, %d done", frame->msgsize, frame->rhead);
-	size = MIN(size, len);
-
-	if (copy_to_user(dest, &frame->data[frame->rhead], size))
-		goto out;
-
-	frame->rhead += size;
-	if (frame->rhead == frame->msgsize)
+	if (frame->pending)
 	{
-		K_DEBUG("unpending");
-		frame->pending = false;
+//		size = frame->msgsize - frame->rhead;
+//		K_DEBUG("message %d bytes, %d done", frame->msgsize, frame->rhead);
+//		size = MIN(size, len);
+//
+//		if (copy_to_user(dest, &frame->data[frame->rhead], size))
+//			goto out;
+//
+//		frame->rhead += size;
+//		if (frame->rhead == frame->msgsize)
+//		{
+//			K_DEBUG("unpending");
+//			frame->pending = false;
+//		}
+		result = cdmx_make_read(frame, dest, len);
 	}
-	result = size;
+	else if (cdata->rx_pending)
+	{
+		size = cdata->rx_pending->size;
+		frame->data[ENT_HEADER_SIZE] = frame->flags;
+		memcpy(&frame->data[ENT_HEADER_SIZE+1], cdata->rx_pending->data, size);
+		cdmx_enttec_mkframe(frame, LABEL_RECEIVED_DMX, size+1);
 
+		next = cdata->rx_pending->next;
+		cdata->rx_pending->next = NULL;
+		cdata->rx_pending = next;
+
+		result = cdmx_make_read(frame, dest, len);
+	}
 	out:
-	mutex_unlock(&cdata->lock);
+	mutex_unlock(&cdata->rx_read_lock);
 
 	K_DEBUG( "->>> port %d, done read: %d, head: %d", cdata->id, size, frame->rhead);
 	return size;
@@ -755,7 +834,8 @@ __poll_t cdmx_poll (struct file *f, struct poll_table_struct *p)
 	__poll_t mask = 0;
 	int r, w;
 
-	mutex_lock(&cdata->lock);
+	mutex_lock(&cdata->tx_write_lock);
+	mutex_lock(&cdata->rx_read_lock);
 
 	poll_wait(f, &cdata->wait, p);
 	r = cdmx_bytes_to_read(cdata);
@@ -766,7 +846,8 @@ __poll_t cdmx_poll (struct file *f, struct poll_table_struct *p)
 	if( w > 0)
 		mask |= EPOLLOUT | EPOLLWRNORM;
 
-	mutex_unlock(&cdata->lock);
+	mutex_unlock(&cdata->rx_read_lock);
+	mutex_unlock(&cdata->tx_write_lock);
 	K_DEBUG("port %d, to read: %d, to write: %d", cdata->id, r, w);
 	return mask;
 }
@@ -854,7 +935,8 @@ static struct dmx_port *create_port_obj(int id)
 	if (!port)
 		return NULL;
 
-	mutex_init(&port->lock);
+	mutex_init(&port->tx_write_lock);
+	mutex_init(&port->rx_read_lock);
 	init_waitqueue_head(&port->wait);
 	port->breaktime = DEFAULT_BREAK;
 	port->mabtime 	= DEFAULT_MAB;
@@ -1007,7 +1089,7 @@ static int __init cdmx_init (void)
 	int i, c, p, err;
 
 	K_DEBUG("start");
-	mutex_init(&cdl_lock);
+	mutex_init(&cld_lock);
 	p = TO_RANGE(cdmx_port_count, CDMX_PORTS_MIN, CDMX_PORTS_MAX);
 	if (p != cdmx_port_count)
 	{
@@ -1063,7 +1145,12 @@ failure1:
 	return err;
 }
 
-static void  cdmx_exit(void)
+#ifndef notrace
+#define notrace
+#warning Re-defining notrace
+#endif
+
+static void __exit cdmx_exit(void)
 {
 	int i;
 	K_DEBUG("clean up");
@@ -1079,6 +1166,6 @@ static void  cdmx_exit(void)
 }
 
 
-module_init(cdmx_init);
-module_exit(cdmx_exit);
+module_init(cdmx_init); // @suppress("Unused variable declaration in file scope")
+module_exit(cdmx_exit); // @suppress("Unused variable declaration in file scope")
 

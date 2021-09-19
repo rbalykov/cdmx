@@ -6,8 +6,8 @@ MODNAME = cdmx
 
 obj-m += $(MODNAME).o
 
-N_DMX = 28
-TEST_DEVICE = /dev/ttyUSB0
+CDMX_LD = 28
+TEST_DEVICE = /dev/ttyAMA0
 SEPR = "---------------------------------------------------------------"
 
 all:
@@ -28,10 +28,15 @@ inp:
 jo:
 	sudo journalctl -f -o short-monotonic --no-hostname
 	
+at:
+	sudo ldattach -d8n2 -s250000 -i BRKINT $(CDMX_LD) $(TEST_DEVICE)
 
+at2:
+	sudo ldattach -d $(CDMX_LD) $(TEST_DEVICE)
 	
-	
-	
+de:
+	sudo killall ldattach
+
 	
 	
 

@@ -14,7 +14,6 @@
 #include <linux/init.h>
 #include <linux/cdev.h>
 #include <linux/fs.h>
-//#include <asm/uaccess.h>
 #include <linux/slab.h>
 #include <linux/mutex.h>
 #include <linux/sysfs.h>
@@ -23,8 +22,13 @@
 #include <linux/tty.h>
 #include <linux/tty_ldisc.h>
 
-/* Common stuff
- * */
+
+/*******************************************************************************
+ *
+ * Common stuff
+ *
+ ******************************************************************************/
+
 #define MAX(a,b) ((a>b)?a:b)
 #define MIN(a,b) ((a<b)?a:b)
 #define TO_RANGE(a,min,max) (MIN(max,MAX(min,a)))
@@ -44,7 +48,7 @@
 
 /*******************************************************************************
  *
- * DMX hardware
+ * Module general
  *
  ******************************************************************************/
 
@@ -53,8 +57,13 @@
 #define CDMX_PORTS_DEFAULT	(0x4u)
 #define BASE_MINOR			(0u)
 #define PORT_INACTIVE		(-1)
-#define CDMX_EXCLUSIVE		(1)
+#define CDMX_BUFFERING		(2)
 
+/*******************************************************************************
+ *
+ * DMX hardware
+ *
+ ******************************************************************************/
 
 #define NORMALISE_BREAK(a) 		(a=TO_RANGE(a, 88, 1000000))
 #define NORMALISE_MAB(a)   		(a=TO_RANGE(a, 8, 1000000))
@@ -78,7 +87,7 @@
 #define DMX_FRAME_MAX 			(DMX_STARTCODE_BYTES + DMX_PAYLOAD_MAX)
 #define DMX_FRAME_MIN 			(DMX_STARTCODE_BYTES + DMX_PAYLOAD_MIN)
 #define DMX_BAUDRATE 			(250000)
-#define DMX_RECEIVE_ROOM		(1024)
+#define CDMX_RECEIVE_ROOM		(1024)
 
 /*******************************************************************************
  *
@@ -243,11 +252,10 @@ typedef enum usb_labels
  ******************************************************************************/
 typedef enum rx_states
 {
-	IDLE = 0,
-	BREAK,
-	GOT_SC,
-	DATAFLOW,
-	OVERFILL
+	BREAK = 0,
+	DATA,
+	OVER,
+	FAULT
 }rx_states_t;
 
 typedef enum rx_flags
@@ -257,14 +265,14 @@ typedef enum rx_flags
 	OVERRUN 	= 2
 } rx_flags_t;
 
-struct uart_frame
+struct uart_frame_a
 {
 	uint8_t data[DMX_FRAME_MAX];
 	size_t size;
-	size_t head;
 	rx_states_t state;
 	uint8_t flags;
-	bool pending;
+//	bool pending;
+	struct uart_frame_a *next;
 };
 
 /*******************************************************************************
@@ -282,7 +290,9 @@ struct uart_frame
  *
  ******************************************************************************/
 
-struct usb_frame
+#define CDMX_EXCLUSIVE		(1)
+
+struct dmx_frame_a
 {
 	// Enttec part
 	uint8_t msglabel;
@@ -303,6 +313,46 @@ struct usb_frame
 	size_t whead;
 };
 
+
+typedef union dmx_frame
+{
+	uint8_t raw[ENT_FRAME_MAX];
+	struct
+	{
+		uint8_t som;
+		uint8_t label;
+		uint8_t sz_lsb;
+		uint8_t sz_msb;
+		uint8_t data[ENT_PAYLOAD_MAX];
+		uint8_t eom;
+	};
+}dmx_frame_t;
+
+typedef struct cdmx_frame
+{
+	struct dmx_frame dmx;
+	usb_states_t state;
+	size_t write_ptr;
+	size_t read_ptr;
+}cdmx_frame_t;
+
+typedef struct frame_ring
+{
+	cdmx_frame_t fr[CDMX_BUFFERING];
+	size_t write_ptr;
+	size_t read_ptr;
+	bool overrun;
+}frame_ring_t;
+
+typedef struct ringbuffer
+{
+	uint8_t data[CDMX_RECEIVE_ROOM];
+	size_t write_ptr;
+	size_t read_ptr;
+	bool overrun;
+}ringbuffer_t;
+
+
 struct dmx_port
 {
 	int id;
@@ -311,26 +361,33 @@ struct dmx_port
 	unsigned int mabtime;
 	unsigned int framerate;
 
+
+	struct mutex tx_write_lock;
+	struct mutex rx_read_lock;
+	wait_queue_head_t wait;
+
+	ringbuffer_t rx;
+	ringbuffer_t wr;
+
+	//TODO: check it once againg and refactor
 	struct cdev cdev;
 	struct device *fsdev;
 
-	struct mutex lock;
-
-	struct usb_frame read_from;
-	struct usb_frame write_to;
-
-	struct uart_frame tx;
-//	struct uart_frame rx;
-	uint8_t	rxchars[DMX_RECEIVE_ROOM];
-	uint8_t	rxflags[DMX_RECEIVE_ROOM];
-	uint8_t rx_flags;
-	rx_states_t rx_state;
-
+	//TODO: refactor exclusive access
 	unsigned long flags;
-	wait_queue_head_t wait;
 
+	//TODO: refactor it
 	struct tty_struct *tty;
 	char *ttyname;
+
+	//TODO: remove it
+	struct dmx_frame_a read_from;
+	struct dmx_frame_a write_to;
+	struct uart_frame_a tx;
+	struct uart_frame_a rx[CDMX_BUFFERING];
+	uint8_t rx_current;
+	struct uart_frame_a *rx_pending;
+
 };
 
 
