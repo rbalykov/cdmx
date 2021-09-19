@@ -28,7 +28,7 @@ Building and testing:
 UART on RPi3:
 - sudo systemctl disable hciuart
 - sudo raspi-config, turn login shell off, serial hardware on
-- edit /boot/config.txt, make sure it has "enable_uart=1" and "dtoverlay=pi3-miniuart-bt"
+- edit /boot/config.txt, make sure it has "enable_uart=1" and "dtoverlay=pi3-disable-bt"
 - use /dev/ttyAMA0, it's compliant with DMX
 
 Kernel headers on RPi3:
