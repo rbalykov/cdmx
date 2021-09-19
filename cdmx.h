@@ -330,7 +330,7 @@ typedef union dmx_frame
 
 typedef struct cdmx_frame
 {
-	struct dmx_frame dmx;
+	dmx_frame_t dmx;
 	usb_states_t state;
 	size_t write_ptr;
 	size_t read_ptr;
@@ -366,19 +366,20 @@ struct dmx_port
 	struct mutex rx_read_lock;
 	wait_queue_head_t wait;
 
-	ringbuffer_t rx;
-	ringbuffer_t wr;
+	ringbuffer_t ring_rx;
+	ringbuffer_t ring_wr;
+
+	frame_ring_t frames_tx;
+	frame_ring_t frames_rd;
 
 	//TODO: check it once againg and refactor
 	struct cdev cdev;
 	struct device *fsdev;
+	struct tty_struct *tty;
+	char *ttyname;
 
 	//TODO: refactor exclusive access
 	unsigned long flags;
-
-	//TODO: refactor it
-	struct tty_struct *tty;
-	char *ttyname;
 
 	//TODO: remove it
 	struct dmx_frame_a read_from;

@@ -32,6 +32,7 @@ static struct dmx_port **dmx_ports;
 static struct kset *dmx_ports_kset;
 static struct mutex cld_lock;
 
+
 static void cdmx_rx_enqueue(struct dmx_port *port)
 {
 	struct uart_frame_a *pending;
@@ -419,12 +420,12 @@ static char *cdmx_devnode(struct device *dev, umode_t *mode)
 
 static int cdmx_open 	(struct inode *node, struct file *f)
 {
-	struct dmx_port *cdata;
-	cdata = container_of(node->i_cdev, struct dmx_port, cdev);
-	K_DEBUG("file %s, cdata %p dev_t %X",
-			f->f_path.dentry->d_name.name, cdata, cdata->cdev.dev);
+	struct dmx_port *port;
+	port = container_of(node->i_cdev, struct dmx_port, cdev);
+	K_DEBUG("file %s, port %p dev_t %X",
+			f->f_path.dentry->d_name.name, port, port->cdev.dev);
 
-	f->private_data = cdata;
+	f->private_data = port;
 	try_module_get(THIS_MODULE);
 
 	K_DEBUG( "->>> done");
@@ -433,10 +434,10 @@ static int cdmx_open 	(struct inode *node, struct file *f)
 
 static int cdmx_release (struct inode *node, struct file *f)
 {
-	struct dmx_port *cdata;
-	cdata = (struct dmx_port *) f->private_data;
-	K_DEBUG("file %s, cdata %p dev_t %X",
-			f->f_path.dentry->d_name.name, cdata, cdata->cdev.dev);
+	struct dmx_port *port;
+	port = (struct dmx_port *) f->private_data;
+	K_DEBUG("file %s, port %p dev_t %X",
+			f->f_path.dentry->d_name.name, port, port->cdev.dev);
 
 	module_put(THIS_MODULE);
 	return 0;
@@ -693,14 +694,14 @@ static void cdmx_enttec_parse(struct dmx_port *port)
 	write_to->rawsize = 0;
 }
 
-static inline size_t cdmx_space_left(struct dmx_port *cdata)
+static inline size_t cdmx_space_left(struct dmx_port *port)
 {
-	return (sizeof(cdata->write_to.rawdata) - cdata->write_to.rawsize );
+	return (sizeof(port->write_to.rawdata) - port->write_to.rawsize );
 }
 
-static int cdmx_bytes_to_read(struct dmx_port *cdata)
+static int cdmx_bytes_to_read(struct dmx_port *port)
 {
-	struct dmx_frame_a *frame = &cdata->read_from;
+	struct dmx_frame_a *frame = &port->read_from;
 	if (!frame->pending)
 		return 0;
 	return frame->msgsize - frame->rhead;
@@ -709,22 +710,22 @@ static int cdmx_bytes_to_read(struct dmx_port *cdata)
 static ssize_t cdmx_write (struct file *f, const char* src,
 		size_t len, loff_t * offset)
 {
-	struct dmx_port *cdata = f->private_data;
-	struct dmx_frame_a *write_to = &cdata->write_to;
+	struct dmx_port *port = f->private_data;
+	struct dmx_frame_a *write_to = &port->write_to;
 	ssize_t result, size;
 
-	K_DEBUG("port %d", cdata->id);
-	if (mutex_lock_interruptible(&cdata->tx_write_lock))
+	K_DEBUG("port %d", port->id);
+	if (mutex_lock_interruptible(&port->tx_write_lock))
 		return -ERESTARTSYS;
-	if (mutex_lock_interruptible(&cdata->rx_read_lock))
+	if (mutex_lock_interruptible(&port->rx_read_lock))
 	{
-		mutex_unlock(&cdata->tx_write_lock);
+		mutex_unlock(&port->tx_write_lock);
 		return -ERESTARTSYS;
 	}
 
-	if (!cdata->fsdev)
+	if (!port->fsdev)
 	{
-		K_ERR( "device #%d doesn't exist", cdata->id);
+		K_ERR( "device #%d doesn't exist", port->id);
 		result = -ENODEV;
 		goto out;
 	}
@@ -745,13 +746,13 @@ static ssize_t cdmx_write (struct file *f, const char* src,
 	write_to->rawsize += size;
 	result = size;
 
-	cdmx_enttec_parse(cdata);
+	cdmx_enttec_parse(port);
 
 	out:
-	mutex_unlock(&cdata->rx_read_lock);
-	mutex_unlock(&cdata->tx_write_lock);
+	mutex_unlock(&port->rx_read_lock);
+	mutex_unlock(&port->tx_write_lock);
 	K_DEBUG("->>> port %d, bytes written %d", \
-			 cdata->id, result);
+			 port->id, result);
 	return result;
 }
 
@@ -774,18 +775,18 @@ ssize_t cdmx_make_read(struct dmx_frame_a *frame, char* dest, size_t len)
 static ssize_t cdmx_read 	(struct file *f, char* dest,
 		size_t len, loff_t * offset)
 {
-	struct dmx_port *cdata = (struct dmx_port *) f->private_data;
-	struct dmx_frame_a *frame = &cdata->read_from;
+	struct dmx_port *port = (struct dmx_port *) f->private_data;
+	struct dmx_frame_a *frame = &port->read_from;
 	ssize_t result = 0, size = 0;
 	struct uart_frame_a *next;
 
-	K_DEBUG("port %d, max %d bytes to read", cdata->id, len);
-	if (mutex_lock_interruptible(&cdata->rx_read_lock))
+	K_DEBUG("port %d, max %d bytes to read", port->id, len);
+	if (mutex_lock_interruptible(&port->rx_read_lock))
 		return -ERESTARTSYS;
 
-	if (!cdata->fsdev)
+	if (!port->fsdev)
 	{
-		K_ERR( "device #%d doesn't exist", cdata->id);
+		K_ERR( "device #%d doesn't exist", port->id);
 		result = -ENODEV;
 		goto out;
 	}
@@ -807,54 +808,54 @@ static ssize_t cdmx_read 	(struct file *f, char* dest,
 //		}
 		result = cdmx_make_read(frame, dest, len);
 	}
-	else if (cdata->rx_pending)
+	else if (port->rx_pending)
 	{
-		size = cdata->rx_pending->size;
+		size = port->rx_pending->size;
 		frame->data[ENT_HEADER_SIZE] = frame->flags;
-		memcpy(&frame->data[ENT_HEADER_SIZE+1], cdata->rx_pending->data, size);
+		memcpy(&frame->data[ENT_HEADER_SIZE+1], port->rx_pending->data, size);
 		cdmx_enttec_mkframe(frame, LABEL_RECEIVED_DMX, size+1);
 
-		next = cdata->rx_pending->next;
-		cdata->rx_pending->next = NULL;
-		cdata->rx_pending = next;
+		next = port->rx_pending->next;
+		port->rx_pending->next = NULL;
+		port->rx_pending = next;
 
 		result = cdmx_make_read(frame, dest, len);
 	}
 	out:
-	mutex_unlock(&cdata->rx_read_lock);
+	mutex_unlock(&port->rx_read_lock);
 
-	K_DEBUG( "->>> port %d, done read: %d, head: %d", cdata->id, size, frame->rhead);
+	K_DEBUG( "->>> port %d, done read: %d, head: %d", port->id, size, frame->rhead);
 	return size;
 
 }
 
 __poll_t cdmx_poll (struct file *f, struct poll_table_struct *p)
 {
-	struct dmx_port *cdata = (struct dmx_port *) f->private_data;
+	struct dmx_port *port = (struct dmx_port *) f->private_data;
 	__poll_t mask = 0;
 	int r, w;
 
-	mutex_lock(&cdata->tx_write_lock);
-	mutex_lock(&cdata->rx_read_lock);
+	mutex_lock(&port->tx_write_lock);
+	mutex_lock(&port->rx_read_lock);
 
-	poll_wait(f, &cdata->wait, p);
-	r = cdmx_bytes_to_read(cdata);
+	poll_wait(f, &port->wait, p);
+	r = cdmx_bytes_to_read(port);
 	if (r > 0)
 		mask |= (EPOLLIN | EPOLLRDNORM | EPOLLPRI );
 
-	w = cdmx_space_left(cdata);
+	w = cdmx_space_left(port);
 	if( w > 0)
 		mask |= EPOLLOUT | EPOLLWRNORM;
 
-	mutex_unlock(&cdata->rx_read_lock);
-	mutex_unlock(&cdata->tx_write_lock);
-	K_DEBUG("port %d, to read: %d, to write: %d", cdata->id, r, w);
+	mutex_unlock(&port->rx_read_lock);
+	mutex_unlock(&port->tx_write_lock);
+	K_DEBUG("port %d, to read: %d, to write: %d", port->id, r, w);
 	return mask;
 }
 
 long cdmx_ioctl (struct file *f, unsigned int cmd, unsigned long arg)
 {
-	struct dmx_port *cdata = (struct dmx_port *) f->private_data;
+	struct dmx_port *port = (struct dmx_port *) f->private_data;
 	void __user *p = (void __user *)arg;
 	int i;
 
@@ -863,23 +864,23 @@ long cdmx_ioctl (struct file *f, unsigned int cmd, unsigned long arg)
 	switch(cmd)
 	{
 	case TIOCEXCL:
-		set_bit(CDMX_EXCLUSIVE, &cdata->flags);
+		set_bit(CDMX_EXCLUSIVE, &port->flags);
 		K_DEBUG("set exclusive");
 		return 0;
 	case TIOCNXCL:
 		K_DEBUG("cleared exclusive");
-		clear_bit(CDMX_EXCLUSIVE, &cdata->flags);
+		clear_bit(CDMX_EXCLUSIVE, &port->flags);
 		return 0;
 	case 0x5440: //TIOCGEXCL:
-		i =  test_bit(CDMX_EXCLUSIVE, &cdata->flags);
+		i =  test_bit(CDMX_EXCLUSIVE, &port->flags);
 		K_DEBUG("is exclusive: %d", i);
 		return put_user(i, (int __user *)p);
 	case TIOCINQ:
-		i = cdmx_bytes_to_read(cdata);
+		i = cdmx_bytes_to_read(port);
 		K_DEBUG("bytes to read: %d", i);
 		return put_user(i, (int __user *)p);
 	case TIOCOUTQ:
-		i = cdata->write_to.rawsize;
+		i = port->write_to.rawsize;
 		K_DEBUG("bytes queued: %d", i);
 		return put_user(i, (int __user *)p);
 	case TCGETS:
