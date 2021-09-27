@@ -174,17 +174,17 @@ enum ent_universe
 #define ENT_NAME_MAX		(32)
 
 
-union ent_frame
+union __packed ent_frame
 {
 	uint8_t raw[ENT_FRAME_MAX];
-	__packed struct
+	struct __packed
 	{
 		uint8_t som;
 		uint8_t label;
-		union
+		union __packed
 		{
-			__le32 size;
-			__packed struct
+			__le16 size;
+			struct __packed
 			{
 				uint8_t sz_lsb;
 				uint8_t sz_msb;
@@ -208,7 +208,6 @@ struct ent_widget
 	struct ent_buffer wr;
 	enum ent_state wr_state;
 	size_t wr_total;
-//	size_t wr_data;
 
 	struct ent_buffer rx;
 	struct ent_buffer reply;
@@ -217,9 +216,9 @@ struct ent_widget
 
 struct ent_ops
 {
-	void (*read) 	(union ent_frame * frame);
-	void (*tx) 		(union ent_frame * frame, int universe);
 	void (*set_params) (struct ent_widget *);
+	void (*recv)	(struct ent_widget *, union ent_frame *);
+	void (*tx) 		(struct ent_widget *, union ent_frame *, int universe);
 	void (*params) 	(struct ent_widget *);
 	void (*serial) 	(struct ent_widget *);
 	void (*vendor) 	(struct ent_widget *);
@@ -228,6 +227,7 @@ struct ent_ops
 
 };
 
+size_t 	frame_rawsize	(const union ent_frame *frame);
 
 size_t 	ent_write 	(struct ent_widget *widget, const char *src, size_t len);
 size_t 	ent_rx 	 	(struct ent_widget *widget, const char *src, size_t len);

@@ -21,11 +21,15 @@ TODO:
 Building and testing:
 - apt install build-essential
 - apt install linux-headers-`uname -r` or build new kernel
-- clone cdmx repository; make; make in
-- read Makefile to use 'make at', 'make rm' and so on
+- apt install ola; service olad stop
+- clone cdmx repository
 - edit Makefile to replace TEST_DEVICE with your local TTY
-- test 1: cat test/test.3.getparams >$(TEST_DEVICE); cat $(TEST_DEVICE) | hexdump -C
-- test 2: apt install ola; sudo service olad start; ola_dev_info
+- cd cdmx; make all in
+- nano /etc/ola/ola-usbserial.conf (device_prefix = cdmx)
+- xterm + make jo;
+- service olad start
+- xterm + make at
+- ola_dev_info; ola_patch; ola_dmxmonitor; ola_dmxconsole
 
 UART on RPi3:
 - sudo systemctl disable hciuart
