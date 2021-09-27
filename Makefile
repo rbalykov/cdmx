@@ -2,8 +2,6 @@ PROJECT_ROOT = $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
 MODNAME = kdmx
 MOD_UNITS = cdmx.o enttec.o
-#MODNAME = kobject-example
-#MODNAME = kset-example
 
 obj-m += $(MODNAME).o
 $(MODNAME)-objs := $(MOD_UNITS)
@@ -24,25 +22,22 @@ rm:
 in:	
 	sudo insmod $(MODNAME).ko cdmx_port_count=1
 	
-inp:
-	sudo insmod $(MODNAME).ko cdmx_port_count=6
+in4:
+	sudo insmod $(MODNAME).ko
 
 jo:
 	sudo journalctl -f -o short-monotonic --no-hostname
-
-# seems to be broken	
-# at2:
-#	sudo ldattach -d8n2 -s250000 -i BRKINT $(CDMX_LD) $(TEST_DEVICE)
 
 at:
 	sudo ldattach -d $(CDMX_LD) $(TEST_DEVICE)
 	
 de:
 	sudo killall ldattach
-
 	
 t3:
 	cat test/test.3.getparams >$(TEST_CHRDEV)
+	cat $(TEST_CHRDEV) | hexdump -C
+
 t6:  
 	cat test/test.6.senddmx >$(TEST_CHRDEV)
 t6over:
@@ -51,26 +46,22 @@ t6over:
 t6under:
 	cat test/test.6a.senddmx >$(TEST_CHRDEV)
 	cat test/test.6d.senddmx >$(TEST_CHRDEV)
+	
+t10:
+	cat test/test.10.serial >$(TEST_CHRDEV)
+	cat $(TEST_CHRDEV) | hexdump -C
+	
+t77:
+	cat test/test.77.vendor >$(TEST_CHRDEV)
+	cat $(TEST_CHRDEV) | hexdump -C
+
 t78:
 	cat test/test.78.getname >$(TEST_CHRDEV)
-
-
-# /sys/devices/virtual/cdmx
-# /sys/class/cdmx
-# /sys/module/dmx_udev/parameters/port_count
-
+	cat $(TEST_CHRDEV) | hexdump -C
 
 ls:
 	sudo ls -lA /sys/devices/virtual/cdmx
 	sudo ls -lA /sys/class/cdmx
 	sudo ls -lA /sys/cdmx_p
 	sudo ls -lA /dev/cdmx*
-	
 
-name:
-	cat /sys/cdmx_p/tty00
-	sudo echo /dev/ttyUSB0 >/sys/cdmx_p/tty00
-	cat /sys/cdmx_p/tty00
-	sudo echo /dev/ttyUSB0 >/sys/cdmx_p/tty00
-	
-	

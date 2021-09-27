@@ -59,7 +59,7 @@ static char	USBPRO_VENDOR[] 	=
 	ESTA_DMXKING_LSB, ESTA_DMXKING_MSB,
 	'D', 'M', 'X', 'k', 'i', 'n', 'g'
 };
-static char	USBPRO_NAME[] 		=
+static char	USBPRO_NAME[] =
 {
 	DMXKING_512_LSB, DMXKING_512_MSB,
 	'U', 'S', 'B', ' ', 'D', 'M', 'X', '5', '1', '2', '-', 'A', ' ',
@@ -86,14 +86,13 @@ typedef enum rx_flags
 	OVERRUN 	= 2
 } rx_flags_t;
 
-struct uart_frame_a
+struct uart_frame
 {
 	uint8_t data[DMX_FRAME_MAX];
 	size_t size;
 	rx_states_t state;
 	uint8_t flags;
 //	bool pending;
-	struct uart_frame_a *next;
 };
 
 /*******************************************************************************
@@ -113,30 +112,42 @@ struct uart_frame_a
 
 #define CDMX_EXCLUSIVE		(1)
 
+struct ringbuffer
+{
+	uint8_t data[CDMX_RECEIVE_ROOM];
+	size_t size;
+	size_t read;
+	size_t write;
+};
+
 struct cdmx_port
 {
 	int id;
+
 	struct kobject kobj;
 	unsigned int breaktime;
 	unsigned int mabtime;
 	unsigned int framerate;
 
 
+	struct ent_widget widget;
+	struct ringbuffer readfrom;
+
 	struct mutex tx_write_lock;
 	struct mutex rx_read_lock;
 	wait_queue_head_t wait;
 
-	//TODO: check it once againg and refactor
+	struct uart_frame rx;
+
 	struct cdev cdev;
 	struct device *fsdev;
 	struct tty_struct *tty;
 
-	//TODO: delete it
-	char *ttyname;
+	//TODO: check it once againg and refactor
+	struct tty_file_private *ttyfp;
 
 	//TODO: refactor exclusive access
 	unsigned long flags;
-	struct ent_widget widget;
 };
 
 

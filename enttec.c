@@ -36,10 +36,33 @@ static inline int wr_full (struct ent_buffer *buffer)
 	return 0;
 }
 
+inline size_t frame_rawsize(const union ent_frame *frame)
+{
+	return __le16_to_cpu(frame->size) + ENT_FRAME_OVERHEAD;
+}
+
+
 static void ent_reply(struct ent_widget *widget)
 {
-	if (widget->ops->read)
-		widget->ops->read(&widget->reply.dmx);
+	if (widget->ops->recv)
+		widget->ops->recv(widget, &widget->reply.dmx);
+}
+
+size_t 	ent_rx (struct ent_widget *widget, const char *src, size_t len)
+{
+	union ent_frame *frame = &widget->rx.dmx;
+	if (!widget->ops->recv)
+		return 0;
+
+	memcpy(&frame->data, src, len);
+	frame->som = ENT_SOM;
+	frame->label = LABEL_RECEIVED_DMX;
+	frame->size = cpu_to_le16(len);
+	frame->data[len] = ENT_EOM;
+
+	widget->ops->recv(widget, frame);
+
+	return len;
 }
 
 static void ent_wr_dispatch(struct ent_widget *widget)
@@ -100,11 +123,11 @@ static void ent_wr_dispatch(struct ent_widget *widget)
 		case LABEL_DMX_OUTPUT:
 		case LABEL_UNIVERSE_0:
 			if (widget->ops->tx)
-				widget->ops->tx(&widget->wr.dmx, UNIVERSE_0);
+				widget->ops->tx(widget, &widget->wr.dmx, UNIVERSE_0);
 			break;
 		case LABEL_UNIVERSE_1:
 			if (widget->ops->tx)
-				widget->ops->tx(&widget->wr.dmx, UNIVERSE_1);
+				widget->ops->tx(widget, &widget->wr.dmx, UNIVERSE_1);
 			break;
 
 		/*
@@ -203,7 +226,7 @@ size_t 	ent_write 	(struct ent_widget *widget,
 }
 
 
-//size_t 	ent_rx 	 	(struct ent_widget *widget, const char *src, size_t len);
+
 //int		ent_reset 	(struct ent_widget *widget);
 
 /*
