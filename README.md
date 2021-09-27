@@ -8,15 +8,12 @@ Requirements:
 - Linux kernel v5 (v5.10.63-longterm is recommended)
 
 Implemented for now:
+- UART RX (not TX yet)
 - /dev/cdmx00x emulates DMXKing USBDMX512-A
 - /sys/cdmx/port00x/* files provide r/w access to port parameters
 - module parameter cdmx_port_count, min=1, max=256
 
 Tests performed using OLA (https://github.com/OpenLightingProject/ola)
-
-TODO:
-- implement UART i/o
-- add RDM support
 
 Building and testing:
 - apt install build-essential
