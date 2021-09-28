@@ -45,6 +45,9 @@ static struct mutex cld_lock;
 
 #define	LOCALBUF_SIZE	(16)
 
+/*******************************************************************************
+ * RING BUFFER SECTION
+ ******************************************************************************/
 
 static inline size_t ring_freespace (const struct ringbuffer *ring)
 {
@@ -99,6 +102,107 @@ static inline void ring_unpop (struct ringbuffer *ring, size_t len)
 	ring->read = (read < 0) ? (CDMX_RECEIVE_ROOM + read) : read;
 }
 
+/*******************************************************************************
+ * UART DMX RX
+ ******************************************************************************/
+
+static inline void fr_dispatch  (struct uart_frame *frame)
+{
+	struct cdmx_port *port = container_of(frame, struct cdmx_port, rx);
+//	K_DEBUG("%02X %02X %02X", frame->startcode,
+//			frame->data[0], frame->data[511]);
+	ent_rx(&port->widget, frame->raw, frame->size, frame->flags);
+}
+
+static inline void fr_reset  (struct uart_frame *frame)
+{
+	frame->state = IDLE;
+	frame->size = 0;
+	frame->flags = 0;
+}
+
+static inline void fr_break (struct uart_frame *frame)
+{
+	if ( (frame->state == DATA) && (frame->size >= DMX_FRAME_MIN))
+		fr_dispatch(frame);
+
+	frame->state = BREAK;
+	frame->size = 0;
+}
+
+static inline void fr_start (struct uart_frame *frame, uint8_t sc)
+{
+	frame->state = DATA;
+	frame->startcode = sc;
+	frame->size = 1;
+}
+
+static inline void fr_data  (struct uart_frame *frame, uint8_t ch)
+{
+	frame->raw[frame->size++] = ch;
+	if (frame->size >= DMX_FRAME_MAX)
+	{
+		fr_dispatch(frame);
+		fr_reset(frame);
+	}
+}
+
+static inline void fr_fault  (struct uart_frame *frame)
+{
+	if ( (frame->state == DATA) && (frame->size >= DMX_FRAME_MIN))
+	{
+		frame->flags = ENT_FLAG_OVERRUN;
+		fr_dispatch(frame);
+	}
+
+	frame->state = IDLE;
+	frame->size  = 0;
+}
+
+
+static inline void fr_process (struct uart_frame *frame,
+		uint8_t ch, uint8_t flag)
+{
+	switch(frame->state)
+	{
+	case IDLE:
+		if (flag == TTY_BREAK)
+			fr_break(frame);
+		break;
+	case DATA:
+		switch (flag)
+		{
+			case TTY_NORMAL:
+				fr_data(frame, ch);
+			break;
+
+			case TTY_BREAK:
+			case TTY_FRAME:
+				fr_break(frame);
+			break;
+
+			case TTY_PARITY:
+			case TTY_OVERRUN:
+			default:
+				fr_fault(frame);
+			break;
+		}
+		break;
+	case BREAK:
+		if (flag == TTY_NORMAL)
+			fr_start(frame, ch);
+		break;
+	case FULL:
+		break;
+	case FAULT:
+		break;
+	}
+}
+
+/*******************************************************************************
+ * ENTTEC PROTOCOL HANDLERS
+ ******************************************************************************/
+
 static void cdmx_enttec_getparams (struct ent_widget *widget)
 {
 	struct cdmx_port *port = container_of(widget, struct cdmx_port, widget);
@@ -139,8 +243,8 @@ static void cdmx_enttec_setparams (struct ent_widget *widget)
 	NORMALISE_FRAMERATE(a);
 	port->framerate = a;
 
-	K_DEBUG("break %d, mab %d, frame %d", port->breaktime,
-			port->mabtime, port->framerate);
+//	K_DEBUG("break %d, mab %d, frame %d", port->breaktime,
+//			port->mabtime, port->framerate);
 }
 
 static void cdmx_enttec_getserial (struct ent_widget *widget)
@@ -187,10 +291,10 @@ static void cdmx_enntec_receive (struct ent_widget *widget, union ent_frame *fra
 {
 	struct cdmx_port *port = container_of(widget, struct cdmx_port, widget);
 
-	K_DEBUG("label %d, size %d", frame->label, __le16_to_cpu(frame->size));
+//	K_DEBUG("label %d, size %d", frame->label, __le16_to_cpu(frame->size));
 	if (ring_push(&port->readfrom, frame->raw, frame_rawsize(frame)))
 	{
-		K_DEBUG("no space in ringbuffer, dropping frame");
+//		K_DEBUG("no space in ringbuffer, dropping frame");
 		return;
 	}
 	wake_up(&port->wait);
@@ -214,24 +318,9 @@ struct ent_ops cdmx_ent_ops =
 };
 
 
-/* static void cdmx_enttec_onchange (struct dmx_port *port)
- *
- * This message also reinitializes the DMX receive processing,
- * so that if change of state reception is selected,
- * the initial received DMX data is cleared to all zeros.
- * */
-
-/* static void cdmx_enttec_update (struct dmx_port *port)
- *
- * Datasheet on this label looks like a crap.
- * It describes 1 byte as frame offset for 40-slot subframe.
- * So, 256 + 40 = insuffitient to address 512-slots frame.
- * Neither forums nor other source found to make it clear,
- * so decision is made to leave ONCHANGE & UPDATE labes unsupported.
- * */
-
-
-
+/*******************************************************************************
+ * LINE DISCIPLINE
+ ******************************************************************************/
 
 static int cld_open(struct tty_struct *tty)
 {
@@ -301,18 +390,32 @@ static ssize_t cld_read(struct tty_struct *tty, struct file *file,
 				  unsigned char *buf, size_t nr,
 				  void **cookie, unsigned long offset)
 {
-	K_DEBUG("->>>");
 	return -EINVAL;
 }
 
 static ssize_t cld_write(struct tty_struct *tty, struct file *file,
 				   const unsigned char *buf, size_t nr)
 {
-	K_DEBUG("->>>");
 	return -EINVAL;
 }
 
 int	cld_receive_buf2(struct tty_struct *tty, const unsigned char *cp,
+		char *fp, int count)
+{
+	struct cdmx_port *port = tty->disc_data;
+	struct uart_frame *frame = &port->rx;
+	int i;
+	uint8_t flag;
+
+	for (i = 0; i<count; i++)
+	{
+		flag = fp ? fp[i] : TTY_NORMAL;
+		fr_process(frame, cp[i], flag);
+	}
+	return count;
+}
+/*
+int	cld_receive_buf2a(struct tty_struct *tty, const unsigned char *cp,
 			char *fp, int count)
 {
 	struct cdmx_port *port = tty->disc_data;
@@ -339,8 +442,8 @@ int	cld_receive_buf2(struct tty_struct *tty, const unsigned char *cp,
 				if (frame->size >= DMX_FRAME_MAX)
 				{
 					frame->state = OVER;
+					K_DEBUG("over");
 					ent_rx(&port->widget, frame->data, frame->size);
-					//TODO: handle frame
 				}
 				break;
 			default:
@@ -351,6 +454,7 @@ int	cld_receive_buf2(struct tty_struct *tty, const unsigned char *cp,
 		{
 			if(frame->state == DATA)
 			{
+				K_DEBUG("break");
 				ent_rx(&port->widget, frame->data, frame->size);
 			}
 			frame->state = BREAK;
@@ -362,15 +466,15 @@ int	cld_receive_buf2(struct tty_struct *tty, const unsigned char *cp,
 	}
 	return count;
 }
-
+*/
 void cld_set_termios (struct tty_struct *tty, struct ktermios *old)
 {
-	K_DEBUG("cflags: %X, ispeed: %d", old->c_cflag, old->c_ispeed);
+//	K_DEBUG("cflags: %X, ispeed: %d", old->c_cflag, old->c_ispeed);
 }
 int	cld_ioctl(struct tty_struct *tty, struct file *file,
 		 unsigned int cmd, unsigned long arg)
 {
-	K_DEBUG("tty: %s, cmd: 0x%04X, arg: 0x%lx", tty->name, cmd, arg);
+//	K_DEBUG("tty: %s, cmd: 0x%04X, arg: 0x%lx", tty->name, cmd, arg);
 	return n_tty_ioctl_helper(tty, file, cmd, arg);
 }
 
@@ -389,6 +493,9 @@ static struct tty_ldisc_ops cld_ops =
 	.ioctl			= cld_ioctl,
 };
 
+/*******************************************************************************
+ * CHARACTER DEVICE
+ ******************************************************************************/
 
 static ssize_t port_attr_show(struct kobject *kobj,
 			     struct attribute *attr,
@@ -433,7 +540,6 @@ static void port_release(struct kobject *kobj)
 	struct cdmx_port *port;
 	port = container_of(kobj, struct cdmx_port, kobj);
 	kfree(port);
-	K_DEBUG("->>> done");
 }
 
 static ssize_t port_show(struct cdmx_port *port,
@@ -526,14 +632,14 @@ static int cdmx_open 	(struct inode *node, struct file *f)
 {
 	struct cdmx_port *port;
 	port = container_of(node->i_cdev, struct cdmx_port, cdev);
-	K_DEBUG("file %s, port %p dev_t %X",
-			f->f_path.dentry->d_name.name, port, port->cdev.dev);
+//	K_DEBUG("file %s, port %p dev_t %X",
+//			f->f_path.dentry->d_name.name, port, port->cdev.dev);
 
 	port->ttyfp = f->private_data;
 	f->private_data = port;
 	try_module_get(THIS_MODULE);
 
-	K_DEBUG( "->>> done");
+//	K_DEBUG( "->>> done");
 	return 0;
 }
 
@@ -541,8 +647,8 @@ static int cdmx_release (struct inode *node, struct file *f)
 {
 	struct cdmx_port *port;
 	port = (struct cdmx_port *) f->private_data;
-	K_DEBUG("file %s, port %p dev_t %X",
-			f->f_path.dentry->d_name.name, port, port->cdev.dev);
+//	K_DEBUG("file %s, port %p dev_t %X",
+//			f->f_path.dentry->d_name.name, port, port->cdev.dev);
 
 	f->private_data = port->ttyfp;
 	module_put(THIS_MODULE);
@@ -558,7 +664,7 @@ static ssize_t cdmx_write (struct file *f, const char* src,
 	uint8_t buffer[LOCALBUF_SIZE];
 	ssize_t result = 0, size = 0;
 
-	K_DEBUG("<<<- port %d, %d bytes", port->id, len);
+//	K_DEBUG("<<<- port %d, max %d bytes", port->id, len);
 	if (mutex_lock_interruptible(&port->tx_write_lock))
 		return -ERESTARTSYS;
 	if (mutex_lock_interruptible(&port->rx_read_lock))
@@ -586,8 +692,8 @@ static ssize_t cdmx_write (struct file *f, const char* src,
 	out:
 	mutex_unlock(&port->rx_read_lock);
 	mutex_unlock(&port->tx_write_lock);
-	K_DEBUG("->>> port %d, bytes written %d", \
-			 port->id, result);
+//	K_DEBUG("->>> port %d, bytes written %d", \
+//			 port->id, result);
 	return result;
 
 }
@@ -654,7 +760,7 @@ __poll_t cdmx_poll (struct file *f, struct poll_table_struct *p)
 //		mask |= EPOLLOUT | EPOLLWRNORM;
 	mutex_unlock(&port->rx_read_lock);
 	mutex_unlock(&port->tx_write_lock);
-	K_DEBUG("port %d, to read: %d, to write: %d", port->id, port->readfrom.size, w);
+//	K_DEBUG("port %d, to read: %d, to write: %d", port->id, port->readfrom.size, w);
 
 	return mask;
 }
@@ -665,26 +771,26 @@ long cdmx_ioctl (struct file *f, unsigned int cmd, unsigned long arg)
 	void __user *p = (void __user *)arg;
 	int i;
 
-	K_DEBUG("cmd 0x%X, param 0x%lX", cmd, arg);
+//	K_DEBUG("cmd 0x%X, param 0x%lX", cmd, arg);
 
 	switch(cmd)
 	{
 	case TIOCEXCL:
 		set_bit(CDMX_EXCLUSIVE, &port->flags);
-		K_DEBUG("set exclusive");
+//		K_DEBUG("set exclusive");
 		return 0;
 	case TIOCNXCL:
-		K_DEBUG("cleared exclusive");
+//		K_DEBUG("cleared exclusive");
 		clear_bit(CDMX_EXCLUSIVE, &port->flags);
 		return 0;
 	case 0x5440: //TIOCGEXCL:
 		i =  test_bit(CDMX_EXCLUSIVE, &port->flags);
-		K_DEBUG("is exclusive: %d", i);
+//		K_DEBUG("is exclusive: %d", i);
 		return put_user(i, (int __user *)p);
 
 	case TIOCINQ:
 		i = port->readfrom.size;
-		K_DEBUG("bytes to read: %d", i);
+//		K_DEBUG("bytes to read: %d", i);
 		return put_user(i, (int __user *)p);
 /*	case TIOCOUTQ:
 		i = port->write_to.rawsize;
@@ -694,10 +800,10 @@ long cdmx_ioctl (struct file *f, unsigned int cmd, unsigned long arg)
 	case TCGETS:
 //		if (port->tty)
 //			return cld_ioctl(port->tty, f, cmd, arg);
-		K_DEBUG("TCGETS, ignoring");
+//		K_DEBUG("TCGETS, ignoring");
 		return 0;
 	case TCSETS:
-		K_DEBUG("TCSETS, ignoring");
+//		K_DEBUG("TCSETS, ignoring");
 		return 0;
 	default:
 		return -EINVAL;
@@ -714,6 +820,10 @@ static struct file_operations cdmx_ops =
 	.poll		= cdmx_poll,
 	.unlocked_ioctl = cdmx_ioctl,
 };
+
+/*******************************************************************************
+ * CDMX CORE
+ ******************************************************************************/
 
 static struct cdmx_port *cdmx_create_port_obj(int id)
 {
@@ -778,7 +888,6 @@ static struct cdmx_port *cdmx_create_port_obj(int id)
 
 static void cdmx_destroy_port_obj(struct cdmx_port *port)
 {
-	K_DEBUG("port %d", port->id);
 	port->id = PORT_INACTIVE;
 	kobject_put(&port->kobj);
 }
@@ -789,7 +898,6 @@ static int cdmx_create_cdevs (void)
 	int i, c, err;
 	const char 	*chrdev_name 	= "cdmx";
 
-	K_DEBUG("start");
 	// Returns zero or a negative error code.
 	err = alloc_chrdev_region(&cdmx_device_id,
 			BASE_MINOR, cdmx_port_count, chrdev_name);
@@ -852,7 +960,7 @@ static int cdmx_create_cdevs (void)
 
 	}
 
-	K_DEBUG("->>> done");
+//	K_DEBUG("->>> done");
 	return 0;
 
 failure4:
@@ -871,7 +979,6 @@ failure1:
 static void cdmx_remove_cdevs (void)
 {
 	int i;
-	K_DEBUG("start");
 	for (i=0; i< cdmx_port_count; i++)
 	{
 		device_destroy(cdmx_devclass,
@@ -881,7 +988,6 @@ static void cdmx_remove_cdevs (void)
 	class_destroy(cdmx_devclass);
 	unregister_chrdev_region(MKDEV(MAJOR(cdmx_device_id), BASE_MINOR),
 			cdmx_port_count);
-	K_DEBUG( "->>> done");
 }
 
 
@@ -889,9 +995,6 @@ static void cdmx_remove_cdevs (void)
 static int __init cdmx_init (void)
 {
 	int i, c, p, err;
-
-	K_DEBUG("start");
-	K_INFO("SIZE = %d", sizeof(USBPRO_NAME));
 
 	mutex_init(&cld_lock);
 	p = TO_RANGE(cdmx_port_count, CDMX_PORTS_MIN, CDMX_PORTS_MAX);
@@ -936,7 +1039,7 @@ static int __init cdmx_init (void)
 	if (err)
 		goto failure3;
 
-	K_DEBUG("->>> done");
+	K_DEBUG("->>> init done");
 	return 0;
 
 failure3:
@@ -952,7 +1055,6 @@ failure1:
 static void __exit cdmx_exit(void)
 {
 	int i;
-	K_DEBUG("clean up");
 
 	tty_unregister_ldisc(CDMX_LD);
 	cdmx_remove_cdevs();

@@ -20,8 +20,8 @@
 #define K_INFO(args...) _pp(KERN_INFO, args)
 #define K_ERR(args...) 	_pp(KERN_ERR, args)
 
-//#define K_DEBUG(args...) _pp(KERN_DEBUG, args)
-#define K_DEBUG(args...)
+#define K_DEBUG(args...) _pp(KERN_DEBUG, args)
+//#define K_DEBUG(args...)
 
 
 #endif /* DEBUG_H_ */
