@@ -414,59 +414,7 @@ int	cld_receive_buf2(struct tty_struct *tty, const unsigned char *cp,
 	}
 	return count;
 }
-/*
-int	cld_receive_buf2a(struct tty_struct *tty, const unsigned char *cp,
-			char *fp, int count)
-{
-	struct cdmx_port *port = tty->disc_data;
-	struct uart_frame *frame = &port->rx;
-	int i;
-	uint8_t flag;
 
-//	count = MIN(count, tty->receive_room);
-	for (i=0; i < count; i++)
-	{
-		flag = fp ? fp[i] : TTY_NORMAL;
-
-		if (flag == TTY_NORMAL)
-		{
-			switch(frame->state)
-			{
-			case BREAK:
-				frame->state = DATA;
-				frame->data[frame->size++] = cp[i];
-				break;
-
-			case DATA:
-				frame->data[frame->size++] = cp[i];
-				if (frame->size >= DMX_FRAME_MAX)
-				{
-					frame->state = OVER;
-					K_DEBUG("over");
-					ent_rx(&port->widget, frame->data, frame->size);
-				}
-				break;
-			default:
-				break;
-			}
-		}
-		else if (flag == TTY_BREAK)
-		{
-			if(frame->state == DATA)
-			{
-				K_DEBUG("break");
-				ent_rx(&port->widget, frame->data, frame->size);
-			}
-			frame->state = BREAK;
-		}
-		else
-		{
-			frame->state = FAULT;
-		}
-	}
-	return count;
-}
-*/
 void cld_set_termios (struct tty_struct *tty, struct ktermios *old)
 {
 //	K_DEBUG("cflags: %X, ispeed: %d", old->c_cflag, old->c_ispeed);
