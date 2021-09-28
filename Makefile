@@ -1,10 +1,14 @@
 PROJECT_ROOT = $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+SRC_DIR = src
+INC_DIR = include
 
 MODNAME = kdmx
-MOD_UNITS = cdmx.o enttec.o
+MOD_UNITS = $(SRC_DIR)/cdmx.o $(SRC_DIR)/enttec.o
 
 obj-m += $(MODNAME).o
 $(MODNAME)-objs := $(MOD_UNITS)
+
+ccflags-y += -I$(PROJECT_ROOT)/include
 
 CDMX_LD = 28
 TEST_DEVICE = /dev/ttyAMA0
