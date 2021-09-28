@@ -15,7 +15,6 @@ static inline void wr_flush (struct ent_widget *widget)
 	widget->wr_total = 0;
 	widget->wr.read_ptr = 0;
 	widget->wr.write_ptr = 0;
-//	widget->wr.size = 0;
 }
 
 static inline int wr_push  (struct ent_buffer *buffer, uint8_t byte)
@@ -48,27 +47,28 @@ static void ent_reply(struct ent_widget *widget)
 		widget->ops->recv(widget, &widget->reply.dmx);
 }
 
-size_t 	ent_rx (struct ent_widget *widget, const char *src, size_t len)
+size_t 	ent_rx (struct ent_widget *widget, const char *src, size_t len, uint8_t flag)
 {
 	union ent_frame *frame = &widget->rx.dmx;
 	if (!widget->ops->recv)
-		return 0;
+		return -1;
 
-	memcpy(&frame->data, src, len);
+	frame->data[0] = flag;
+	memcpy(&frame->data[ENT_FLAG_BYTES], src, len);
 	frame->som = ENT_SOM;
 	frame->label = LABEL_RECEIVED_DMX;
-	frame->size = cpu_to_le16(len);
-	frame->data[len] = ENT_EOM;
+	frame->size = cpu_to_le16(len + ENT_FLAG_BYTES);
+	frame->data[len + ENT_FLAG_BYTES] = ENT_EOM;
 
 	widget->ops->recv(widget, frame);
 
-	return len;
+	return 0;
 }
 
 static void ent_wr_dispatch(struct ent_widget *widget)
 {
-	K_DEBUG("label %d, size %d", widget->wr.dmx.label,
-			__le16_to_cpu(widget->wr.dmx.size));
+//	K_DEBUG("label %d, size %d", widget->wr.dmx.label,
+//			__le16_to_cpu(widget->wr.dmx.size));
 
 	switch (widget->wr.dmx.label)
 	{
@@ -231,14 +231,8 @@ size_t 	ent_write 	(struct ent_widget *widget,
 
 /*
  *
-
-
-static void ent_parse(struct dmx_port *port)
-{
-}
-
-
-
-
+ *
+ *
+ *
  *
  */

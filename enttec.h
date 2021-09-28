@@ -136,6 +136,7 @@ enum ent_universe
 #define ENT_HEADER_SIZE		(4)
 #define ENT_FOOTER_SIZE 	(1)
 #define ENT_FRAME_OVERHEAD 	(ENT_HEADER_SIZE + ENT_FOOTER_SIZE)
+#define ENT_FLAG_BYTES		(1)
 
 #define ENT_FW_DMX			(1)
 #define ENT_FW_RDM			(2)
@@ -227,11 +228,28 @@ struct ent_ops
 
 };
 
+/*
+ * Datasheet on labels ONCHANGE & UPDATE looks like a crap.
+ * Neither forums nor other source found to make it clear,
+ * so decision is made to leave ONCHANGE & UPDATE labes unsupported.
+ *
+ *  	void (*onchange)	(struct ent_widget *);
+ *
+ * This message also reinitializes the DMX receive processing,
+ * so that if change of state reception is selected,
+ * the initial received DMX data is cleared to all zeros.
+ *
+ * 		void (*update)  	(struct ent_widget *);
+ *
+ * It describes 1 byte as frame offset for 40-slot subframe.
+ * So, 256 + 40 = insuffitient to address 512-slots frame.
+ *
+ * */
+
 size_t 	frame_rawsize	(const union ent_frame *frame);
 
 size_t 	ent_write 	(struct ent_widget *widget, const char *src, size_t len);
-size_t 	ent_rx 	 	(struct ent_widget *widget, const char *src, size_t len);
-int		ent_reset 	(struct ent_widget *widget);
+size_t 	ent_rx 	 	(struct ent_widget *widget, const char *src, size_t len, uint8_t flag);
 
 
 /*******************************************************************************
