@@ -73,9 +73,10 @@ static char	USBPRO_NAME[] =
  ******************************************************************************/
 typedef enum rx_states
 {
-	BREAK = 0,
+	IDLE = 0,
 	DATA,
-	OVER,
+	BREAK,
+	FULL,
 	FAULT
 }rx_states_t;
 
@@ -88,11 +89,18 @@ typedef enum rx_flags
 
 struct uart_frame
 {
-	uint8_t data[DMX_FRAME_MAX];
+	union __packed
+	{
+		uint8_t raw[DMX_FRAME_MAX];
+		struct __packed
+		{
+		uint8_t startcode;
+		uint8_t data[DMX_PAYLOAD_MAX];
+		};
+	};
 	size_t size;
 	rx_states_t state;
 	uint8_t flags;
-//	bool pending;
 };
 
 /*******************************************************************************

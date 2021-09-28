@@ -1,4 +1,7 @@
-.token
-.cproject
-.project
-
+.* 
+*.mod.*
+*.mod
+*.o
+*.ko
+modules.order
+*.symvers
