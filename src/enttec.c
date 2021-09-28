@@ -226,9 +226,6 @@ size_t 	ent_write 	(struct ent_widget *widget,
 }
 
 
-
-//int		ent_reset 	(struct ent_widget *widget);
-
 /*
  *
  *
