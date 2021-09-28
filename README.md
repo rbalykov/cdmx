@@ -8,6 +8,7 @@ Requirements:
 - Linux kernel v5 (v5.10.63-longterm is recommended)
 
 Implemented for now:
+
 - UART RX
 - /dev/cdmx00x emulates DMXKing USBDMX512-A
 - /sys/cdmx/port00x/* files provide r/w access to port parameters
