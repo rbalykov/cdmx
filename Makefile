@@ -2,8 +2,8 @@ PROJECT_ROOT = $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 SRC_DIR = src
 INC_DIR = include
 
-MODNAME = kdmx
-MOD_UNITS = $(SRC_DIR)/cdmx.o $(SRC_DIR)/enttec.o
+MODNAME = cdmx
+MOD_UNITS := $(SRC_DIR)/cdmx.o $(SRC_DIR)/enttec.o
 
 obj-m += $(MODNAME).o
 $(MODNAME)-objs := $(MOD_UNITS)

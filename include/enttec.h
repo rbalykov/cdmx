@@ -1,18 +1,17 @@
 /*
  * enttec.h
- *
- *  Created on: 21 сент. 2021 г.
- *      Author: rbalykov
  */
 
-#ifndef ENTTEC_H_
-#define ENTTEC_H_
+#ifndef INCLUDE_ENTTEC_H_
+#define INCLUDE_ENTTEC_H_
 
-#include <linux/compiler_attributes.h>
-#include <asm/byteorder.h>
-#include <linux/types.h>
 
+#include "dmx.h"
 #include "debug.h"
+
+/*******************************************************************************
+ * FRAME LABELS
+ ******************************************************************************/
 
 typedef enum ent_labels
 {
@@ -104,28 +103,8 @@ typedef enum ent_labels
 	 * */
 } ent_labels_t;
 
-enum ent_state
-{
-	PRE_SOM = 0,
- 	GOT_SOM = 1,
-	GOT_LABEL = 2,
-	GOT_SIZE_LSB = 3,
-	IN_DATA = 4,
-	WAITING_FOR_EOM = 5,
-};
-
-enum ent_universe
-{
-	UNIVERSE_0 = 0,
-	UNIVERSE_1,
-	UNIVERSE_2,
-	UNIVERSE_3
-};
-
 /*******************************************************************************
- *
- * Enttec protocol
- *
+ * DATA FRAMING
  ******************************************************************************/
 
 #define ENT_FRAME_MAX		(605)
@@ -158,9 +137,6 @@ enum ent_universe
 #define ENT_MAB_MIN			(1)
 #define ENT_FRAMERATE_MAX	(40)
 
-#define ENT_FLAG_CLEAR		(0)
-#define ENT_FLAG_OVERRUN	(0x01)
-
 #define ENT_SEND_ALWAYS		(0)
 #define ENT_SEND_ONCHANGE	(1)
 
@@ -174,6 +150,9 @@ enum ent_universe
 #define DMXKING_512_MSB		(0x00)
 #define ENT_NAME_MAX		(32)
 
+/*******************************************************************************
+ * ENTTEC WIDGET DATA MODEL
+ ******************************************************************************/
 
 union __packed ent_frame
 {
@@ -196,30 +175,72 @@ union __packed ent_frame
 	};
 };
 
+/*******************************************************************************
+ * STATE MACHINE AND DATA ROUTING
+ ******************************************************************************/
+
+enum ent_state
+{
+	PRE_SOM = 0,				// before got any data
+ 	GOT_SOM = 1,				// start-of-frame recognized
+	GOT_LABEL = 2,				// label byte
+	GOT_SIZE_LSB = 3,			// frame size LSB byte
+	IN_DATA = 4,				// data body
+	WAITING_FOR_EOM = 5,		// got data, awaiting for end-of-frame
+};
+
+enum ent_universe				// for multiple-output widgets, not suitable here
+{								// kept for possible future use
+	UNIVERSE_0 = 0,				// labels 5 & 100, output #1
+	UNIVERSE_1,					// label 101, output #2 (DMXKing UltraDmxPro)
+	UNIVERSE_2,
+	UNIVERSE_3
+};
+
+enum ent_rx_flags
+{
+	ENT_RX_CLEAR 	= 0,		// clear data, no errors
+	ENT_RX_OVERFLOW = 1,		// dmx frame drops during receiving
+	ENT_RX_OVERRUN 	= 2			// uart overruns have happened
+};
+
 struct ent_buffer
 {
-	union ent_frame dmx;
-	size_t read_ptr;
-	size_t write_ptr;
-//	size_t size;
+	union ent_frame dmx;		// enttec-formatted dmx data
+	size_t size;				// size of dmx data
 };
 
 struct ent_widget
 {
-	struct ent_buffer wr;
-	enum ent_state wr_state;
-	size_t wr_total;
+	struct ent_buffer wr;		// /dev/cdmx write() buffer
+	enum ent_state wr_state;	// write() state machine
+	size_t wr_total;			// write() frame size limiter
 
-	struct ent_buffer rx;
-	struct ent_buffer reply;
+	struct ent_buffer rx;		// uart RX, receive_buf2()
+	struct ent_buffer reply;	// serves replies to write()
 	struct ent_ops *ops;
 };
 
 struct ent_ops
 {
-	void (*set_params) (struct ent_widget *);
-	void (*recv)	(struct ent_widget *, union ent_frame *);
-	void (*tx) 		(struct ent_widget *, union ent_frame *, int universe);
+	/*
+	 * proceed *frame to read(), there is reply or dmx/rdm
+	 * */
+	void (*recv) (struct ent_widget *, union ent_frame *);
+
+	/*
+	 * proceed *frame to uart tx
+	 * */
+	void (*tx) (struct ent_widget *, union ent_frame *, int universe);
+
+	/*
+	 * read *frame to get new parameters
+	 * */
+	void (*set_params) (struct ent_widget *,  union ent_frame *);
+
+	/*
+	 * generate full-featured replies to widget->reply
+	 * */
 	void (*params) 	(struct ent_widget *);
 	void (*serial) 	(struct ent_widget *);
 	void (*vendor) 	(struct ent_widget *);
@@ -228,6 +249,9 @@ struct ent_ops
 
 };
 
+/*******************************************************************************
+ * NOTES ON DATA HADLING
+ ******************************************************************************/
 /*
  * Datasheet on labels ONCHANGE & UPDATE looks like a crap.
  * Neither forums nor other source found to make it clear,
@@ -246,27 +270,16 @@ struct ent_ops
  *
  * */
 
-size_t 	frame_rawsize	(const union ent_frame *frame);
+/*******************************************************************************
+ * HELPER FUNCTIONS
+ ******************************************************************************/
 
+size_t 	frame_rawsize	(const union ent_frame *frame);
 size_t 	ent_write 	(struct ent_widget *widget, const char *src, size_t len);
 size_t 	ent_rx 	 	(struct ent_widget *widget, const char *src, size_t len, uint8_t flag);
 
-
 /*******************************************************************************
- *
- * DMX-512 protocol
- *
  ******************************************************************************/
 
-#define DMX_WORD_SIZE			(1)
-#define DMX_PAYLOAD_MAX 		(512)
-#define DMX_PAYLOAD_MIN			(24)
-#define DMX_STARTCODE_BYTES 	(1)
-#define DMX_STARTCODE_DMX512	(0)
-#define DMX_FRAME_MAX 			(DMX_STARTCODE_BYTES + DMX_PAYLOAD_MAX)
-#define DMX_FRAME_MIN 			(DMX_STARTCODE_BYTES + DMX_PAYLOAD_MIN)
-#define DMX_BAUDRATE 			(250000)
-
-
-#endif /* ENTTEC_H_ */
+#endif /* INCLUDE_ENTTEC_H_ */
 

@@ -1,28 +1,27 @@
 /*
- *
  * enttec.c
- *
- *  Created on: 21 сент. 2021 г.
- *      Author: rbalykov
  */
 
 
 #include "enttec.h"
 
+/*******************************************************************************
+ * HELPER FUNCTIONS FOR write()
+ ******************************************************************************/
+
 static inline void wr_flush (struct ent_widget *widget)
 {
 	widget->wr_state = PRE_SOM;
 	widget->wr_total = 0;
-	widget->wr.read_ptr = 0;
-	widget->wr.write_ptr = 0;
+	widget->wr.size = 0;
 }
 
 static inline int wr_push  (struct ent_buffer *buffer, uint8_t byte)
 {
-	if (buffer->write_ptr < DMX_FRAME_MAX )
+	if (buffer->size < DMX_FRAME_MAX )
 	{
-		buffer->dmx.data[buffer->write_ptr] = byte;
-		buffer->write_ptr++;
+		buffer->dmx.data[buffer->size] = byte;
+		buffer->size++;
 		return 0;
 	}
 	return -1;
@@ -30,16 +29,10 @@ static inline int wr_push  (struct ent_buffer *buffer, uint8_t byte)
 
 static inline int wr_full (struct ent_buffer *buffer)
 {
-	if (buffer->write_ptr >= DMX_FRAME_MAX) return 1;
-	if (buffer->write_ptr >= __le16_to_cpu(buffer->dmx.size)) return 1;
+	if (buffer->size >= DMX_FRAME_MAX) return 1;
+	if (buffer->size >= __le16_to_cpu(buffer->dmx.size)) return 1;
 	return 0;
 }
-
-inline size_t frame_rawsize(const union ent_frame *frame)
-{
-	return __le16_to_cpu(frame->size) + ENT_FRAME_OVERHEAD;
-}
-
 
 static void ent_reply(struct ent_widget *widget)
 {
@@ -47,23 +40,8 @@ static void ent_reply(struct ent_widget *widget)
 		widget->ops->recv(widget, &widget->reply.dmx);
 }
 
-size_t 	ent_rx (struct ent_widget *widget, const char *src, size_t len, uint8_t flag)
-{
-	union ent_frame *frame = &widget->rx.dmx;
-	if (!widget->ops->recv)
-		return -1;
-
-	frame->data[0] = flag;
-	memcpy(&frame->data[ENT_FLAG_BYTES], src, len);
-	frame->som = ENT_SOM;
-	frame->label = LABEL_RECEIVED_DMX;
-	frame->size = cpu_to_le16(len + ENT_FLAG_BYTES);
-	frame->data[len + ENT_FLAG_BYTES] = ENT_EOM;
-
-	widget->ops->recv(widget, frame);
-
-	return 0;
-}
+/*******************************************************************************
+ ******************************************************************************/
 
 static void ent_wr_dispatch(struct ent_widget *widget)
 {
@@ -112,7 +90,7 @@ static void ent_wr_dispatch(struct ent_widget *widget)
 		// labels that don't need replies
 		case LABEL_SET_PARAMS:
 			if (widget->ops->set_params)
-				widget->ops->set_params(widget);
+				widget->ops->set_params(widget, &widget->wr.dmx);
 			break;
 
 		// labels that bring DMX/RDM data to TX
@@ -145,9 +123,34 @@ static void ent_wr_dispatch(struct ent_widget *widget)
 		default:
 		break;
 	}
-	//TODO: implement TX
 }
 
+/*******************************************************************************
+ * EXPORTED HELPER FUNCTIONS
+ ******************************************************************************/
+
+inline size_t frame_rawsize(const union ent_frame *frame)
+{
+	return __le16_to_cpu(frame->size) + ENT_FRAME_OVERHEAD;
+}
+
+size_t 	ent_rx (struct ent_widget *widget, const char *src, size_t len, uint8_t flag)
+{
+	union ent_frame *frame = &widget->rx.dmx;
+	if (!widget->ops->recv)
+		return -1;
+
+	frame->data[0] = flag;
+	memcpy(&frame->data[ENT_FLAG_BYTES], src, len);
+	frame->som = ENT_SOM;
+	frame->label = LABEL_RECEIVED_DMX;
+	frame->size = cpu_to_le16(len + ENT_FLAG_BYTES);
+	frame->data[len + ENT_FLAG_BYTES] = ENT_EOM;
+
+	widget->ops->recv(widget, frame);
+
+	return 0;
+}
 
 size_t 	ent_write 	(struct ent_widget *widget,
 		const char *src, size_t len)
@@ -225,11 +228,5 @@ size_t 	ent_write 	(struct ent_widget *widget,
 	return len;
 }
 
-
-/*
- *
- *
- *
- *
- *
- */
+/*******************************************************************************
+ ******************************************************************************/
