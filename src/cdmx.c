@@ -1,4 +1,20 @@
-
+/*******************************************************************************
+ *
+ * CDMX - Linux kernel module to turn any DMX capable UART
+ * into Enttec-compatible device.
+ *
+ * (C) 2021 Neutrino
+ * Licensed with GNU GPL v3 or any later version
+ *
+ * Usage:
+ * - make sure your UART supports BRKINT (man termios) and 250'000 bps
+ * - get Linux kernel v5
+ * - build a module
+ * - attach line discipline to UART
+ * - use /dev/cdmx00x as Enttec widget
+ * - tweak it using /sys/cdmx/port00x/
+ *
+ ******************************************************************************/
 
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -24,29 +40,45 @@
 #include <uapi/asm-generic/ioctls.h>
 #include <uapi/asm-generic/termbits.h>
 
+#include "cdmx.h"
+
+/*******************************************************************************
+ ******************************************************************************/
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Neutrino");
-MODULE_DESCRIPTION("DMX character device");
+MODULE_DESCRIPTION("CDMX character device");
 MODULE_VERSION("0.01");
 
-#include "cdmx.h"
+/*******************************************************************************
+ ******************************************************************************/
 
+/*
+ * NUMBER OF I/O PORTS
+ * use it while inserting module or kernel boot cmdline
+ * min 1, max 256, 4 by default
+ */
 int cdmx_port_count = CDMX_PORTS_DEFAULT;
 module_param(cdmx_port_count, hexint, CHMOD_RO);
+static struct cdmx_port 	**cdmx_ports;
 
+// CHARACTER DEVICE
+static struct class 		*cdmx_devclass 	= NULL;
+static dev_t 				cdmx_device_id;
 
-static struct class *cdmx_devclass 	= NULL;
-static dev_t 		cdmx_device_id;
+// SYSFS ATTRIBUTES
+static struct kset 			*cdmx_ports_kset;
 
-static struct cdmx_port **dmx_ports;
-static struct kset *dmx_ports_kset;
-static struct mutex cld_lock;
+// LINE DISCIPLINE
+//TODO: check out if it's useful or not
+static struct mutex 		cld_lock;
 
+// IN-FUNCTION BUFFER (see cdmx_read/write())
+//TODO: tweak it
 #define	LOCALBUF_SIZE	(16)
 
 /*******************************************************************************
- * RING BUFFER SECTION
+ * RING BUFFER FOR read()
  ******************************************************************************/
 
 static inline size_t ring_freespace (const struct ringbuffer *ring)
@@ -68,7 +100,8 @@ static inline void ring_do_pop (struct ringbuffer *ring, uint8_t *ch)
 	ring->read %= CDMX_RECEIVE_ROOM;
 }
 
-static size_t ring_push (struct ringbuffer *ring, const uint8_t *buf, size_t len)
+static size_t ring_push (struct ringbuffer *ring,
+		const uint8_t *buf, size_t len)
 {
 	size_t i = 0;
 //	K_DEBUG("len %d", len);
@@ -99,14 +132,79 @@ static inline void ring_unpop (struct ringbuffer *ring, size_t len)
 {
 //	K_DEBUG("len %d", len);
 	ssize_t read = ring->read - len;
+	if ((ring->size + len) > CDMX_RECEIVE_ROOM)
+		return;
 	ring->read = (read < 0) ? (CDMX_RECEIVE_ROOM + read) : read;
+	ring->size += len;
 }
 
 /*******************************************************************************
- * UART DMX RX
+ * UART DMX TRANSMITTER
  ******************************************************************************/
 
-static inline void fr_dispatch  (struct uart_frame *frame)
+#define TIMEOUT_NSEC   ( 1000000000L )      //1 second in nano seconds
+#define TIMEOUT_SEC    ( 4 )                //4 seconds
+
+enum hrtimer_restart tx_timer (struct hrtimer *timer)
+{
+    hrtimer_forward_now(timer,ktime_set(TIMEOUT_SEC, TIMEOUT_NSEC));
+    return HRTIMER_RESTART;
+}
+
+void tx_timer_start (struct cdmx_port *port)
+{
+    ktime_t ktime;
+
+    ktime = ktime_set(TIMEOUT_SEC, TIMEOUT_NSEC);
+    hrtimer_init(&port->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+    port->timer.function = &tx_timer;
+    hrtimer_start( &port->timer, ktime, HRTIMER_MODE_REL);
+}
+
+void tx_timer_stop (struct cdmx_port *port)
+{
+    hrtimer_cancel(&port->timer);
+}
+
+int tx_thread (void *arg)
+{
+	struct cdmx_port *port = (struct cdmx_port *) arg;
+	(void) port;
+
+	return 0;
+}
+
+int tx_thread_create (struct cdmx_port *port)
+{
+	char *name = "cdmx tx___";
+	sprintf(name, "cdmx tx%03X", port->id);
+
+#if 1
+    port->thread = kthread_create(tx_thread, port, name);
+    if(port->thread)
+    {
+        wake_up_process(port->thread);
+        return 0;
+    }
+#else
+    port->thread = kthread_run(tx_thread, port, name);
+    if(!port->thread)
+    	return 0;
+#endif
+    else
+    	return -1;
+}
+
+void tx_thread_stop (struct cdmx_port *port)
+{
+	kthread_stop(port->thread);
+}
+
+/*******************************************************************************
+ * UART DMX RECEIVER
+ ******************************************************************************/
+
+static inline void rx_dispatch  (struct uart_frame *frame)
 {
 	struct cdmx_port *port = container_of(frame, struct cdmx_port, rx);
 //	K_DEBUG("%02X %02X %02X", frame->startcode,
@@ -114,87 +212,87 @@ static inline void fr_dispatch  (struct uart_frame *frame)
 	ent_rx(&port->widget, frame->raw, frame->size, frame->flags);
 }
 
-static inline void fr_reset  (struct uart_frame *frame)
+static inline void rx_reset  (struct uart_frame *frame)
 {
-	frame->state = IDLE;
+	frame->state_rx = RX_IDLE;
 	frame->size = 0;
-	frame->flags = 0;
+	frame->flags = ENT_RX_CLEAR;
 }
 
-static inline void fr_break (struct uart_frame *frame)
+static inline void rx_break (struct uart_frame *frame)
 {
-	if ( (frame->state == DATA) && (frame->size >= DMX_FRAME_MIN))
-		fr_dispatch(frame);
+	if ( (frame->state_rx == RX_DATA) && (frame->size >= DMX_FRAME_MIN))
+		rx_dispatch(frame);
 
-	frame->state = BREAK;
+	frame->state_rx = RX_BREAK;
 	frame->size = 0;
 }
 
-static inline void fr_start (struct uart_frame *frame, uint8_t sc)
+static inline void rx_start (struct uart_frame *frame, uint8_t sc)
 {
-	frame->state = DATA;
+	frame->state_rx = RX_DATA;
 	frame->startcode = sc;
 	frame->size = 1;
 }
 
-static inline void fr_data  (struct uart_frame *frame, uint8_t ch)
+static inline void rx_data  (struct uart_frame *frame, uint8_t ch)
 {
 	frame->raw[frame->size++] = ch;
 	if (frame->size >= DMX_FRAME_MAX)
 	{
-		fr_dispatch(frame);
-		fr_reset(frame);
+		rx_dispatch(frame);
+		rx_reset(frame);
 	}
 }
 
-static inline void fr_fault  (struct uart_frame *frame)
+static inline void rx_fault  (struct uart_frame *frame)
 {
-	if ( (frame->state == DATA) && (frame->size >= DMX_FRAME_MIN))
+	if ( (frame->state_rx == RX_DATA) && (frame->size >= DMX_FRAME_MIN))
 	{
-		frame->flags = ENT_FLAG_OVERRUN;
-		fr_dispatch(frame);
+		frame->flags |= ENT_RX_OVERRUN;
+		rx_dispatch(frame);
 	}
 
-	frame->state = IDLE;
+	frame->state_rx = RX_IDLE;
 	frame->size  = 0;
 }
 
 
-static inline void fr_process (struct uart_frame *frame,
+static inline void rx_process (struct uart_frame *frame,
 		uint8_t ch, uint8_t flag)
 {
-	switch(frame->state)
+	switch(frame->state_rx)
 	{
-	case IDLE:
+	case RX_IDLE:
 		if (flag == TTY_BREAK)
-			fr_break(frame);
+			rx_break(frame);
 		break;
-	case DATA:
+	case RX_DATA:
 		switch (flag)
 		{
 			case TTY_NORMAL:
-				fr_data(frame, ch);
+				rx_data(frame, ch);
 			break;
 
 			case TTY_BREAK:
 			case TTY_FRAME:
-				fr_break(frame);
+				rx_break(frame);
 			break;
 
 			case TTY_PARITY:
 			case TTY_OVERRUN:
 			default:
-				fr_fault(frame);
+				rx_fault(frame);
 			break;
 		}
 		break;
-	case BREAK:
+	case RX_BREAK:
 		if (flag == TTY_NORMAL)
-			fr_start(frame, ch);
+			rx_start(frame, ch);
 		break;
-	case FULL:
+	case RX_FULL:
 		break;
-	case FAULT:
+	case RX_FAULT:
 		break;
 	}
 }
@@ -220,10 +318,10 @@ static void cdmx_enttec_getparams (struct ent_widget *widget)
 	frame->data[4] = port->framerate;
 }
 
-static void cdmx_enttec_setparams (struct ent_widget *widget)
+static void cdmx_enttec_setparams (struct ent_widget *widget,
+		union ent_frame *frame)
 {
 	struct cdmx_port *port = container_of(widget, struct cdmx_port, widget);
-	union ent_frame *frame = &widget->wr.dmx;
 	int a;
 
 //	frame->data[0]
@@ -287,13 +385,15 @@ static void cdmx_enttec_getname (struct ent_widget *widget)
 	memcpy(&frame->data, USBPRO_NAME, size);
 }
 
-static void cdmx_enntec_receive (struct ent_widget *widget, union ent_frame *frame)
+static void cdmx_enntec_receive (struct ent_widget *widget,
+		union ent_frame *frame)
 {
 	struct cdmx_port *port = container_of(widget, struct cdmx_port, widget);
 
 //	K_DEBUG("label %d, size %d", frame->label, __le16_to_cpu(frame->size));
 	if (ring_push(&port->readfrom, frame->raw, frame_rawsize(frame)))
 	{
+		//TODO: Handle ENT_RX_OVERFLOW flag
 //		K_DEBUG("no space in ringbuffer, dropping frame");
 		return;
 	}
@@ -317,7 +417,6 @@ struct ent_ops cdmx_ent_ops =
 	.recv 	= cdmx_enntec_receive
 };
 
-
 /*******************************************************************************
  * LINE DISCIPLINE
  ******************************************************************************/
@@ -330,13 +429,13 @@ static int cld_open(struct tty_struct *tty)
 	mutex_lock(&cld_lock);
 	for (i=0; i< cdmx_port_count; i++)
 	{
-		if (dmx_ports[i]->tty == NULL)
+		if (cdmx_ports[i]->tty == NULL)
 		{
-			dmx_ports[i]->tty = tty_kref_get(tty);
-			if (dmx_ports[i]->tty)
+			cdmx_ports[i]->tty = tty_kref_get(tty);
+			if (cdmx_ports[i]->tty)
 			{
 				K_INFO("attaching %s to port %d", tty->name, i);
-				tty->disc_data = dmx_ports[i];
+				tty->disc_data = cdmx_ports[i];
 				tty->receive_room = CDMX_RECEIVE_ROOM;
 
 				kt = tty->termios;
@@ -353,7 +452,7 @@ static int cld_open(struct tty_struct *tty)
 				if (tty_set_termios(tty, &kt))
 				{
 					K_ERR("failed to setup UART: %s", tty->name);
-					dmx_ports[i]->tty = NULL;
+					cdmx_ports[i]->tty = NULL;
 					tty_kref_put(tty);
 					mutex_unlock(&cld_lock);
 					return -EINVAL;
@@ -410,7 +509,7 @@ int	cld_receive_buf2(struct tty_struct *tty, const unsigned char *cp,
 	for (i = 0; i<count; i++)
 	{
 		flag = fp ? fp[i] : TTY_NORMAL;
-		fr_process(frame, cp[i], flag);
+		rx_process(frame, cp[i], flag);
 	}
 	return count;
 }
@@ -419,6 +518,7 @@ void cld_set_termios (struct tty_struct *tty, struct ktermios *old)
 {
 //	K_DEBUG("cflags: %X, ispeed: %d", old->c_cflag, old->c_ispeed);
 }
+
 int	cld_ioctl(struct tty_struct *tty, struct file *file,
 		 unsigned int cmd, unsigned long arg)
 {
@@ -435,14 +535,13 @@ static struct tty_ldisc_ops cld_ops =
 	.close			= cld_close,
 	.read			= cld_read,
 	.write			= cld_write,
-//	.receive_buf	= cld_receive_buf,
 	.receive_buf2	= cld_receive_buf2,
 	.set_termios	= cld_set_termios,
 	.ioctl			= cld_ioctl,
 };
 
 /*******************************************************************************
- * CHARACTER DEVICE
+ * SYSFS ATTRIBUTES
  ******************************************************************************/
 
 static ssize_t port_attr_show(struct kobject *kobj,
@@ -566,6 +665,10 @@ static struct kobj_type port_ktype =
 	.default_groups = port_groups,
 };
 
+/*******************************************************************************
+ * CHARACTER DEVICE
+ ******************************************************************************/
+
 static char *cdmx_devnode(struct device *dev, umode_t *mode)
 {
 	if (!mode)
@@ -575,7 +678,6 @@ static char *cdmx_devnode(struct device *dev, umode_t *mode)
 	return NULL;
 }
 
-
 static int cdmx_open 	(struct inode *node, struct file *f)
 {
 	struct cdmx_port *port;
@@ -583,7 +685,6 @@ static int cdmx_open 	(struct inode *node, struct file *f)
 //	K_DEBUG("file %s, port %p dev_t %X",
 //			f->f_path.dentry->d_name.name, port, port->cdev.dev);
 
-	port->ttyfp = f->private_data;
 	f->private_data = port;
 	try_module_get(THIS_MODULE);
 
@@ -598,12 +699,9 @@ static int cdmx_release (struct inode *node, struct file *f)
 //	K_DEBUG("file %s, port %p dev_t %X",
 //			f->f_path.dentry->d_name.name, port, port->cdev.dev);
 
-	f->private_data = port->ttyfp;
 	module_put(THIS_MODULE);
 	return 0;
 }
-
-
 
 static ssize_t cdmx_write (struct file *f, const char* src,
 		size_t len, loff_t * offset)
@@ -640,12 +738,11 @@ static ssize_t cdmx_write (struct file *f, const char* src,
 	out:
 	mutex_unlock(&port->rx_read_lock);
 	mutex_unlock(&port->tx_write_lock);
-//	K_DEBUG("->>> port %d, bytes written %d", \
+//	K_DEBUG("->>> port %d, bytes written %d",
 //			 port->id, result);
 	return result;
 
 }
-
 
 static ssize_t cdmx_read 	(struct file *f, char* dest,
 		size_t len, loff_t * offset)
@@ -703,12 +800,14 @@ __poll_t cdmx_poll (struct file *f, struct poll_table_struct *p)
 		mask |= (EPOLLIN | EPOLLRDNORM | EPOLLPRI );
 
 	//TODO: handle out
+	(void) w;
 //	w = cdmx_space_left(port);
 //	if( w > 0)
 //		mask |= EPOLLOUT | EPOLLWRNORM;
 	mutex_unlock(&port->rx_read_lock);
 	mutex_unlock(&port->tx_write_lock);
-//	K_DEBUG("port %d, to read: %d, to write: %d", port->id, port->readfrom.size, w);
+//	K_DEBUG("port %d, to read: %d, to write: %d",
+//	port->id, port->readfrom.size, w);
 
 	return mask;
 }
@@ -770,7 +869,7 @@ static struct file_operations cdmx_ops =
 };
 
 /*******************************************************************************
- * CDMX CORE
+ * MODULE CORE
  ******************************************************************************/
 
 static struct cdmx_port *cdmx_create_port_obj(int id)
@@ -807,7 +906,7 @@ static struct cdmx_port *cdmx_create_port_obj(int id)
 	 * As we have a kset for this kobject, we need to set it before calling
 	 * the kobject core.
 	 */
-	port->kobj.kset = dmx_ports_kset;
+	port->kobj.kset = cdmx_ports_kset;
 
 	/*
 	 * Initialize and add the kobject to the kernel.  All the default files
@@ -848,7 +947,7 @@ static int cdmx_create_cdevs (void)
 
 	// Returns zero or a negative error code.
 	err = alloc_chrdev_region(&cdmx_device_id,
-			BASE_MINOR, cdmx_port_count, chrdev_name);
+			CDMX_BASE_MINOR, cdmx_port_count, chrdev_name);
 	if (err)
 	{
 		K_ERR("failed to allocate chrdev region for '%s'", chrdev_name);
@@ -870,18 +969,18 @@ static int cdmx_create_cdevs (void)
 
 	for (i=0; i< cdmx_port_count; i++)
 	{
-		cdev_init( &dmx_ports[i]->cdev, &cdmx_ops);
-		dmx_ports[i]->cdev.owner = THIS_MODULE;
+		cdev_init( &cdmx_ports[i]->cdev, &cdmx_ops);
+		cdmx_ports[i]->cdev.owner = THIS_MODULE;
 		//  A negative error code is returned on failure.
-		err = cdev_add (&dmx_ports[i]->cdev,
-				MKDEV(MAJOR(cdmx_device_id), (i+BASE_MINOR)), 1);
+		err = cdev_add (&cdmx_ports[i]->cdev,
+				MKDEV(MAJOR(cdmx_device_id), (i+CDMX_BASE_MINOR)), 1);
 
 		if (err < 0)
 		{
 			K_ERR("cdev_add failed");
 			for (c = i - 1; c >= 0; c--)
 			{
-				cdev_del(&dmx_ports[c]->cdev);
+				cdev_del(&cdmx_ports[c]->cdev);
 			}
 			err = -ENOENT;
 			goto failure3;
@@ -891,17 +990,17 @@ static int cdmx_create_cdevs (void)
 	for (i=0; i< cdmx_port_count; i++)
 	{
 		// Returns &struct device pointer on success, or ERR_PTR() on error.
-		dmx_ports[i]->fsdev = \
+		cdmx_ports[i]->fsdev = \
 			device_create(cdmx_devclass, NULL, \
-			MKDEV(MAJOR(cdmx_device_id), (i + BASE_MINOR)),
-			NULL, "cdmx%03X", (i + BASE_MINOR));
+			MKDEV(MAJOR(cdmx_device_id), (i + CDMX_BASE_MINOR)),
+			NULL, "cdmx%03X", (i + CDMX_BASE_MINOR));
 
-		if (IS_ERR(dmx_ports[i]->fsdev))
+		if (IS_ERR(cdmx_ports[i]->fsdev))
 		{
 			K_ERR("failed create device");
 			for (c = i - 1; c >= 0; c--)
 				device_destroy(cdmx_devclass,
-						MKDEV(MAJOR(cdmx_device_id), (c + BASE_MINOR)));
+						MKDEV(MAJOR(cdmx_device_id), (c + CDMX_BASE_MINOR)));
 			err = -ENOENT;
 			goto failure4;
 		}
@@ -913,11 +1012,11 @@ static int cdmx_create_cdevs (void)
 
 failure4:
 	for (i=0; i< cdmx_port_count; i++)
-		cdev_del(&dmx_ports[i]->cdev);
+		cdev_del(&cdmx_ports[i]->cdev);
 failure3:
 	class_destroy(cdmx_devclass);
 failure2:
-	unregister_chrdev_region(MKDEV(MAJOR(cdmx_device_id), BASE_MINOR),
+	unregister_chrdev_region(MKDEV(MAJOR(cdmx_device_id), CDMX_BASE_MINOR),
 			cdmx_port_count);
 failure1:
 	K_ERR( "->>> cleanup done");
@@ -930,11 +1029,11 @@ static void cdmx_remove_cdevs (void)
 	for (i=0; i< cdmx_port_count; i++)
 	{
 		device_destroy(cdmx_devclass,
-				MKDEV(MAJOR(cdmx_device_id), (i + BASE_MINOR)));
-		cdev_del(&dmx_ports[i]->cdev);
+				MKDEV(MAJOR(cdmx_device_id), (i + CDMX_BASE_MINOR)));
+		cdev_del(&cdmx_ports[i]->cdev);
 	}
 	class_destroy(cdmx_devclass);
-	unregister_chrdev_region(MKDEV(MAJOR(cdmx_device_id), BASE_MINOR),
+	unregister_chrdev_region(MKDEV(MAJOR(cdmx_device_id), CDMX_BASE_MINOR),
 			cdmx_port_count);
 }
 
@@ -954,14 +1053,14 @@ static int __init cdmx_init (void)
 	}
 	K_INFO("using port count %d", cdmx_port_count);
 
-	dmx_ports_kset = kset_create_and_add("cdmx", NULL, NULL);
-	if (!dmx_ports_kset)
+	cdmx_ports_kset = kset_create_and_add("cdmx", NULL, NULL);
+	if (!cdmx_ports_kset)
 	{
 		K_ERR("out of memory");
 		return -ENOMEM;
 	}
-	dmx_ports = kzalloc(cdmx_port_count * sizeof(*dmx_ports), GFP_KERNEL);
-	if (!dmx_ports)
+	cdmx_ports = kzalloc(cdmx_port_count * sizeof(*cdmx_ports), GFP_KERNEL);
+	if (!cdmx_ports)
 	{
 		K_ERR("out of memory");
 		err = -ENOMEM;
@@ -969,11 +1068,11 @@ static int __init cdmx_init (void)
 	}
 	for (i=0; i<cdmx_port_count; i++)
 	{
-		dmx_ports[i] = cdmx_create_port_obj(i + BASE_MINOR);
-		if (!dmx_ports[i])
+		cdmx_ports[i] = cdmx_create_port_obj(i + CDMX_BASE_MINOR);
+		if (!cdmx_ports[i])
 		{
 			for (c = 0; c < i; c++)
-				cdmx_destroy_port_obj(dmx_ports[c]);
+				cdmx_destroy_port_obj(cdmx_ports[c]);
 			K_ERR("out of memory");
 			err = -ENOMEM;
 			goto failure2;
@@ -993,9 +1092,9 @@ static int __init cdmx_init (void)
 failure3:
 	cdmx_remove_cdevs();
 failure2:
-	kfree(dmx_ports);
+	kfree(cdmx_ports);
 failure1:
-	kset_unregister(dmx_ports_kset);
+	kset_unregister(cdmx_ports_kset);
 	K_ERR("resources freed after failure, exiting");
 	return err;
 }
@@ -1007,13 +1106,15 @@ static void __exit cdmx_exit(void)
 	tty_unregister_ldisc(CDMX_LD);
 	cdmx_remove_cdevs();
 	for (i=0; i<cdmx_port_count; i++)
-		cdmx_destroy_port_obj(dmx_ports[i]);
-	kfree(dmx_ports);
-	kset_unregister(dmx_ports_kset);
+		cdmx_destroy_port_obj(cdmx_ports[i]);
+	kfree(cdmx_ports);
+	kset_unregister(cdmx_ports_kset);
 
 	K_DEBUG("->>> done");
 }
 
-
 module_init(cdmx_init); // @suppress("Unused function declaration")
 module_exit(cdmx_exit); // @suppress("Unused function declaration")
+
+/*******************************************************************************
+ ******************************************************************************/
