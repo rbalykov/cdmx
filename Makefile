@@ -9,6 +9,7 @@ obj-m += $(MODNAME).o
 $(MODNAME)-objs := $(MOD_UNITS)
 
 ccflags-y += -I$(PROJECT_ROOT)/include
+ccflags-y += -DDYNAMIC_DEBUG_MODULE
 
 CDMX_LD = 28
 TEST_DEVICE = /dev/ttyAMA0
