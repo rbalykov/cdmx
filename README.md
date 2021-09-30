@@ -33,8 +33,8 @@ Dependencies:
 
 Building the module:
 - clone cdmx repository
-- cd cdmx; make all insert
-- edit Makefile to replace TEST_DEVICE with your local UART
+- cd cdmx; edit Makefile to replace TEST_DEVICE with your local UART
+- make all insert
 - service olad start
 - make attach
 
