@@ -37,6 +37,8 @@
 #include <uapi/linux/eventpoll.h>
 #include <uapi/asm-generic/posix_types.h>
 #include <uapi/asm-generic/errno-base.h>
+#include <asm-generic/ioctl.h>
+#include <uapi/asm-generic/ioctl.h>
 #include <uapi/asm-generic/ioctls.h>
 #include <uapi/asm-generic/termbits.h>
 
@@ -71,7 +73,7 @@ static struct kset 			*cdmx_ports_kset;
 
 // LINE DISCIPLINE
 //TODO: check out if it's useful or not
-static struct mutex 		cld_lock;
+//static struct mutex 		cld_lock;
 
 // IN-FUNCTION BUFFER (see cdmx_read/write())
 //TODO: tweak it
@@ -426,7 +428,7 @@ static int cld_open(struct tty_struct *tty)
 	int i;
 	struct ktermios kt;
 
-	mutex_lock(&cld_lock);
+//	mutex_lock(&cld_lock);
 	for (i=0; i< cdmx_port_count; i++)
 	{
 		if (cdmx_ports[i]->tty == NULL)
@@ -434,7 +436,7 @@ static int cld_open(struct tty_struct *tty)
 			cdmx_ports[i]->tty = tty_kref_get(tty);
 			if (cdmx_ports[i]->tty)
 			{
-				K_INFO("attaching %s to port %d", tty->name, i);
+				K_DEBUG("attaching %s to port %d", tty->name, i);
 				tty->disc_data = cdmx_ports[i];
 				tty->receive_room = CDMX_RECEIVE_ROOM;
 
@@ -454,17 +456,17 @@ static int cld_open(struct tty_struct *tty)
 					K_ERR("failed to setup UART: %s", tty->name);
 					cdmx_ports[i]->tty = NULL;
 					tty_kref_put(tty);
-					mutex_unlock(&cld_lock);
+//					mutex_unlock(&cld_lock);
 					return -EINVAL;
 				}
 				tty_driver_flush_buffer(tty);
-				mutex_unlock(&cld_lock);
+//				mutex_unlock(&cld_lock);
 				return 0;
 			}
 		}
 	}
 	K_INFO("no place to attach %s", tty->name);
-	mutex_unlock(&cld_lock);
+//	mutex_unlock(&cld_lock);
 	return -EINVAL;
 }
 
@@ -473,14 +475,14 @@ static void cld_close(struct tty_struct *tty)
 	struct cdmx_port *port = tty->disc_data;
 	if (port)
 	{
-		mutex_lock(&cld_lock);
+//		mutex_lock(&cld_lock);
 
 		tty_driver_flush_buffer(port->tty);
 		tty_kref_put(port->tty);
 		port->tty = NULL;
 		tty->disc_data = NULL;
 
-		mutex_unlock(&cld_lock);
+//		mutex_unlock(&cld_lock);
 		K_DEBUG("detached %s", tty->name);
 	}
 }
@@ -812,6 +814,7 @@ __poll_t cdmx_poll (struct file *f, struct poll_table_struct *p)
 	return mask;
 }
 
+
 long cdmx_ioctl (struct file *f, unsigned int cmd, unsigned long arg)
 {
 	struct cdmx_port *port = (struct cdmx_port *) f->private_data;
@@ -822,36 +825,24 @@ long cdmx_ioctl (struct file *f, unsigned int cmd, unsigned long arg)
 
 	switch(cmd)
 	{
+	/* just stubs, no any action taken */
+	case TCGETS:
+	case TCSETS:
 	case TIOCEXCL:
-		set_bit(CDMX_EXCLUSIVE, &port->flags);
-//		K_DEBUG("set exclusive");
-		return 0;
 	case TIOCNXCL:
-//		K_DEBUG("cleared exclusive");
-		clear_bit(CDMX_EXCLUSIVE, &port->flags);
 		return 0;
-	case 0x5440: //TIOCGEXCL:
-		i =  test_bit(CDMX_EXCLUSIVE, &port->flags);
-//		K_DEBUG("is exclusive: %d", i);
+	case TIOCGEXCL:
+		i =  1;
 		return put_user(i, (int __user *)p);
 
+	/* some real stuff here */
 	case TIOCINQ:
 		i = port->readfrom.size;
-//		K_DEBUG("bytes to read: %d", i);
 		return put_user(i, (int __user *)p);
 /*	case TIOCOUTQ:
 		i = port->write_to.rawsize;
-		K_DEBUG("bytes queued: %d", i);
 		return put_user(i, (int __user *)p);
 */
-	case TCGETS:
-//		if (port->tty)
-//			return cld_ioctl(port->tty, f, cmd, arg);
-//		K_DEBUG("TCGETS, ignoring");
-		return 0;
-	case TCSETS:
-//		K_DEBUG("TCSETS, ignoring");
-		return 0;
 	default:
 		return -EINVAL;
 	}
@@ -1043,7 +1034,7 @@ static int __init cdmx_init (void)
 {
 	int i, c, p, err;
 
-	mutex_init(&cld_lock);
+//	mutex_init(&cld_lock);
 	p = TO_RANGE(cdmx_port_count, CDMX_PORTS_MIN, CDMX_PORTS_MAX);
 	if (p != cdmx_port_count)
 	{

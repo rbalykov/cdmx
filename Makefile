@@ -9,7 +9,7 @@ obj-m += $(MODNAME).o
 $(MODNAME)-objs := $(MOD_UNITS)
 
 ccflags-y += -I$(PROJECT_ROOT)/include
-ccflags-y += -DDYNAMIC_DEBUG_MODULE
+ccflags-y += -DDYNAMIC_DEBUG_MODULE -DDEBUG -DUSE_SIMPLE_DYNDBG
 
 CDMX_LD = 28
 TEST_DEVICE = /dev/ttyAMA0
@@ -30,8 +30,8 @@ in:
 in4:
 	sudo insmod $(MODNAME).ko
 
-jo:
-	sudo journalctl -f -o short-monotonic --no-hostname
+log:
+	sudo journalctl -f -o short-monotonic --no-hostname -tkernel -t$(MODNAME)
 
 at:
 	sudo ldattach -d $(CDMX_LD) $(TEST_DEVICE)
@@ -39,6 +39,11 @@ at:
 de:
 	sudo killall ldattach
 	
+attach: at
+detach: de
+insert: in
+remove: rm
+
 t3:
 	cat test/test.3.getparams >$(TEST_CHRDEV)
 	cat $(TEST_CHRDEV) | hexdump -C

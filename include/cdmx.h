@@ -77,9 +77,6 @@ struct cdmx_port
 
 	struct task_struct *thread;
 	struct hrtimer timer;
-
-	//TODO: refactor exclusive access
-	unsigned long flags;
 };
 
 struct port_attribute
