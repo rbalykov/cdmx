@@ -44,6 +44,8 @@
 
 #include "cdmx.h"
 
+#include <linux/delay.h>
+
 /*******************************************************************************
  ******************************************************************************/
 
@@ -170,36 +172,35 @@ void tx_timer_stop (struct cdmx_port *port)
 
 int tx_thread (void *arg)
 {
-	struct cdmx_port *port = (struct cdmx_port *) arg;
-	(void) port;
+//	struct cdmx_port *port = (struct cdmx_port *) arg;
+
+   while(!kthread_should_stop())
+    {
+        K_DEBUG("Thread active");
+//        K_DEBUG("Thread %d active", port->id);
+        //hrtimer_nanosleep(ktime_set(0,1000000000u), HRTIMER_MODE_REL, CLOCK_MONOTONIC);
+        msleep(1000);
+    }
+    return 0;
 
 	return 0;
 }
 
+
 int tx_thread_create (struct cdmx_port *port)
 {
-	char *name = "cdmx tx___";
-	sprintf(name, "cdmx tx%03X", port->id);
+//	char *name = "cdmx tx________";
+//	snprintf(name, 10, "cdmx tx%03X", port->id);
 
-#if 1
-    port->thread = kthread_create(tx_thread, port, name);
-    if(port->thread)
-    {
-        wake_up_process(port->thread);
-        return 0;
-    }
-#else
-    port->thread = kthread_run(tx_thread, port, name);
-    if(!port->thread)
-    	return 0;
-#endif
-    else
-    	return -1;
+    port->thread = kthread_run(tx_thread, port, "hello world");
+   	return (port->thread) ? 0 : -1;
 }
 
 void tx_thread_stop (struct cdmx_port *port)
 {
 	kthread_stop(port->thread);
+	port->thread = NULL;
+	K_DEBUG("thread %d stopped", port->id);
 }
 
 /*******************************************************************************
@@ -423,68 +424,83 @@ struct ent_ops cdmx_ent_ops =
  * LINE DISCIPLINE
  ******************************************************************************/
 
+static int cld_attach (struct tty_struct *tty, int i)
+{
+	struct ktermios kt;
+	cdmx_ports[i]->tty = tty_kref_get(tty);
+	if (cdmx_ports[i]->tty)
+	{
+		K_DEBUG("attaching %s to port %d", tty->name, i);
+		tty->disc_data = cdmx_ports[i];
+		tty->receive_room = CDMX_RECEIVE_ROOM;
+
+		kt = tty->termios;
+		kt.c_iflag &= ~(IGNBRK|IGNPAR|PARMRK|ISTRIP|INLCR|\
+				IGNCR|ICRNL|IUCLC|IXON|IXANY|IXOFF|IMAXBEL|IUTF8);
+		kt.c_iflag |= (BRKINT|INPCK);
+		kt.c_oflag &= ~(OPOST);
+		kt.c_lflag &= ~(ECHO|ECHONL|ICANON|ISIG|IEXTEN);
+		kt.c_cflag &= ~(CSIZE|PARENB|CBAUD|CRTSCTS);
+		kt.c_cflag |= (CS8|BOTHER|CSTOPB|CREAD|CLOCAL);
+		kt.c_ospeed	= DMX_BAUDRATE;
+		kt.c_ispeed = kt.c_ospeed;
+
+		if (tty_set_termios(tty, &kt))
+		{
+			K_ERR("failed to setup UART: %s", tty->name);
+			cdmx_ports[i]->tty = NULL;
+			tty_kref_put(tty);
+			return -EINVAL;
+		}
+		tty_driver_flush_buffer(tty);
+		K_DEBUG("done termios");
+		return 0;
+	}
+	else
+		return -EINVAL;
+}
+
+static void cld_detach (struct cdmx_port *port)
+{
+	tty_driver_flush_buffer(port->tty);
+	tty_kref_put(port->tty);
+
+	K_DEBUG("detached %s", port->tty->name);
+	port->tty = NULL;
+}
+
 static int cld_open(struct tty_struct *tty)
 {
-	int i;
-	struct ktermios kt;
+	int i, err;
 
-//	mutex_lock(&cld_lock);
 	for (i=0; i< cdmx_port_count; i++)
 	{
 		if (cdmx_ports[i]->tty == NULL)
 		{
-			cdmx_ports[i]->tty = tty_kref_get(tty);
-			if (cdmx_ports[i]->tty)
+			K_DEBUG("attach");
+			err = cld_attach(tty, i);
+			if (err)
+				return err;
+			K_DEBUG("thread");
+			err = tx_thread_create(cdmx_ports[i]);
+			if (err)
 			{
-				K_DEBUG("attaching %s to port %d", tty->name, i);
-				tty->disc_data = cdmx_ports[i];
-				tty->receive_room = CDMX_RECEIVE_ROOM;
-
-				kt = tty->termios;
-				kt.c_iflag &= ~(IGNBRK|IGNPAR|PARMRK|ISTRIP|INLCR|\
-						IGNCR|ICRNL|IUCLC|IXON|IXANY|IXOFF|IMAXBEL|IUTF8);
-				kt.c_iflag |= (BRKINT|INPCK);
-				kt.c_oflag &= ~(OPOST);
-				kt.c_lflag &= ~(ECHO|ECHONL|ICANON|ISIG|IEXTEN);
-				kt.c_cflag &= ~(CSIZE|PARENB|CBAUD|CRTSCTS);
-				kt.c_cflag |= (CS8|BOTHER|CSTOPB|CREAD|CLOCAL);
-				kt.c_ospeed	= DMX_BAUDRATE;
-				kt.c_ispeed = kt.c_ospeed;
-
-				if (tty_set_termios(tty, &kt))
-				{
-					K_ERR("failed to setup UART: %s", tty->name);
-					cdmx_ports[i]->tty = NULL;
-					tty_kref_put(tty);
-//					mutex_unlock(&cld_lock);
-					return -EINVAL;
-				}
-				tty_driver_flush_buffer(tty);
-//				mutex_unlock(&cld_lock);
-				return 0;
+				cld_detach(cdmx_ports[i]);
+				return err;
 			}
+			K_DEBUG("done open");
 		}
 	}
 	K_INFO("no place to attach %s", tty->name);
-//	mutex_unlock(&cld_lock);
 	return -EINVAL;
 }
 
 static void cld_close(struct tty_struct *tty)
 {
 	struct cdmx_port *port = tty->disc_data;
-	if (port)
-	{
-//		mutex_lock(&cld_lock);
-
-		tty_driver_flush_buffer(port->tty);
-		tty_kref_put(port->tty);
-		port->tty = NULL;
-		tty->disc_data = NULL;
-
-//		mutex_unlock(&cld_lock);
-		K_DEBUG("detached %s", tty->name);
-	}
+	tty->disc_data = NULL;
+	tx_thread_stop(port);
+	cld_detach(port);
 }
 
 static ssize_t cld_read(struct tty_struct *tty, struct file *file,
@@ -1034,7 +1050,6 @@ static int __init cdmx_init (void)
 {
 	int i, c, p, err;
 
-//	mutex_init(&cld_lock);
 	p = TO_RANGE(cdmx_port_count, CDMX_PORTS_MIN, CDMX_PORTS_MAX);
 	if (p != cdmx_port_count)
 	{

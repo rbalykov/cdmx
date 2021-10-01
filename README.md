@@ -40,7 +40,7 @@ Building the module:
 
 Further module hacking:
 - It's recommended to build kernel from source, since out-of-stock images are not intended for debug.
-- Enable CONFIG_DYNAMIC_DEBUG_CORE and CONFIG_MODULE_FORCE_UNLOAD
+- Enable CONFIG_DYNAMIC_DEBUG_CORE and CONFIG_MODULE_FORCE_UNLOAD in kernel .config
 - cd cdmx/extra; make dyndbg
 
 UART on RPi3:
