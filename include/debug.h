@@ -5,8 +5,10 @@
 #ifndef INCLUDE_DEBUG_H_
 #define INCLUDE_DEBUG_H_
 
+#include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/printk.h>
+#include <linux/export.h>
 
 /*******************************************************************************
  * DEBUG MACROS
