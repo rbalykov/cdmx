@@ -73,7 +73,7 @@ static struct kset 			*cdmx_ports_kset;
 
 // LINE DISCIPLINE
 //TODO: check out if it's useful or not
-//static struct mutex 		cld_lock;
+static struct mutex 		cld_lock;
 
 // IN-FUNCTION BUFFER (see cdmx_read/write())
 //TODO: tweak it
@@ -428,7 +428,7 @@ static int cld_open(struct tty_struct *tty)
 	int i;
 	struct ktermios kt;
 
-//	mutex_lock(&cld_lock);
+	mutex_lock(&cld_lock);
 	for (i=0; i< cdmx_port_count; i++)
 	{
 		if (cdmx_ports[i]->tty == NULL)
@@ -456,17 +456,17 @@ static int cld_open(struct tty_struct *tty)
 					K_ERR("failed to setup UART: %s", tty->name);
 					cdmx_ports[i]->tty = NULL;
 					tty_kref_put(tty);
-//					mutex_unlock(&cld_lock);
+					mutex_unlock(&cld_lock);
 					return -EINVAL;
 				}
 				tty_driver_flush_buffer(tty);
-//				mutex_unlock(&cld_lock);
+				mutex_unlock(&cld_lock);
 				return 0;
 			}
 		}
 	}
 	K_INFO("no place to attach %s", tty->name);
-//	mutex_unlock(&cld_lock);
+	mutex_unlock(&cld_lock);
 	return -EINVAL;
 }
 
@@ -475,14 +475,14 @@ static void cld_close(struct tty_struct *tty)
 	struct cdmx_port *port = tty->disc_data;
 	if (port)
 	{
-//		mutex_lock(&cld_lock);
+		mutex_lock(&cld_lock);
 
 		tty_driver_flush_buffer(port->tty);
 		tty_kref_put(port->tty);
 		port->tty = NULL;
 		tty->disc_data = NULL;
 
-//		mutex_unlock(&cld_lock);
+		mutex_unlock(&cld_lock);
 		K_DEBUG("detached %s", tty->name);
 	}
 }
@@ -1034,7 +1034,7 @@ static int __init cdmx_init (void)
 {
 	int i, c, p, err;
 
-//	mutex_init(&cld_lock);
+	mutex_init(&cld_lock);
 	p = TO_RANGE(cdmx_port_count, CDMX_PORTS_MIN, CDMX_PORTS_MAX);
 	if (p != cdmx_port_count)
 	{

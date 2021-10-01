@@ -9,7 +9,7 @@ obj-m += $(MODNAME).o
 $(MODNAME)-objs := $(MOD_UNITS)
 
 ccflags-y += -I$(PROJECT_ROOT)/include
-ccflags-y += -DDYNAMIC_DEBUG_MODULE -DDEBUG -DUSE_SIMPLE_DYNDBG
+# ccflags-y += -DDYNAMIC_DEBUG_MODULE -DDEBUG -DUSE_SIMPLE_DYNDBG
 
 CDMX_LD = 28
 TEST_DEVICE = /dev/ttyAMA0
@@ -23,6 +23,8 @@ clean:
 
 rm: 
 	sudo rmmod $(MODNAME).ko
+rmf: 
+	sudo rmmod -f $(MODNAME).ko
 
 in:	
 	sudo insmod $(MODNAME).ko cdmx_port_count=1
@@ -32,6 +34,8 @@ in4:
 
 log:
 	sudo journalctl -f -o short-monotonic --no-hostname -tkernel -t$(MODNAME)
+lo:
+	sudo journalctl -f -o short-monotonic --no-hostname
 
 at:
 	sudo ldattach -d $(CDMX_LD) $(TEST_DEVICE)
