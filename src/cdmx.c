@@ -285,6 +285,7 @@ struct ent_ops cdmx_ent_ops =
 static int cld_attach (struct cdmx_port *port, struct tty_struct *tty)
 {
 	struct ktermios kt;
+	K_DEBUG("<---");
 	port->tty = tty_kref_get(tty);
 	if (port->tty)
 	{
@@ -311,19 +312,24 @@ static int cld_attach (struct cdmx_port *port, struct tty_struct *tty)
 			return -EINVAL;
 		}
 		tty_driver_flush_buffer(tty);
+		K_DEBUG("->>>");
 		return 0;
 	}
 	else
+	{
+		K_DEBUG("got NULL tty kref");
 		return -EINVAL;
+	}
 }
 
 static void cld_detach (struct cdmx_port *port)
 {
-	K_DEBUG("%s, port %d", port->tty->name, port->id);
+	K_DEBUG("<--- %s, port %d", port->tty->name, port->id);
 	tty_driver_flush_buffer(port->tty);
 	tty_kref_put(port->tty);
 	port->tty->disc_data = NULL;
 	port->tty = NULL;
+	K_DEBUG("->>>");
 }
 
 static int cld_tryopen (struct cdmx_port *port, struct tty_struct *tty)
@@ -331,19 +337,23 @@ static int cld_tryopen (struct cdmx_port *port, struct tty_struct *tty)
 	int result = 0;
 	mutex_lock(&port->ld_lock);
 
+	K_DEBUG("<---");
 	result = cld_attach(port, tty);
 	if (result)
 		goto out1;
+	K_DEBUG("done cld_attach");
 	result = tx_attach(&port->tx, tty);
 	if (result)
 		goto out2;
 
+	K_DEBUG("->>>");
 	return 0;
 
 	out2:
 		cld_detach(port);
 	out1:
 		mutex_unlock(&port->ld_lock);
+		K_DEBUG("cld_tryopen failed");
 	return result;
 }
 
@@ -351,18 +361,24 @@ static int cld_open(struct tty_struct *tty)
 {
 	int i, result = 0;
 
+	K_DEBUG("<---");
 	for (i=0; i< cdmx_port_count; i++)
 	{
 		if (cdmx_ports[i]->tty == NULL)
 		{
+			K_DEBUG("attaching %s", tty->name);
 			result = cld_tryopen(cdmx_ports[i], tty);
 			if (result)
+			{
+				K_DEBUG("failed");
 				return result;
+			}
+			K_DEBUG("->>> done");
 			return 0;
 		}
 	}
 	K_INFO("no place to attach %s", tty->name);
-	return result;
+	return -EINVAL;
 }
 
 static void cld_close(struct tty_struct *tty)
