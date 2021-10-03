@@ -30,6 +30,7 @@
  * PHYSICAL LAYER
  ******************************************************************************/
 
+// microseconds
 #define DMX_BAUDRATE 			(250000u)
 #define DMX_FRAMERATE_MIN		(1u)
 #define DMX_FRAMERATE_MAX		(44u)
@@ -37,15 +38,15 @@
 #define DMX_BREAK_MAX			(1000000u)
 #define DMX_MAB_MIN				(12u)
 #define DMX_MAB_MAX				(1000000u)
-#define DMX_SHORT_FRAME_us		(1204u)
+#define DMX_SHORT_FRAME			(1204u)
 
 #define NORMALISE_BREAK(a) 		(a=TO_RANGE(a, DMX_BREAK_MIN, 	DMX_BREAK_MAX))
 #define NORMALISE_MAB(a)   		(a=TO_RANGE(a, DMX_MAB_MIN, 	DMX_MAB_MAX))
 #define NORMALISE_FRAMERATE(a)  (a=TO_RANGE(a, DMX_FRAMERATE_MIN, DMX_FRAMERATE_MAX))
 
-#define DEFAULT_BREAK		(88)
-#define DEFAULT_MAB			(8)
-#define DEFAULT_FRAMERATE	(44)
+#define DEFAULT_BREAK		(DMX_BREAK_MIN)
+#define DEFAULT_MAB			(DMX_MAB_MIN)
+#define DEFAULT_FRAMERATE	(DMX_FRAMERATE_MAX)
 
 /*******************************************************************************
  * UART RX/TX STATE MACHINE
@@ -63,6 +64,7 @@ typedef enum rx_state
 typedef enum tx_state
 {
 	TX_IDLE = 0,
+	TX_ARMED,
 	TX_BREAK,
 	TX_MAB,
 	TX_DATA

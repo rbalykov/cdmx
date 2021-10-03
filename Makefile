@@ -6,11 +6,10 @@ SRC_DIR = src
 INC_DIR = include
 MODNAME = cdmx
 
-MOD_UNITS := $(SRC_DIR)/cdmx.o $(SRC_DIR)/enttec.o
+MOD_UNITS := $(SRC_DIR)/cdmx.o $(SRC_DIR)/enttec.o $(SRC_DIR)/uart.o
 obj-m += $(MODNAME).o
 $(MODNAME)-objs := $(MOD_UNITS)
 ccflags-y += -I$(PROJECT_ROOT)/include
-# ccflags-y += -DDYNAMIC_DEBUG_MODULE -DDEBUG -DUSE_SIMPLE_DYNDBG
 
 #
 # if have kernel with CONFIG_DYNAMIC_DEBUG_CORE 
@@ -22,8 +21,9 @@ ccflags-y += -I$(PROJECT_ROOT)/include
 ccflags-y += -DDYNAMIC_DEBUG_MODULE -DDEBUG
 
 #
-# without USE_SIMPLE_DYNDBG '+mflt' (module, file, line, time) options
-# are hard-coded to message text, otherwise they are generated on-the-fly
+# With USE_SIMPLE_DYNDBG (module, file, line, time) fields
+# are generated on-the-fly using dyndbg='+mflt' parameter.
+# Otherwise they are hard-coded to message text.
 #
 ccflags-y += -DUSE_SIMPLE_DYNDBG
 
@@ -48,12 +48,13 @@ clean:
 rm: 
 	sudo rmmod $(MODNAME).ko
 
+# Remove forced
 rmf: 
 	sudo rmmod -f $(MODNAME).ko
 	
-# Insert module with single port
+# Insert module with single port and dyndbg
 in:	
-	sudo insmod $(MODNAME).ko cdmx_port_count=1
+	sudo insmod $(MODNAME).ko cdmx_port_count=1 dyndbg="+ptfml"
 
 # Insert module
 in4:
@@ -112,6 +113,9 @@ ls:
 	sudo ls -lA /sys/class/cdmx
 	sudo ls -lA /sys/cdmx_p
 	sudo ls -lA /dev/cdmx*
+
+
+
 
 ################################################################################
 ################################################################################
