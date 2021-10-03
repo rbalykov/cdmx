@@ -83,7 +83,6 @@ struct uart_frame
 	};
 	size_t size;
 	rx_state_t state_rx;
-	tx_state_t state_tx;
 	uint8_t flags;
 };
 

@@ -175,12 +175,11 @@ static size_t tx_read (struct uart_tx *tx, uint8_t *data, size_t size)
 int tx_send_fifo (struct uart_tx *tx)
 {
 	struct cdmx_port *port = container_of(tx, struct cdmx_port, tx);
-	ktime_t sleep, t1, t2;
+	ktime_t sleep, t1, t2, t3, t4, t5, t6;
 	size_t size = 0, offset = 0;
 	uint8_t *data;
 	int breaktime, mabtime, framerate;
 
-	K_DEBUG("<---");
 	if (mutex_trylock(&port->sysfs_lock))
 	{
 		breaktime 	= port->breaktime;
@@ -197,12 +196,16 @@ int tx_send_fifo (struct uart_tx *tx)
 	set_current_state(TASK_UNINTERRUPTIBLE);
 	schedule_hrtimeout(&sleep, HRTIMER_MODE_REL);
 
+	t2 = tx->timer.base->get_time();
+
 	if (0 != tx->ops.break_ctl(tx, false))
 		return -1;
 
 	sleep = mabtime * NSEC_PER_USEC;
 	set_current_state(TASK_UNINTERRUPTIBLE);
 	schedule_hrtimeout(&sleep, HRTIMER_MODE_REL);
+
+	t3 = tx->timer.base->get_time();
 
 	mutex_lock(&tx->lock);
 		size = tx->frame.size;
@@ -214,17 +217,20 @@ int tx_send_fifo (struct uart_tx *tx)
 			size -= offset;
 			tty_wait_until_sent(tx->tty, 0);
 		}
-		t2 = tx->timer.base->get_time();
 	mutex_unlock(&tx->lock);
+	t4 = tx->timer.base->get_time();
 
-	sleep = (NSEC_PER_SEC/framerate) - (t2 - t1);
-	if (sleep > 0)
+	t5 = (NSEC_PER_SEC/framerate) - (t4 - t1);
+	if (t5 > 0)
 	{
-//		set_current_state(TASK_UNINTERRUPTIBLE);
-//		schedule_hrtimeout(&sleep, HRTIMER_MODE_REL);
+		set_current_state(TASK_INTERRUPTIBLE);
+		schedule_hrtimeout(&t5, HRTIMER_MODE_REL);
 	}
+	t6 = tx->timer.base->get_time();
+	K_DEBUG("\nbreak\t%lld \nmab\t%lld \ndata\t%lld \ntail\t%lld \
+			\ntotal\t%lld",
+			t2-t1, t3-t2, t4-t3, t5, t6-t1);
 
-	K_DEBUG("->>>");
 	return 0;
 }
 
@@ -235,7 +241,6 @@ int tx_send_none (struct uart_tx *tx)
 
 static bool tx_tty_validate (struct uart_tx *tx, struct tty_struct *tty)
 {
-	K_DEBUG("<---");
 	if (tty->ops->break_ctl)
 		tx->ops.break_ctl = tx_break_native;
 	else if (tty->ops->ioctl)
@@ -256,7 +261,6 @@ static bool tx_tty_validate (struct uart_tx *tx, struct tty_struct *tty)
 		K_ERR("TTY %s doesn't have write() op", tty->name);
 		return false;
 	}
-	K_DEBUG("->>>");
 	return true;
 }
 
@@ -264,18 +268,17 @@ static int tx_thread (void *arg)
 {
 	struct uart_tx *tx = (struct uart_tx *) arg;
 
-	K_DEBUG("<---");
 	while(!kthread_should_stop())
     {
 		tx->ops.send(tx);
+		//TODO: delete msleep
+		msleep(1000);
     }
-	K_DEBUG("->>>");
     return 0;
 }
 
 static int tx_start (struct uart_tx *tx)
 {
-	K_DEBUG("<---");
 	if ( ! tx->compliant)
 	{
 		pr_debug("Trying to start non-compliant TX");
@@ -286,30 +289,25 @@ static int tx_start (struct uart_tx *tx)
    	tx->thread = kthread_run(tx_thread, tx, tx->name);
    	if (tx->thread)
    	{
-   		K_DEBUG("->>>");
    		return 0;
    	}
-	K_DEBUG("no thread");
    	return -1;
 }
 
 static void tx_stop (struct uart_tx *tx)
 {
-	K_DEBUG("<---");
 	if (tx->thread)
 	{
 		kthread_stop(tx->thread);
 		tx->thread = NULL;
 	}
     hrtimer_cancel(&tx->timer);
-	K_DEBUG("->>>");
 }
 
 
 int tx_attach (struct uart_tx *tx, struct tty_struct *tty)
 {
 	struct cdmx_port *port = container_of(tx, struct cdmx_port, tx);
-	K_DEBUG("<---");
 	if (!tty)
 	{
 		K_ERR("Attaching TX to NULL TTY");
@@ -326,20 +324,17 @@ int tx_attach (struct uart_tx *tx, struct tty_struct *tty)
 	tx->tty = tty;
 	scnprintf(tx->name, TX_NAME_MAX, "cdmx %03X", port->id);
 	memset(&tx->frame, 0, sizeof(struct uart_frame));
-	tx->frame.size = DMX_FRAME_MIN;
+	tx->frame.size = DMX_FRAME_MAX;
 	mutex_init(&tx->lock);
 
-	K_DEBUG("->>> return ops.start");
 	return tx->ops.start(tx);
 }
 
 void tx_detach (struct uart_tx *tx)
 {
-	K_DEBUG("<---");
 	tx->ops.stop (tx);
 	tx->tty = NULL;
 	tx->compliant = false;
-	K_DEBUG("->>>");
 }
 
 

@@ -156,7 +156,7 @@ static inline void ring_unpop (struct ringbuffer *ring, size_t len)
 /*******************************************************************************
  * ENTTEC PROTOCOL HANDLERS
  ******************************************************************************/
-
+//TODO: move it to enttec.c
 static void cdmx_enttec_getparams (struct ent_widget *widget)
 {
 	struct cdmx_port *port = container_of(widget, struct cdmx_port, widget);
@@ -285,11 +285,10 @@ struct ent_ops cdmx_ent_ops =
 static int cld_attach (struct cdmx_port *port, struct tty_struct *tty)
 {
 	struct ktermios kt;
-	K_DEBUG("<---");
 	port->tty = tty_kref_get(tty);
 	if (port->tty)
 	{
-		K_DEBUG("attaching %s to port %d", tty->name, port->id);
+		K_INFO("attaching %s to port %d", tty->name, port->id);
 		tty->disc_data = port;
 		tty->receive_room = CDMX_RECEIVE_ROOM;
 
@@ -312,7 +311,6 @@ static int cld_attach (struct cdmx_port *port, struct tty_struct *tty)
 			return -EINVAL;
 		}
 		tty_driver_flush_buffer(tty);
-		K_DEBUG("->>>");
 		return 0;
 	}
 	else
@@ -324,36 +322,32 @@ static int cld_attach (struct cdmx_port *port, struct tty_struct *tty)
 
 static void cld_detach (struct cdmx_port *port)
 {
-	K_DEBUG("<--- %s, port %d", port->tty->name, port->id);
+	K_INFO("detaching %s from port %d", port->tty->name, port->id);
 	tty_driver_flush_buffer(port->tty);
 	tty_kref_put(port->tty);
 	port->tty->disc_data = NULL;
 	port->tty = NULL;
-	K_DEBUG("->>>");
 }
 
 static int cld_tryopen (struct cdmx_port *port, struct tty_struct *tty)
 {
 	int result = 0;
+
 	mutex_lock(&port->ld_lock);
+		result = cld_attach(port, tty);
+		if (result)
+			goto out1;
+		result = tx_attach(&port->tx, tty);
+		if (result)
+			goto out2;
+	mutex_unlock(&port->ld_lock);
 
-	K_DEBUG("<---");
-	result = cld_attach(port, tty);
-	if (result)
-		goto out1;
-	K_DEBUG("done cld_attach");
-	result = tx_attach(&port->tx, tty);
-	if (result)
-		goto out2;
-
-	K_DEBUG("->>>");
 	return 0;
 
 	out2:
 		cld_detach(port);
 	out1:
 		mutex_unlock(&port->ld_lock);
-		K_DEBUG("cld_tryopen failed");
 	return result;
 }
 
@@ -361,19 +355,13 @@ static int cld_open(struct tty_struct *tty)
 {
 	int i, result = 0;
 
-	K_DEBUG("<---");
 	for (i=0; i< cdmx_port_count; i++)
 	{
 		if (cdmx_ports[i]->tty == NULL)
 		{
-			K_DEBUG("attaching %s", tty->name);
 			result = cld_tryopen(cdmx_ports[i], tty);
 			if (result)
-			{
-				K_DEBUG("failed");
 				return result;
-			}
-			K_DEBUG("->>> done");
 			return 0;
 		}
 	}
@@ -908,7 +896,6 @@ static int cdmx_create_cdevs (void)
 
 	}
 
-//	K_DEBUG("->>> done");
 	return 0;
 
 failure4:
@@ -920,7 +907,6 @@ failure2:
 	unregister_chrdev_region(MKDEV(MAJOR(cdmx_device_id), CDMX_BASE_MINOR),
 			cdmx_port_count);
 failure1:
-	K_ERR( "->>> cleanup done");
 	return err;
 }
 
@@ -1010,7 +996,7 @@ static void __exit cdmx_exit(void)
 	kfree(cdmx_ports);
 	kset_unregister(cdmx_ports_kset);
 
-	K_DEBUG("->>> done");
+	K_DEBUG("->>> cdmx exit");
 }
 
 module_init(cdmx_init); // @suppress("Unused function declaration")
