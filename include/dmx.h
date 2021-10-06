@@ -30,15 +30,21 @@
  * PHYSICAL LAYER
  ******************************************************************************/
 
-// microseconds
 #define DMX_BAUDRATE 			(250000u)
 #define DMX_FRAMERATE_MIN		(1u)
 #define DMX_FRAMERATE_MAX		(44u)
+
+// microseconds
 #define DMX_BREAK_MIN			(92u)
 #define DMX_BREAK_MAX			(1000000u)
 #define DMX_MAB_MIN				(12u)
 #define DMX_MAB_MAX				(1000000u)
 #define DMX_SHORT_FRAME			(1204u)
+
+// nanoseconds
+#define DMX_SLOT_NSEC	(44000L)
+#define DMX_SLOT_DUMMY	(49000L)
+
 
 #define NORMALISE_BREAK(a) 		(a=TO_RANGE(a, DMX_BREAK_MIN, 	DMX_BREAK_MAX))
 #define NORMALISE_MAB(a)   		(a=TO_RANGE(a, DMX_MAB_MIN, 	DMX_MAB_MAX))

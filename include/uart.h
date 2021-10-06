@@ -23,28 +23,32 @@ struct uart_tx_ops
 	/*
 	 * Init data and start transmitting
 	 */
-	int  	(*start) 	(struct uart_tx *tx);
+	int (*start) (struct uart_tx *tx);
 
 	/*
 	 * Stop transmitting
 	 */
-	void 	(*stop) 	(struct uart_tx *tx);
+	void (*stop) (struct uart_tx *tx);
 
 	/*
 	 * Set BREAK state on/off
 	 */
-	int		(*break_ctl) (struct uart_tx *tx, bool on);
+	int (*break_ctl) (struct uart_tx *tx, bool on);
 
 	/*
 	 * Send single frame
 	 */
-	int		(*send) 	(struct uart_tx *tx);
+	int (*send) (struct uart_tx *tx);
 
 	/*
 	 * Get frame from outer space
 	 */
-	size_t	(*read)		(struct uart_tx *tx, uint8_t *data, size_t size);
+	size_t (*read) (struct uart_tx *tx, uint8_t *data, size_t size);
 
+	/*
+	 * Wait until data sent
+	 */
+	int (*wait) (struct uart_tx *tx);
 };
 
 struct uart_tx
@@ -60,6 +64,7 @@ struct uart_tx
 };
 
 void 	rx_process (struct uart_frame *frame, uint8_t ch, uint8_t flag);
+void 	tx_transmit (struct uart_tx *tx, uint8_t *data, size_t size);
 
 int 	tx_attach (struct uart_tx *tx, struct tty_struct *tty);
 void 	tx_detach (struct uart_tx *tx);

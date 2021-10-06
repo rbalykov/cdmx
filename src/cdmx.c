@@ -264,7 +264,11 @@ void cdmx_enntec_tx (struct ent_widget *widget,
 		union ent_frame * frame, int universe)
 {
 	//TODO: Implement TX
-	K_DEBUG("TX not implemented yet");
+	//K_DEBUG("TX not implemented yet");
+
+	struct cdmx_port *port = container_of(widget, struct cdmx_port, widget);
+	//TODO: Lock it proper
+	tx_transmit (&port->tx, frame->data, __le16_to_cpu(frame->size));
 }
 
 struct ent_ops cdmx_ent_ops =
