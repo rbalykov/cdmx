@@ -48,7 +48,7 @@ struct uart_tx_ops
 	/*
 	 * Wait until data sent
 	 */
-	int (*wait) (struct uart_tx *tx);
+	int (*wait) (struct uart_tx *tx, ktime_t maf);
 };
 
 struct uart_tx

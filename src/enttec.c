@@ -152,6 +152,7 @@ size_t 	ent_rx (struct ent_widget *widget, const char *src, size_t len, uint8_t 
 	return 0;
 }
 
+
 size_t 	ent_write 	(struct ent_widget *widget,
 		const char *src, size_t len)
 {
@@ -215,6 +216,7 @@ size_t 	ent_write 	(struct ent_widget *widget,
 				{
 				widget->wr_state = PRE_SOM;
 				ent_wr_dispatch(widget);
+				wr_flush(widget);
 				break;
 				}
 			else if (widget->wr_total >= ENT_FRAME_MAX)

@@ -261,11 +261,8 @@ static void cdmx_enntec_receive (struct ent_widget *widget,
 }
 
 void cdmx_enntec_tx (struct ent_widget *widget,
-		union ent_frame * frame, int universe)
+		union ent_frame *frame, int universe)
 {
-	//TODO: Implement TX
-	//K_DEBUG("TX not implemented yet");
-
 	struct cdmx_port *port = container_of(widget, struct cdmx_port, widget);
 	//TODO: Lock it proper
 	tx_transmit (&port->tx, frame->data, __le16_to_cpu(frame->size));
@@ -497,6 +494,8 @@ static ssize_t port_show(struct cdmx_port *port,
 		var = port->breaktime;
 	else if (strcmp(attr->attr.name, "mabtime") == 0)
 		var = port->mabtime;
+	else if (strcmp(attr->attr.name, "maftime") == 0)
+		var = port->maftime;
 	else if (strcmp(attr->attr.name, "framerate") == 0)
 		var = port->framerate;
 
@@ -511,7 +510,7 @@ static ssize_t port_store(struct cdmx_port *port,
 	int ret, var;
 
 	ret = kstrtoint(buf, 10, &var);
-	K_INFO("port %d, '%s'=%d", port->id, attr->attr.name, var);
+	K_DEBUG("port %d, '%s'=%d", port->id, attr->attr.name, var);
 	if (ret < 0)
 		return ret;
 
@@ -521,6 +520,8 @@ static ssize_t port_store(struct cdmx_port *port,
 		port->breaktime = NORMALISE_BREAK(var);
 	else if (strcmp(attr->attr.name, "mabtime") == 0)
 		port->mabtime = NORMALISE_MAB(var);
+	else if (strcmp(attr->attr.name, "maftime") == 0)
+		port->maftime = var;
 	else if (strcmp(attr->attr.name, "framerate") == 0)
 		port->framerate = NORMALISE_FRAMERATE(var);
 
@@ -536,12 +537,16 @@ static struct port_attribute attr_breaktime =
 static struct port_attribute attr_mabtime =
 	__ATTR(mabtime, 0664, port_show, port_store);
 
+static struct port_attribute attr_maftime =
+	__ATTR(maftime, 0664, port_show, port_store);
+
 static struct port_attribute attr_framerate =
 	__ATTR(framerate, 0664, port_show, port_store);
 
 static struct attribute *port_attrs[] = {
 	&attr_breaktime.attr,
 	&attr_mabtime.attr,
+	&attr_maftime.attr,
 	&attr_framerate.attr,
 	NULL,	/* need to NULL terminate the list of attributes */
 };
@@ -791,6 +796,7 @@ static struct cdmx_port *cdmx_create_port_obj(int id)
 	init_waitqueue_head(&port->wait);
 	port->breaktime = DEFAULT_BREAK;
 	port->mabtime 	= DEFAULT_MAB;
+	port->maftime 	= DEFAULT_MAF;
 	port->framerate = DEFAULT_FRAMERATE;
 	port->id = PORT_INACTIVE;
 	port->widget.ops = &cdmx_ent_ops;

@@ -52,6 +52,7 @@ struct cdmx_port
 	// microseconds
 	unsigned int breaktime;
 	unsigned int mabtime;
+	unsigned int maftime;
 	unsigned int framerate;
 	struct mutex sysfs_lock;
 

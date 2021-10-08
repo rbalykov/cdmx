@@ -51,6 +51,12 @@ rm:
 # Remove forced
 rmf: 
 	sudo rmmod -f $(MODNAME).ko
+
+# Remove while OLA stopped
+rmo:
+	sudo service olad stop
+	sudo rmmod -f $(MODNAME).ko
+	sudo service olad start
 	
 # Insert module with single port and dyndbg
 in:	

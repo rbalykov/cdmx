@@ -52,6 +52,7 @@
 
 #define DEFAULT_BREAK		(DMX_BREAK_MIN)
 #define DEFAULT_MAB			(DMX_MAB_MIN)
+#define DEFAULT_MAF			(1000)
 #define DEFAULT_FRAMERATE	(DMX_FRAMERATE_MAX)
 
 /*******************************************************************************

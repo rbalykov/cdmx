@@ -11,7 +11,7 @@
 //#include <asm-generic/ioctl.h>
 //#include <uapi/asm-generic/ioctl.h>
 #include <uapi/asm-generic/ioctls.h>
-#include <asm-generic/current.h>
+#include <asm/current.h>
 
 #include "dmx.h"
 #include "enttec.h"
@@ -26,124 +26,6 @@ extern struct uart_tx_ops tx_ops;
 
 #define TIMEOUT_NSEC   ( 1000000000L )      //1 second in nano seconds
 #define TIMEOUT_SEC    ( 4 )                //4 seconds
-/*
-enum hrtimer_restart tx_timer (struct hrtimer *timer)
-{
-    hrtimer_forward_now(timer,ktime_set(TIMEOUT_SEC, TIMEOUT_NSEC));
-    return HRTIMER_RESTART;
-}
-
-void tx_timer_start (struct cdmx_port *port)
-{
-    ktime_t ktime;
-
-    ktime = ktime_set(TIMEOUT_SEC, TIMEOUT_NSEC);
-    hrtimer_init(&port->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-    port->timer.function = &tx_timer;
-    hrtimer_start( &port->timer, ktime, HRTIMER_MODE_REL);
-}
-
-void tx_timer_stop (struct cdmx_port *port)
-{
-    hrtimer_cancel(&port->timer);
-}
-
-static void tty_write_unlock(struct tty_struct *tty)
-{
-	mutex_unlock(&tty->atomic_write_lock);
-	wake_up_interruptible_poll(&tty->write_wait, EPOLLOUT);
-}
-
-static int tty_write_lock(struct tty_struct *tty, int ndelay)
-{
-	if (!mutex_trylock(&tty->atomic_write_lock))
-	{
-		if (ndelay)
-			return -EAGAIN;
-
-		if (mutex_lock_interruptible(&tty->atomic_write_lock))
-			return -ERESTARTSYS;
-	}
-	return 0;
-}
-
-static int send_break(struct tty_struct *tty, unsigned int duration)
-{
-	int retval;
-
-	if (tty->ops->break_ctl == NULL)
-		return 0;
-
-	if (tty->driver->flags & TTY_DRIVER_HARDWARE_BREAK)
-		retval = tty->ops->break_ctl(tty, duration);
-	else
-	{
-		//  Do the work ourselves
-		if (tty_write_lock(tty, 0) < 0)
-			return -EINTR;
-
-		retval = tty->ops->break_ctl(tty, -1);
-		if (retval)
-			goto out;
-
-		if (!signal_pending(current))
-			msleep_interruptible(duration);
-
-		retval = tty->ops->break_ctl(tty, 0);
-
-	out:
-		tty_write_unlock(tty);
-		if (signal_pending(get_current()))
-			retval = -EINTR;
-	}
-	return retval;
-}
-*/
-/*
-static int tx_set_break (struct tty_struct *tty, bool on)
-{
-	if (tty->ops->break_ctl)
-	{
-		pr_debug_once("tty %s, using BREAK op", tty->name);
-		return tty->ops->break_ctl(tty, on ? -1 : 0 );
-
-	}
-	else if (tty->ops->ioctl)
-	{
-		pr_debug_once("tty %s has no BREAK op, using IOCTL", tty->name);
-		return tty->ops->ioctl(tty, on ? TIOCSBRK : TIOCCBRK, 0);
-	}
-	pr_err_once("tty %s doesn't have neither BREAK nor IOCTL ops", tty->name);
-	return -EINVAL;
-}
-
-void tx_send_frame (struct cdmx_port *port)
-{
-//	struct uart_frame *frame = &port->tx;
-	struct tty_struct *tty = port->tty;
-	ktime_t sleep, s1, s2;
-
-	if (0 != tx_set_break(tty, true))
-		return;
-
-	sleep = port->breaktime * NSEC_PER_USEC;
-	set_current_state(TASK_UNINTERRUPTIBLE);
-	s1 = port->tx.timer.base->get_time();
-	schedule_hrtimeout(&sleep, HRTIMER_MODE_REL);
-	s2 = port->tx.timer.base->get_time();
-	K_DEBUG("%lld", s2-s1);
-
-	if (0 != tx_set_break(tty, false))
-		return;
-
-}
-*/
-/*
- * schedule_hrtimeout
- * schedule_hrtimeout_range
- * hrtimer_sleeper_start_expires
- *
- */
 
 
 static int tx_break_native (struct uart_tx *tx, bool on)
@@ -175,15 +57,16 @@ static size_t tx_read (struct uart_tx *tx, uint8_t *data, size_t size)
 int tx_send_fifo (struct uart_tx *tx)
 {
 	struct cdmx_port *port = container_of(tx, struct cdmx_port, tx);
-	ktime_t sleep, t1, t2, t3, t4, t5, t6;
+	ktime_t sleep, t1, t2;
 	size_t size = 0, offset = 0;
 	uint8_t *data;
-	int breaktime, mabtime, framerate;
+	int breaktime, mabtime, maftime, framerate;
 
 	if (mutex_trylock(&port->sysfs_lock))
 	{
 		breaktime 	= port->breaktime;
 		mabtime 	= port->mabtime;
+		maftime		= port->maftime;
 		framerate 	= port->framerate;
 		mutex_unlock(&port->sysfs_lock);
 	}
@@ -192,25 +75,19 @@ int tx_send_fifo (struct uart_tx *tx)
 	if (0 != tx->ops.break_ctl(tx, true))
 	{
 		pr_err_once("BRK setting failure");
-		//return -1;
 	}
 	sleep = breaktime * NSEC_PER_USEC;
 	set_current_state(TASK_UNINTERRUPTIBLE);
 	schedule_hrtimeout(&sleep, HRTIMER_MODE_REL);
 
-	t2 = tx->timer.base->get_time();
-
 	if (0 != tx->ops.break_ctl(tx, false))
 	{
 		pr_err_once("BRK clearing failure");
-		//return -1;
 	}
 
 	sleep = mabtime * NSEC_PER_USEC;
 	set_current_state(TASK_UNINTERRUPTIBLE);
 	schedule_hrtimeout(&sleep, HRTIMER_MODE_REL);
-
-	t3 = tx->timer.base->get_time();
 
 	mutex_lock(&tx->lock);
 		size = tx->frame.size;
@@ -220,26 +97,21 @@ int tx_send_fifo (struct uart_tx *tx)
 			offset = tx->tty->ops->write(tx->tty, data, size);
 			data += offset;
 			size -= offset;
-//			tty_wait_until_sent(tx->tty, 0);
 		}
 	mutex_unlock(&tx->lock);
 
-	if (0 != tx->ops.wait(tx))
-		return 1;
+	if (0 != tx->ops.wait(tx, maftime * NSEC_PER_USEC))
+		return -1;
 
-//	t4 = tx->timer.base->get_time();
-//
-//	t5 = (NSEC_PER_SEC/framerate) - (t4 - t1);
-//	if (t5 > 0)
-//	{
-//		set_current_state(TASK_INTERRUPTIBLE);
-//		schedule_hrtimeout(&t5, HRTIMER_MODE_REL);
-//	}
-//	t6 = tx->timer.base->get_time();
-//	K_DEBUG("\nbreak\t%lld \nmab\t%lld \ndata\t%lld \ntail\t%lld \
-//			\ntotal\t%lld",
-//			t2-t1, t3-t2, t4-t3, t5, t6-t1);
+	t2 = tx->timer.base->get_time();
 
+	sleep = (NSEC_PER_SEC/framerate) - (t2 - t1);
+	if (sleep > 0)
+	{
+		set_current_state(TASK_UNINTERRUPTIBLE);
+		if (schedule_hrtimeout(&sleep, HRTIMER_MODE_REL))
+			return -1;
+	}
 	return 0;
 }
 
@@ -248,13 +120,14 @@ int tx_send_none (struct uart_tx *tx)
 	return -EINVAL;
 }
 
-int tx_wait_until_sent (struct uart_tx *tx)
+int tx_wait_until_sent (struct uart_tx *tx, ktime_t maf)
 {
+	(void) maf;
 	tx->tty->ops->wait_until_sent(tx->tty, 0);
 	return 0;
 }
 
-int tx_wait_chars (struct uart_tx *tx)
+int tx_wait_chars (struct uart_tx *tx, ktime_t maf)
 {
 	unsigned int i = tx->tty->ops->chars_in_buffer(tx->tty);
 	ktime_t t;
@@ -267,16 +140,16 @@ int tx_wait_chars (struct uart_tx *tx)
 			return -1;
 		i = tx->tty->ops->chars_in_buffer(tx->tty);
 	}
-	t = NSEC_PER_MSEC;
+
 	set_current_state(TASK_UNINTERRUPTIBLE);
-	if (schedule_hrtimeout(&t, HRTIMER_MODE_REL))
+	if (schedule_hrtimeout(&maf, HRTIMER_MODE_REL))
 		return -1;
 	return 0;
 }
 
-int tx_wait_dummy (struct uart_tx *tx)
+int tx_wait_dummy (struct uart_tx *tx, ktime_t maf)
 {
-	ktime_t t = DMX_SLOT_DUMMY * DMX_FRAME_MAX;
+	ktime_t t = maf + DMX_SLOT_NSEC * DMX_FRAME_MAX;
 	set_current_state(TASK_INTERRUPTIBLE);
 	if (schedule_hrtimeout(&t, HRTIMER_MODE_REL))
 		return -1;
@@ -315,15 +188,15 @@ static bool tx_tty_validate (struct uart_tx *tx, struct tty_struct *tty)
 		return false;
 	}
 
-	if (tty->ops->wait_until_sent)
-	{
-		K_DEBUG("using wait_until_sent");
-		tx->ops.wait = tx_wait_until_sent;
-	}
-	else if (tty->ops->chars_in_buffer)
+	if (tty->ops->chars_in_buffer)
 	{
 		K_DEBUG("using chars_in_buffer");
 		tx->ops.wait = tx_wait_chars;
+	}
+	else if (tty->ops->wait_until_sent)
+	{
+		K_DEBUG("using wait_until_sent");
+		tx->ops.wait = tx_wait_until_sent;
 	}
 	else
 	{
@@ -398,13 +271,11 @@ int tx_attach (struct uart_tx *tx, struct tty_struct *tty)
 	}
 
 	memcpy(&tx->ops, &tx_ops, sizeof(struct uart_tx_ops));
-//	tx->compliant = tx_tty_validate(tx, tty);
-//	if (!tx->compliant)
-//	{
-//		return -EINVAL;
-//	}
-	//TODO: put validating back again
-	tx->compliant = true;
+	tx->compliant = tx_tty_validate(tx, tty);
+	if (!tx->compliant)
+	{
+		return -EINVAL;
+	}
 
 	tx->tty = tty;
 	scnprintf(tx->name, TX_NAME_MAX, "cdmx %03X", port->id);
