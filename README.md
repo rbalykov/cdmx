@@ -4,34 +4,44 @@ Linux kernel module that turns any serial tty to DMX port.
 (C) 2021, GNU Public license v3.
 
 Requirements: 
-- h/w support for BRKINT and non-standard baudrate.
-- Linux kernel v5 (v5.10.63-longterm is recommended)
+- h/w support for BREAK detection and non-standard baudrate.
+- Linux kernel v5 (they change API at speed of light, this work done with v5.10.63 LTS)
 
 Implemented for now:
 
 - UART RX
-- /dev/cdmx00x emulates DMXKing USBDMX512-A
-- /sys/cdmx/port00x/* files provide r/w access to port parameters
-- variable port count, min=1, max=256
-
-Tests performed using OLA (https://github.com/OpenLightingProject/ola)
+- DMXKing USBDMX512-A emulation (Enttec UsbPro compatible)
+- SysFS access to port parameters
+- variable port count, 1 to 256
 
 TODO:
 - implement TX
 - implement RDM
 
-Building and testing:
-- apt install build-essential
-- apt install linux-headers-`uname -r` or build new kernel
-- apt install ola; service olad stop
+Known issues:
+- some IOCTLs are implemented as stubs, so you won't be able to change TTY settings while using module. Exclusive file access used in OLA is also emulated with no real action done.
+- RX overflow flag is not reported to host. Faulty frames are just dropped.
+- First received DMX frame remains in read() queue and blocks the rest if no host is reading it. So the best practice is start OLA, let it detect CDMX, then attach UART to CDMX line discipline (LDISC).
+- Kernel API for attaching line discipline has to be called from user-space, not kernel-space, so 'ldattach' from 'util-linux' package is what you need. Alternatively, any application could open UART file and call TIOCSETD ioctl.
+
+Tests performed using OLA (https://github.com/OpenLightingProject/ola)
+
+Dependencies:
+- apt install build-essential util-linux ola sysvinit-utils
+- apt install linux-headers-\`uname -r\` or build new kernel
+- service olad stop; nano /etc/ola/ola-usbserial.conf (device_prefix = cdmx); make sure other OLA plugins or ModemManager don't use your UART.
+
+Building the module:
 - clone cdmx repository
-- edit Makefile to replace TEST_DEVICE with your local TTY
-- cd cdmx; make all in
-- nano /etc/ola/ola-usbserial.conf (device_prefix = cdmx)
-- xterm + make jo;
+- cd cdmx; edit Makefile to replace TEST_DEVICE with your local UART
+- make all insert
 - service olad start
-- xterm + make at
-- ola_dev_info; ola_patch; ola_dmxmonitor; ola_dmxconsole
+- make attach
+
+Further module hacking:
+- It's recommended to build kernel from source, since out-of-stock images are not intended for debug.
+- Enable CONFIG_DYNAMIC_DEBUG_CORE and CONFIG_MODULE_FORCE_UNLOAD in kernel .config
+- cd cdmx/extra; make dyndbg
 
 UART on RPi3:
 - sudo systemctl disable hciuart

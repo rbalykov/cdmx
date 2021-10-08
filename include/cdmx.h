@@ -6,6 +6,7 @@
 #define INCLUDE_CDMX_H_
 
 #include "enttec.h"
+#include "uart.h"
 
 #include <linux/kthread.h>
 #include <linux/hrtimer.h>
@@ -20,17 +21,6 @@
 #define CDMX_BASE_MINOR		(0u)
 #define PORT_INACTIVE		(-1)
 
-static char	USBPRO_VENDOR[] 	=
-{
-	ESTA_DMXKING_LSB, ESTA_DMXKING_MSB,
-	'D', 'M', 'X', 'k', 'i', 'n', 'g'
-};
-static char	USBPRO_NAME[] =
-{
-	DMXKING_512_LSB, DMXKING_512_MSB,
-	'U', 'S', 'B', ' ', 'D', 'M', 'X', '5', '1', '2', '-', 'A', ' ',
-	'E', 'm', 'u', 'l', 'a', 't', 'i', 'o', 'n'
-};
 
 /*******************************************************************************
  * Line discipline
@@ -43,8 +33,6 @@ static char	USBPRO_NAME[] =
  * Character device
  ******************************************************************************/
 
-#define CDMX_EXCLUSIVE		(1)
-
 struct ringbuffer
 {
 	uint8_t data[CDMX_RECEIVE_ROOM];
@@ -53,33 +41,47 @@ struct ringbuffer
 	size_t write;
 };
 
+
 struct cdmx_port
 {
 	int id;
 
+	// SysFS interface
 	struct kobject kobj;
+
+	// microseconds
 	unsigned int breaktime;
 	unsigned int mabtime;
+	unsigned int maftime;
 	unsigned int framerate;
+	struct mutex sysfs_lock;
 
-	struct ent_widget widget;
-	struct ringbuffer readfrom;
-
-	struct mutex tx_write_lock;
-	struct mutex rx_read_lock;
-	wait_queue_head_t wait;
-
-	struct uart_frame rx;
-
+	// CHRDEV interface
 	struct cdev cdev;
 	struct device *fsdev;
+
+	// Line Discipline
+	struct mutex ld_lock;
 	struct tty_struct *tty;
 
-	struct task_struct *thread;
-	struct hrtimer timer;
+	// read() to TX
+	struct mutex tx_read_lock;
 
-	//TODO: refactor exclusive access
-	unsigned long flags;
+	// RX to write()
+	struct mutex rx_write_lock;
+
+	// read()
+	struct ringbuffer readfrom;
+	wait_queue_head_t wait;
+
+	// write()
+	struct ent_widget widget;
+
+	// UART RX
+	struct uart_frame rx;
+
+	// UART TX
+	struct uart_tx tx;
 };
 
 struct port_attribute

@@ -5,3 +5,5 @@
 *.ko
 modules.order
 *.symvers
+eclipse
+
