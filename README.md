@@ -9,13 +9,12 @@ Requirements:
 
 Implemented for now:
 
-- UART RX
+- UART TX/RX
 - DMXKing USBDMX512-A emulation (Enttec UsbPro compatible)
 - SysFS access to port parameters
 - variable port count, 1 to 256
 
 TODO:
-- implement TX
 - implement RDM
 
 Known issues:
