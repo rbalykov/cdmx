@@ -4,6 +4,7 @@
 
 
 #include "enttec.h"
+#include "debug.h"
 
 /*******************************************************************************
  * HELPER FUNCTIONS FOR write()

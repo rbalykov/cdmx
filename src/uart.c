@@ -8,25 +8,20 @@
 #include <linux/sched.h>
 #include <linux/mutex.h>
 
-//#include <asm-generic/ioctl.h>
-//#include <uapi/asm-generic/ioctl.h>
 #include <uapi/asm-generic/ioctls.h>
+#include <uapi/asm-generic/errno-base.h>
 #include <asm/current.h>
 
-#include "dmx.h"
-#include "enttec.h"
+#include "uart.h"
 #include "cdmx.h"
 #include "debug.h"
+
 
 extern struct uart_tx_ops tx_ops;
 
 /*******************************************************************************
  * UART DMX TRANSMITTER
  ******************************************************************************/
-
-#define TIMEOUT_NSEC   ( 1000000000L )      //1 second in nano seconds
-#define TIMEOUT_SEC    ( 4 )                //4 seconds
-
 
 static int tx_break_native (struct uart_tx *tx, bool on)
 {

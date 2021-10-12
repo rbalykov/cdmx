@@ -18,36 +18,49 @@
 
 struct uart_tx;
 
+/**
+ * 		struct uart_tx_ops
+ *
+ *
+ * 		int (*start) (struct uart_tx *tx);
+ *
+ * Public.
+ * Start transmitting.
+ *
+ * 		void (*stop) (struct uart_tx *tx);
+ *
+ * Public.
+ * Stop transmitting.
+ *
+ * 		size_t (*read) (struct uart_tx *tx, uint8_t *data, size_t size);
+ *
+ * Public.
+ * Get frame from outer space. Size is trimmed to DMX_FRAME_MAX.
+ *
+ *		int (*break_ctl) (struct uart_tx *tx, bool on);
+ *
+ * Private.
+ * Set BREAK state on/off.
+ *
+ * 		int (*send) (struct uart_tx *tx);
+ *
+ * Private.
+ * Send single frame.
+ *
+ * 		int (*wait) (struct uart_tx *tx, ktime_t maf);
+ *
+ * Private.
+ * Wait until data sent.
+ */
+
+
 struct uart_tx_ops
 {
-	/*
-	 * Init data and start transmitting
-	 */
 	int (*start) (struct uart_tx *tx);
-
-	/*
-	 * Stop transmitting
-	 */
 	void (*stop) (struct uart_tx *tx);
-
-	/*
-	 * Set BREAK state on/off
-	 */
-	int (*break_ctl) (struct uart_tx *tx, bool on);
-
-	/*
-	 * Send single frame
-	 */
-	int (*send) (struct uart_tx *tx);
-
-	/*
-	 * Get frame from outer space
-	 */
 	size_t (*read) (struct uart_tx *tx, uint8_t *data, size_t size);
-
-	/*
-	 * Wait until data sent
-	 */
+	int (*break_ctl) (struct uart_tx *tx, bool on);
+	int (*send) (struct uart_tx *tx);
 	int (*wait) (struct uart_tx *tx, ktime_t maf);
 };
 
