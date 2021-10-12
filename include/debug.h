@@ -14,38 +14,25 @@
  * DEBUG MACROS
  ******************************************************************************/
 
-//#if defined (DYNAMIC_DEBUG_MODULE)
-#if defined (USE_SIMPLE_DYNDBG)
+#if defined(CONFIG_DYNAMIC_DEBUG) || \
+	(defined(CONFIG_DYNAMIC_DEBUG_CORE) && defined(DYNAMIC_DEBUG_MODULE))
 
-#define K_WARN(args...) 	pr_warn(args)
-#define K_NOTE(args...) 	pr_note(args)
-#define K_INFO(args...) 	pr_info(args)
-#define K_ERR(args...) 		pr_err(args)
-#define K_DEBUG(args...) 	pr_debug(args)
+#define K_WARN(fmt, args...) 	pr_warn(fmt "\n", ##args)
+#define K_NOTE(fmt, args...) 	pr_note(fmt "\n", ##args)
+#define K_INFO(fmt, args...) 	pr_info(fmt "\n", ##args)
+#define K_ERR(fmt, args...) 	pr_err(fmt "\n", ##args)
+#define K_DEBUG(fmt, args...) 	pr_debug(fmt "\n", ##args)
 
 #else
 
-#define K_WARN(fmt, args...) 	pr_warn("%s: %d: %s: " fmt "\n", THIS_MODULE->name, __LINE__, __func__, ##args)
-#define K_NOTE(fmt, args...) 	pr_note("%s: %d: %s: " fmt "\n", THIS_MODULE->name, __LINE__, __func__, ##args)
-#define K_INFO(fmt, args...) 	pr_info("%s: %d: %s: " fmt "\n", THIS_MODULE->name, __LINE__, __func__, ##args)
-#define K_ERR(fmt, args...) 	pr_err("%s: %d: %s: " fmt "\n", THIS_MODULE->name, __LINE__, __func__, ##args)
-#define K_DEBUG(fmt, args...) 	pr_debug("%s: %d: %s: " fmt "\n", THIS_MODULE->name, __LINE__, __func__, ##args)
+#define K_WARN(fmt, args...) 	printk(KERN_WARNING "%s: %d: %s: " fmt "\n", THIS_MODULE->name, __LINE__, __func__, ##args)
+#define K_NOTE(fmt, args...) 	printk(KERN_NOTICE "%s: %d: %s: " fmt "\n", THIS_MODULE->name, __LINE__, __func__, ##args)
+#define K_INFO(fmt, args...) 	printk(KERN_INFO "%s: %d: %s: " fmt "\n", THIS_MODULE->name, __LINE__, __func__, ##args)
+#define K_ERR(fmt, args...) 	printk(KERN_ERR "%s: %d: %s: " fmt "\n", THIS_MODULE->name, __LINE__, __func__, ##args)
+#define K_DEBUG(fmt, args...) 	printk(KERN_DEBUG "%s: %d: %s: " fmt "\n", THIS_MODULE->name, __LINE__, __func__, ##args)
 
 #endif // USE_SIMPLE_DYNDBG
 
-//#else
-//
-//#define _pp(severity, format, args...) \
-//  printk(severity "%s: %d: %s: " format "\n", THIS_MODULE->name, __LINE__, __func__, ##args)
-//
-//#define K_WARN(args...) 	_pp(KERN_WARNING,	args)
-//#define K_NOTE(args...) 	_pp(KERN_NOTICE, 	args)
-//#define K_INFO(args...) 	_pp(KERN_INFO, 		args)
-//#define K_ERR(args...) 		_pp(KERN_ERR, 		args)
-//#define K_DEBUG(args...) 	_pp(KERN_DEBUG, 	args)
-//
-//
-//#endif // DYNAMIC_DEBUG_MODULE
 /*******************************************************************************
  ******************************************************************************/
 

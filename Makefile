@@ -20,13 +20,6 @@ ccflags-y += -I$(PROJECT_ROOT)/include
 #
 ccflags-y += -DDYNAMIC_DEBUG_MODULE -DDEBUG
 
-#
-# With USE_SIMPLE_DYNDBG (module, file, line, time) fields
-# are generated on-the-fly using dyndbg='+mflt' parameter.
-# Otherwise they are hard-coded to message text.
-#
-ccflags-y += -DUSE_SIMPLE_DYNDBG
-
 # Line Discipline ID
 CDMX_LD = 28
 
