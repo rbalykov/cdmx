@@ -9,16 +9,16 @@ Requirements:
 
 Implemented for now:
 
-- UART RX
+- UART TX/RX
 - DMXKing USBDMX512-A emulation (Enttec UsbPro compatible)
 - SysFS access to port parameters
 - variable port count, 1 to 256
 
 TODO:
-- implement TX
 - implement RDM
 
 Known issues:
+- Oscilloscope could be useful to tweak MARK-After-Frame (MAF) time. By default it's set to 1000us, works fine on PPi3's PL011. If you don't get stable MAF, increase the value.
 - some IOCTLs are implemented as stubs, so you won't be able to change TTY settings while using module. Exclusive file access used in OLA is also emulated with no real action done.
 - RX overflow flag is not reported to host. Faulty frames are just dropped.
 - First received DMX frame remains in read() queue and blocks the rest if no host is reading it. So the best practice is start OLA, let it detect CDMX, then attach UART to CDMX line discipline (LDISC).
